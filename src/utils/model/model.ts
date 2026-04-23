@@ -28,6 +28,18 @@ import { getAPIProvider } from './providers.js'
 import { LIGHTNING_BOLT } from '../../constants/figures.js'
 import { isModelAllowed } from './modelAllowlist.js'
 import { type ModelAlias, isModelAlias } from './aliases.js'
+
+/**
+ * Returns true if the value is a model alias or a model alias with a suffix
+ * like [1m] (e.g. "opus", "opus[1m]", "sonnet", "haiku[1m]").
+ * Used to guard against infinite recursion when getDefault*Model() falls back
+ * to the user-specified setting — an alias like "opus[1m]" would cause
+ * parseUserSpecifiedModel → getDefaultOpusModel → parseUserSpecifiedModel loop.
+ */
+function isAliasOrAliasWithSuffix(value: string): boolean {
+  const base = value.replace(/\[1m\]$/i, '').trim()
+  return isModelAlias(base)
+}
 import { capitalize } from '../stringUtils.js'
 
 export type ModelShortName = string
@@ -111,19 +123,6 @@ export function getBestModel(): ModelName {
   return getDefaultOpusModel()
 }
 
-/**
- * Resolve the provider's primary model from its env var (e.g. OPENAI_MODEL).
- * Returns undefined for providers that don't have a primary-model env var
- * (Bedrock, Vertex, Foundry, firstParty).
- */
-function getProviderPrimaryModel(): ModelName | undefined {
-  const provider = getAPIProvider()
-  if (provider === 'openai') return process.env.OPENAI_MODEL
-  if (provider === 'gemini') return process.env.GEMINI_MODEL
-  if (provider === 'grok') return process.env.GROK_MODEL
-  return undefined
-}
-
 // @[MODEL LAUNCH]: Update the default Opus model (3P providers may lag so keep defaults unchanged).
 export function getDefaultOpusModel(): ModelName {
   const provider = getAPIProvider()
@@ -139,12 +138,14 @@ export function getDefaultOpusModel(): ModelName {
   if (process.env.ANTHROPIC_DEFAULT_OPUS_MODEL) {
     return process.env.ANTHROPIC_DEFAULT_OPUS_MODEL
   }
-  // 3P providers: if user set a primary model (e.g. OPENAI_MODEL=deepseek-v4-pro),
-  // fall back to it instead of a hardcoded Anthropic model. This prevents
-  // sideQuery / background tasks from sending requests to Anthropic's API
-  // when the user configured a third-party provider.
-  const primaryModel = getProviderPrimaryModel()
-  if (primaryModel) return primaryModel
+  // Fall back to user's configured model — custom providers may not
+  // recognize hardcoded Anthropic model IDs.
+  // Skip if the user setting is a model alias (e.g. "opus", "opus[1m]") to
+  // avoid infinite recursion: parseUserSpecifiedModel(alias) → getDefaultOpusModel().
+  const userSpecifiedOpus = getUserSpecifiedModelSetting()
+  if (userSpecifiedOpus && !isAliasOrAliasWithSuffix(userSpecifiedOpus)) {
+    return parseUserSpecifiedModel(userSpecifiedOpus)
+  }
   // 3P providers (Bedrock, Vertex, Foundry) — kept as a separate branch
   // even when values match, since 3P availability lags firstParty and
   // these will diverge again at the next model launch.
@@ -158,10 +159,7 @@ export function getDefaultOpusModel(): ModelName {
 export function getDefaultSonnetModel(): ModelName {
   const provider = getAPIProvider()
   // For OpenAI provider, check OPENAI_DEFAULT_SONNET_MODEL first
-  if (
-    provider === 'openai' &&
-    process.env.OPENAI_DEFAULT_SONNET_MODEL
-  ) {
+  if (provider === 'openai' && process.env.OPENAI_DEFAULT_SONNET_MODEL) {
     return process.env.OPENAI_DEFAULT_SONNET_MODEL
   }
   // For Gemini provider, check GEMINI_DEFAULT_SONNET_MODEL
@@ -172,10 +170,14 @@ export function getDefaultSonnetModel(): ModelName {
   if (process.env.ANTHROPIC_DEFAULT_SONNET_MODEL) {
     return process.env.ANTHROPIC_DEFAULT_SONNET_MODEL
   }
-  // 3P providers: fall back to user's primary model instead of a hardcoded
-  // Anthropic model name.
-  const primaryModel = getProviderPrimaryModel()
-  if (primaryModel) return primaryModel
+  // Fall back to user's configured model (ANTHROPIC_MODEL / settings) —
+  // custom providers (proxies, national clouds) may not recognize the
+  // hardcoded Anthropic model IDs.
+  // Skip if the user setting is a model alias to avoid infinite recursion.
+  const userSpecified = getUserSpecifiedModelSetting()
+  if (userSpecified && !isAliasOrAliasWithSuffix(userSpecified)) {
+    return parseUserSpecifiedModel(userSpecified)
+  }
   // Default to Sonnet 4.5 for 3P since they may not have 4.6 yet
   if (provider !== 'firstParty') {
     return getModelStrings().sonnet45
@@ -198,11 +200,13 @@ export function getDefaultHaikuModel(): ModelName {
   if (process.env.ANTHROPIC_DEFAULT_HAIKU_MODEL) {
     return process.env.ANTHROPIC_DEFAULT_HAIKU_MODEL
   }
-
-  // 3P providers: fall back to user's primary model instead of a hardcoded
-  // Anthropic model name.
-  const primaryModel = getProviderPrimaryModel()
-  if (primaryModel) return primaryModel
+  // Fall back to user's configured model — custom providers may not
+  // recognize hardcoded Anthropic model IDs.
+  // Skip if the user setting is a model alias to avoid infinite recursion.
+  const userSpecifiedHaiku = getUserSpecifiedModelSetting()
+  if (userSpecifiedHaiku && !isAliasOrAliasWithSuffix(userSpecifiedHaiku)) {
+    return parseUserSpecifiedModel(userSpecifiedHaiku)
+  }
 
   // Haiku 4.5 is available on all platforms (first-party, Foundry, Bedrock, Vertex)
   return getModelStrings().haiku45
