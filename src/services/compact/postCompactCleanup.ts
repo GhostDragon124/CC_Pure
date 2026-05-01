@@ -10,6 +10,17 @@ import { clearBetaTracingState } from '../../utils/telemetry/betaSessionTracing.
 import { resetMicrocompactState } from './microCompact.js'
 
 /**
+ * Compact-scoped cleanup callbacks registered by REPL or other long-lived
+ * components. Called during runPostCompactCleanup() so instance-scoped state
+ * (e.g. contentReplacementState) is freed alongside module-level caches.
+ */
+const compactCleanupCallbacks: Array<() => void> = []
+
+export function registerCompactCleanup(callback: () => void): void {
+  compactCleanupCallbacks.push(callback)
+}
+
+/**
  * Run cleanup of caches and tracking state after compaction.
  * Call this after both auto-compact and manual /compact to free memory
  * held by tracking structures that are invalidated by compaction.
@@ -74,4 +85,11 @@ export function runPostCompactCleanup(querySource?: QuerySource): void {
     )
   }
   clearSessionMessagesCache()
+  for (const cb of compactCleanupCallbacks) {
+    try {
+      cb()
+    } catch (error) {
+      logError(error)
+    }
+  }
 }
