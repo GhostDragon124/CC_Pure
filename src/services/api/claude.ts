@@ -185,7 +185,6 @@ import {
   type ThinkingConfig,
 } from 'src/utils/thinking.js'
 import {
-  extractDiscoveredToolNames,
   isDeferredToolsDeltaEnabled,
   isToolSearchEnabled,
 } from 'src/utils/toolSearch.js'
@@ -446,7 +445,7 @@ function configureEffortParams(
     betas.push(EFFORT_BETA_HEADER)
   } else if (typeof effortValue === 'string') {
     // Send string effort level as is
-    outputConfig.effort = effortValue as "high" | "medium" | "low" | "max"
+    outputConfig.effort = effortValue as 'high' | 'medium' | 'low' | 'max'
     betas.push(EFFORT_BETA_HEADER)
   } else if (process.env.USER_TYPE === 'ant') {
     // Numeric effort override - ant-only (uses anthropic_internal)
@@ -640,7 +639,8 @@ export function userMessageToMessageParam(
     role: 'user',
     content: (Array.isArray(message.message!.content)
       ? [...message.message!.content]
-      : message.message!.content) as import('@anthropic-ai/sdk/resources/beta/messages/messages.js').BetaContentBlockParam[],
+      : message.message!
+          .content) as import('@anthropic-ai/sdk/resources/beta/messages/messages.js').BetaContentBlockParam[],
   }
 }
 
@@ -691,7 +691,9 @@ export function assistantMessageToMessageParam(
     content:
       typeof message.message!.content === 'string'
         ? message.message!.content
-        : message.message!.content!.map(stripGeminiProviderMetadata) as BetaContentBlockParam[],
+        : (message.message!.content!.map(
+            stripGeminiProviderMetadata,
+          ) as BetaContentBlockParam[]),
   }
 }
 
@@ -706,10 +708,8 @@ function stripGeminiProviderMetadata<T extends BetaContentBlockParam | string>(
   }
 
   const obj = contentBlock as unknown as Record<string, unknown>
-  const {
-    _geminiThoughtSignature: _unusedGeminiThoughtSignature,
-    ...rest
-  } = obj
+  const { _geminiThoughtSignature: _unusedGeminiThoughtSignature, ...rest } =
+    obj
   return rest as unknown as T
 }
 
@@ -1189,23 +1189,21 @@ async function* queryModel(
     useToolSearch = false
   }
 
-  // Filter out ToolSearchTool if tool search is not enabled for this model
-  // ToolSearchTool returns tool_reference blocks which unsupported models can't handle
+  // Dynamic tool loading: filter deferred tools that haven't been discovered yet
   let filteredTools: Tools
 
   if (useToolSearch) {
-    // Dynamic tool loading: Only include deferred tools that have been discovered
-    // via tool_reference blocks in the message history. This eliminates the need
-    // to predeclare all deferred tools upfront and removes limits on tool quantity.
-    const discoveredToolNames = extractDiscoveredToolNames(messages)
-
+    // Never include deferred tools in the API tools array — they are invoked
+    // via ExecuteExtraTool which looks them up from the global tool registry
+    // at runtime. Keeping the tools array stable preserves the prompt cache
+    // across turns (discovered tools no longer bloat the tools JSON).
     filteredTools = tools.filter(tool => {
-      // Always include non-deferred tools
+      // Always include non-deferred tools (core tools)
       if (!deferredToolNames.has(tool.name)) return true
       // Always include ToolSearchTool (so it can discover more tools)
       if (toolMatchesName(tool, TOOL_SEARCH_TOOL_NAME)) return true
-      // Only include deferred tools that have been discovered
-      return discoveredToolNames.has(tool.name)
+      // All other deferred tools are excluded — use ExecuteExtraTool instead
+      return false
     })
   } else {
     filteredTools = tools.filter(
@@ -1288,11 +1286,8 @@ async function* queryModel(
   )
 
   if (useToolSearch) {
-    const includedDeferredTools = count(filteredTools, t =>
-      deferredToolNames.has(t.name),
-    )
     logForDebugging(
-      `Dynamic tool loading: ${includedDeferredTools}/${deferredToolNames.size} deferred tools included`,
+      `Dynamic tool loading: 0/${deferredToolNames.size} deferred tools in API tools array (all via ExecuteExtraTool)`,
     )
   }
 
@@ -1361,7 +1356,13 @@ async function* queryModel(
   // media stripping) but before Anthropic-specific logic (betas, thinking, caching).
   if (getAPIProvider() === 'openai') {
     const { queryModelOpenAI } = await import('./openai/index.js')
-    yield* queryModelOpenAI(messagesForAPI, systemPrompt, filteredTools, signal, options)
+    yield* queryModelOpenAI(
+      messagesForAPI,
+      systemPrompt,
+      filteredTools,
+      signal,
+      options,
+    )
     return
   }
 
@@ -1380,7 +1381,13 @@ async function* queryModel(
 
   if (getAPIProvider() === 'grok') {
     const { queryModelGrok } = await import('./grok/index.js')
-    yield* queryModelGrok(messagesForAPI, systemPrompt, filteredTools, signal, options)
+    yield* queryModelGrok(
+      messagesForAPI,
+      systemPrompt,
+      filteredTools,
+      signal,
+      options,
+    )
     return
   }
 
@@ -1576,11 +1583,11 @@ async function* queryModel(
   let start = Date.now()
   let attemptNumber = 0
   const attemptStartTimes: number[] = []
-  let stream: Stream<BetaRawMessageStreamEvent> | undefined = undefined
-  let streamRequestId: string | null | undefined = undefined
-  let clientRequestId: string | undefined = undefined
+  let stream: Stream<BetaRawMessageStreamEvent> | undefined
+  let streamRequestId: string | null | undefined
+  let clientRequestId: string | undefined
   // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins -- Response is available in Node 18+ and is used by the SDK
-  let streamResponse: Response | undefined = undefined
+  let streamResponse: Response | undefined
 
   // Release all stream resources to prevent native memory leaks.
   // The Response object holds native TLS/socket buffers that live outside the
@@ -1666,7 +1673,7 @@ async function* queryModel(
     const hasThinking =
       thinkingConfig.type !== 'disabled' &&
       !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_THINKING)
-    let thinking: BetaMessageStreamParams['thinking'] | undefined = undefined
+    let thinking: BetaMessageStreamParams['thinking'] | undefined
 
     // IMPORTANT: Do not change the adaptive-vs-budget thinking selection below
     // without notifying the model launch DRI and research. This is a sensitive
@@ -1837,7 +1844,7 @@ async function* queryModel(
 
   const newMessages: AssistantMessage[] = []
   let ttftMs = 0
-  let partialMessage: BetaMessage | undefined = undefined
+  let partialMessage: BetaMessage | undefined
   const contentBlocks: (BetaContentBlock | ConnectorTextBlock)[] = []
   // Accumulate streaming deltas in arrays to avoid O(n²) string concatenation.
   // Joined and assigned to contentBlock fields at content_block_stop.
@@ -1848,8 +1855,8 @@ async function* queryModel(
   let didFallBackToNonStreaming = false
   let fallbackMessage: AssistantMessage | undefined
   let maxOutputTokens = 0
-  let responseHeaders: globalThis.Headers | undefined = undefined
-  let research: unknown = undefined
+  let responseHeaders: globalThis.Headers | undefined
+  let research: unknown
   let isFastModeRequest = isFastMode // Keep separate state as it may change if falling back
   let isAdvisorInProgress = false
 
@@ -2360,7 +2367,10 @@ async function* queryModel(
             }
 
             // Update cost
-            const costUSDForPart = calculateUSDCost(resolvedModel, usage as unknown as BetaUsage)
+            const costUSDForPart = calculateUSDCost(
+              resolvedModel,
+              usage as unknown as BetaUsage,
+            )
             costUSD += addToTotalSessionCost(
               costUSDForPart,
               usage as unknown as BetaUsage,
@@ -2930,10 +2940,14 @@ async function* queryModel(
     // message_delta handler before any yield. Fallback pushes to newMessages
     // then yields, so tracking must be here to survive .return() at the yield.
     if (fallbackMessage) {
-      const fallbackUsage = fallbackMessage.message.usage as BetaMessageDeltaUsage
+      const fallbackUsage = fallbackMessage.message
+        .usage as BetaMessageDeltaUsage
       usage = updateUsage(EMPTY_USAGE, fallbackUsage)
       stopReason = fallbackMessage.message.stop_reason as BetaStopReason
-      const fallbackCost = calculateUSDCost(resolvedModel, fallbackUsage as unknown as BetaUsage)
+      const fallbackCost = calculateUSDCost(
+        resolvedModel,
+        fallbackUsage as unknown as BetaUsage,
+      )
       costUSD += addToTotalSessionCost(
         fallbackCost,
         fallbackUsage as unknown as BetaUsage,
@@ -2989,7 +3003,9 @@ async function* queryModel(
   void options.getToolPermissionContext().then(permissionContext => {
     logAPISuccessAndDuration({
       model:
-        (newMessages[0]?.message.model as string | undefined) ?? partialMessage?.model ?? options.model,
+        (newMessages[0]?.message.model as string | undefined) ??
+        partialMessage?.model ??
+        options.model,
       preNormalizedModel: options.model,
       usage,
       start,

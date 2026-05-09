@@ -17,7 +17,10 @@ import { adaptOpenAIStreamToAnthropic } from './streamAdapter.js'
 import { resolveOpenAIModel } from './modelMapping.js'
 import { normalizeMessagesForAPI } from '../../../utils/messages.js'
 import { toolToAPISchema } from '../../../utils/api.js'
-import { getEmptyToolPermissionContext } from '../../../Tool.js'
+import {
+  getEmptyToolPermissionContext,
+  toolMatchesName,
+} from '../../../Tool.js'
 import { logForDebugging } from '../../../utils/debug.js'
 import { addToTotalSessionCost } from '../../../cost-tracker.js'
 import { calculateUSDCost } from '../../../utils/modelCost.js'
@@ -27,6 +30,11 @@ import {
   createAssistantAPIErrorMessage,
   normalizeContentFromAPI,
 } from '../../../utils/messages.js'
+import { isToolSearchEnabled } from '../../../utils/toolSearch.js'
+import {
+  isDeferredTool,
+  TOOL_SEARCH_TOOL_NAME,
+} from '../../../tools/ToolSearchTool/prompt.js'
 
 /**
  * OpenAI-compatible query path. Converts Anthropic-format messages/tools to
@@ -51,15 +59,50 @@ export async function* queryModelOpenAI(
     // 2. Normalize messages using shared preprocessing
     const messagesForAPI = normalizeMessagesForAPI(messages, tools)
 
-    // 3. Build tool schemas
+    // 3. Check if tool search is enabled (similar to Anthropic path)
+    const useToolSearch = await isToolSearchEnabled(
+      options.model,
+      tools,
+      options.getToolPermissionContext ||
+        (async () => getEmptyToolPermissionContext()),
+      options.agents || [],
+      options.querySource,
+    )
+
+    // 4. Build deferred tools set (similar to Anthropic path)
+    const deferredToolNames = new Set<string>()
+    if (useToolSearch) {
+      for (const tool of tools) {
+        if (isDeferredTool(tool)) deferredToolNames.add(tool.name)
+      }
+    }
+
+    // 5. Filter tools (similar to Anthropic path)
+    // Never include deferred tools in the API tools array — they are invoked
+    // via ExecuteExtraTool which looks them up from the global tool registry
+    // at runtime. Keeping the tools array stable preserves the prompt cache.
+    let filteredTools = tools
+    if (useToolSearch && deferredToolNames.size > 0) {
+      filteredTools = tools.filter(tool => {
+        // Always include non-deferred tools
+        if (!deferredToolNames.has(tool.name)) return true
+        // Always include ToolSearchTool (so it can discover more tools)
+        if (toolMatchesName(tool, TOOL_SEARCH_TOOL_NAME)) return true
+        // All other deferred tools are excluded — use ExecuteExtraTool instead
+        return false
+      })
+    }
+
+    // 6. Build tool schemas
     const toolSchemas = await Promise.all(
-      tools.map(tool =>
+      filteredTools.map(tool =>
         toolToAPISchema(tool, {
           getToolPermissionContext: options.getToolPermissionContext,
           tools,
           agents: options.agents,
           allowedAgentTypes: options.allowedAgentTypes,
           model: options.model,
+          deferLoading: useToolSearch && deferredToolNames.has(tool.name),
         }),
       ),
     )
@@ -73,7 +116,7 @@ export async function* queryModelOpenAI(
       },
     )
 
-    // 4. Convert messages and tools to OpenAI format
+    // 7. Convert messages and tools to OpenAI format
     const openaiMessages = anthropicMessagesToOpenAI(
       messagesForAPI,
       systemPrompt,
@@ -81,7 +124,7 @@ export async function* queryModelOpenAI(
     const openaiTools = anthropicToolsToOpenAI(standardTools)
     const openaiToolChoice = anthropicToolChoiceToOpenAI(options.toolChoice)
 
-    // 5. Get client and make streaming request
+    // 8. Get client and make streaming request
     const client = getOpenAIClient({
       maxRetries: 0,
       fetchOverride: options.fetchOverride,
@@ -92,7 +135,7 @@ export async function* queryModelOpenAI(
       `[OpenAI] Calling model=${openaiModel}, messages=${openaiMessages.length}, tools=${openaiTools.length}`,
     )
 
-    // 6. Call OpenAI API with streaming
+    // 9. Call OpenAI API with streaming
     const stream = await client.chat.completions.create(
       {
         model: openaiModel,
@@ -112,7 +155,7 @@ export async function* queryModelOpenAI(
       },
     )
 
-    // 7. Convert OpenAI stream to Anthropic events, then process into
+    // 10. Convert OpenAI stream to Anthropic events, then process into
     //    AssistantMessage + StreamEvent (matching the Anthropic path behavior)
     const adaptedStream = adaptOpenAIStreamToAnthropic(stream, openaiModel)
 
