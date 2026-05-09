@@ -18,8 +18,7 @@ import { TASK_UPDATE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/Tas
 import { TEAM_CREATE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TeamCreateTool/constants.js'
 import { TEAM_DELETE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TeamDeleteTool/constants.js'
 import { TODO_WRITE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TodoWriteTool/constants.js'
-import { TOOL_SEARCH_TOOL_NAME } from '../../tools/ToolSearchTool/prompt.js'
-import { WORKFLOW_TOOL_NAME as WORKFLOW_TOOL_NAME_VALUE } from '@claude-code-best/builtin-tools/tools/WorkflowTool/constants.js'
+import { SEARCH_EXTRA_TOOLS_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/SearchExtraToolsTool/prompt.js'
 import { YOLO_CLASSIFIER_TOOL_NAME } from './yoloClassifier.js'
 
 // Ant-only tool names: conditional require so Bun can DCE these in external builds.
@@ -59,7 +58,7 @@ const SAFE_YOLO_ALLOWLISTED_TOOLS = new Set([
   GREP_TOOL_NAME,
   GLOB_TOOL_NAME,
   LSP_TOOL_NAME,
-  TOOL_SEARCH_TOOL_NAME,
+  SEARCH_EXTRA_TOOLS_TOOL_NAME,
   LIST_MCP_RESOURCES_TOOL_NAME,
   'ReadMcpResourceTool', // no exported constant
   // Task management (metadata only)

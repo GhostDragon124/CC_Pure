@@ -417,6 +417,8 @@ import { useLspPluginRecommendation } from 'src/hooks/useLspPluginRecommendation
 import { LspRecommendationMenu } from 'src/components/LspRecommendation/LspRecommendationMenu.js';
 import { useClaudeCodeHintRecommendation } from 'src/hooks/useClaudeCodeHintRecommendation.js';
 import { PluginHintMenu } from 'src/components/ClaudeCodeHint/PluginHintMenu.js';
+import { SearchExtraToolsHint } from 'src/components/SearchExtraToolsHint.js';
+import { useSearchExtraToolsHint } from 'src/hooks/useSearchExtraToolsHint.js';
 import {
   DesktopUpsellStartup,
   shouldShowDesktopUpsellStartup,
@@ -999,6 +1001,7 @@ export function REPL({
   useTeammateLifecycleNotification();
   const { recommendation: lspRecommendation, handleResponse: handleLspResponse } = useLspPluginRecommendation();
   const { recommendation: hintRecommendation, handleResponse: handleHintResponse } = useClaudeCodeHintRecommendation();
+  const searchExtraToolsHint = useSearchExtraToolsHint();
 
   // Memoize the combined initial tools array to prevent reference changes
   const combinedInitialTools = useMemo(() => {
@@ -2357,6 +2360,7 @@ export function REPL({
     | 'remote-callout'
     | 'lsp-recommendation'
     | 'plugin-hint'
+    | 'search-extra-tools-hint'
     | 'desktop-upsell'
     | 'ultraplan-choice'
     | 'ultraplan-launch'
@@ -2410,6 +2414,9 @@ export function REPL({
 
     // Plugin hint from CLI/SDK stderr (same priority band as LSP rec)
     if (allowDialogsWithAnimation && hintRecommendation) return 'plugin-hint';
+
+    // Tool search hint (discovered tools relevant to current query)
+    if (allowDialogsWithAnimation && searchExtraToolsHint.visible) return 'search-extra-tools-hint';
 
     // Desktop app upsell (max 3 launches, lowest priority)
     if (allowDialogsWithAnimation && showDesktopUpsellStartup) return 'desktop-upsell';
@@ -3155,7 +3162,8 @@ export function REPL({
   const onQueryImpl = useCallback(
     async (
       messagesIncludingNewMessages: MessageType[],
-      _newMessages: MessageType[],      abortController: AbortController,
+      _newMessages: MessageType[],
+      abortController: AbortController,
       shouldQuery: boolean,
       additionalAllowedTools: string[],
       mainLoopModelParam: string,
@@ -5933,6 +5941,14 @@ export function REPL({
                     marketplaceName={hintRecommendation.marketplaceName}
                     sourceCommand={hintRecommendation.sourceCommand}
                     onResponse={handleHintResponse}
+                  />
+                )}
+
+                {focusedInputDialog === 'search-extra-tools-hint' && searchExtraToolsHint.visible && (
+                  <SearchExtraToolsHint
+                    tools={searchExtraToolsHint.tools}
+                    onSelect={searchExtraToolsHint.handleSelect}
+                    onDismiss={searchExtraToolsHint.handleDismiss}
                   />
                 )}
 

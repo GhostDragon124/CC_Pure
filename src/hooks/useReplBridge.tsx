@@ -322,6 +322,16 @@ export function useReplBridge(
                     replBridgeError: undefined,
                   };
                 });
+                // Notify model about newly available bridge-dependent tools
+                if (!wasSessionActive) {
+                  setMessages(prev => [
+                    ...prev,
+                    createSystemMessage(
+                      'Remote Control 已连接。现在可以使用 PushNotification、SendUserFile、Brief 工具，请使用 SearchExtraTools 搜索发现。',
+                      'info',
+                    ),
+                  ]);
+                }
                 // Send system/init so remote clients (web/iOS/Android) get
                 // session metadata. REPL uses query() directly — never hits
                 // QueryEngine's SDKMessage layer — so this is the only path
