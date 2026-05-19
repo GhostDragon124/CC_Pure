@@ -32,6 +32,12 @@ Example — MCP tool:
 - tool_name: Exact name of the target tool (string, e.g. "CronCreate", "mcp__slack__send_message")
 - params: Object with the target tool's parameters. Check the tool's schema from SearchExtraTools discover: response.
 
-## Failure handling
-If this tool returns an error, do NOT retry or re-search. Tell the user what failed and suggest alternatives.`
+If the tool is not found, an error message will be returned suggesting to use SearchExtraTools to discover available tools.
+
+## Failure handling — critical
+If ExecuteExtraTool returns an error (missing parameters, validation error, permission denied, tool not found, or any other failure), you MUST:
+1. Stop immediately — do NOT retry the same tool.
+2. Do NOT call SearchExtraTools again for the same tool name.
+3. Inform the user about the failure and suggest alternatives.
+Never enter a SearchExtraTools → ExecuteExtraTool retry loop for the same tool.`
 }

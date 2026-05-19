@@ -57,7 +57,7 @@ If you don't know the exact tool name, use keyword search first:
 - "+slack send" — require "slack" in the name, rank by remaining terms
 
 ## Failure policy
-If ExecuteExtraTool fails, do NOT re-search for the same tool — it will loop. Stop and tell the user what failed.`
+If ExecuteExtraTool fails for a tool, do NOT search for that same tool again. Searching again will not fix the failure — it will only repeat the same error in a loop. Stop immediately and inform the user about the failure.`
 
 /**
  * Check if a tool should be deferred (requires SearchExtraTools to load).
