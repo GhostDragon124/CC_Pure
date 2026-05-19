@@ -43,18 +43,19 @@ import {
   isPluginEnabledAtProjectScope,
   uninstallPluginOp,
   updatePluginOp,
-} from '../../services/plugins/pluginOperations.js'
-import { useAppState } from '../../state/AppState.js'
-import type { Tool } from '../../Tool.js'
-import type { LoadedPlugin, PluginError } from '../../types/plugin.js'
-import { count } from '../../utils/array.js'
-import { openBrowser } from '../../utils/browser.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { errorMessage, toError } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
-import { clearAllCaches } from '../../utils/plugins/cacheUtils.js'
-import { loadInstalledPluginsV2 } from '../../utils/plugins/installedPluginsManager.js'
-import { getMarketplace } from '../../utils/plugins/marketplaceManager.js'
+  type InstallableScope,
+} from '../../services/plugins/pluginOperations.js';
+import { useAppState } from '../../state/AppState.js';
+import type { Tool } from '../../Tool.js';
+import type { LoadedPlugin, PluginError } from '../../types/plugin.js';
+import { count } from '../../utils/array.js';
+import { openBrowser } from '../../utils/browser.js';
+import { logForDebugging } from '../../utils/debug.js';
+import { errorMessage, toError } from '../../utils/errors.js';
+import { logError } from '../../utils/log.js';
+import { clearAllCaches } from '../../utils/plugins/cacheUtils.js';
+import { loadInstalledPluginsV2 } from '../../utils/plugins/installedPluginsManager.js';
+import { getMarketplace } from '../../utils/plugins/marketplaceManager.js';
 import {
   isMcpbSource,
   loadMcpbFile,
@@ -86,16 +87,16 @@ import {
   getSettings_DEPRECATED,
   getSettingsForSource,
   updateSettingsForSource,
-} from '../../utils/settings/settings.js'
-import { jsonParse } from '../../utils/slowOperations.js'
-import { plural } from '../../utils/stringUtils.js'
-import { formatErrorMessage, getErrorGuidance } from './PluginErrors.js'
-import { PluginOptionsDialog } from './PluginOptionsDialog.js'
-import { PluginOptionsFlow } from './PluginOptionsFlow.js'
-import type { ViewState as ParentViewState } from './types.js'
-import { UnifiedInstalledCell } from './UnifiedInstalledCell.js'
-import type { UnifiedInstalledItem } from './unifiedTypes.js'
-import { usePagination } from './usePagination.js'
+} from '../../utils/settings/settings.js';
+import { jsonParse } from '../../utils/slowOperations.js';
+import { plural } from '../../utils/stringUtils.js';
+import { formatErrorMessage, getErrorGuidance } from './PluginErrors.js';
+import { PluginOptionsDialog } from './PluginOptionsDialog.js';
+import { PluginOptionsFlow } from './PluginOptionsFlow.js';
+import type { ViewState as ParentViewState } from './types.js';
+import { UnifiedInstalledCell } from './UnifiedInstalledCell.js';
+import type { UnifiedInstalledItem, UnifiedInstalledScope } from './unifiedTypes.js';
+import { usePagination } from './usePagination.js';
 
 type Props = {
   setViewState: (state: ParentViewState) => void
@@ -117,12 +118,12 @@ type FlaggedPluginInfo = {
 }
 
 type FailedPluginInfo = {
-  id: string
-  name: string
-  marketplace: string
-  errors: PluginError[]
-  scope: PersistablePluginScope
-}
+  id: string;
+  name: string;
+  marketplace: string;
+  errors: PluginError[];
+  scope: UnifiedInstalledScope;
+};
 
 type ViewState =
   | 'plugin-list'
@@ -1388,14 +1389,14 @@ export function ManagePlugins({
     const item = filteredItems[selectedIndex]
     if (item?.type === 'flagged-plugin') return
     if (item?.type === 'plugin') {
-      const pluginId = `${item.plugin.name}@${item.marketplace}`
-      const mergedSettings = getSettings_DEPRECATED()
-      const currentPending = pendingToggles.get(pluginId)
-      const isEnabled = mergedSettings?.enabledPlugins?.[pluginId] !== false
-      const pluginScope = item.scope
-      const isBuiltin = pluginScope === 'builtin'
-      if (isBuiltin || isInstallableScope(pluginScope)) {
-        const newPending = new Map(pendingToggles)
+      const pluginId = `${item.plugin.name}@${item.marketplace}`;
+      const mergedSettings = getSettings_DEPRECATED();
+      const currentPending = pendingToggles.get(pluginId);
+      const isEnabled = mergedSettings?.enabledPlugins?.[pluginId] !== false;
+      const pluginScope = item.scope;
+      const isBuiltin = pluginScope === 'builtin';
+      if (isBuiltin || isInstallableScope(pluginScope as PersistablePluginScope)) {
+        const newPending = new Map(pendingToggles);
         // Omit scope — see handleSingleOperation's enable/disable comment.
         if (currentPending) {
           // Cancel: reverse the operation back to the original state
@@ -1752,10 +1753,10 @@ export function ManagePlugins({
             // is a recovery path for a plugin that failed to load — it may
             // be reinstallable, so don't nuke ${CLAUDE_PLUGIN_DATA} silently.
             // The normal uninstall path prompts; this one preserves.
-            const result = isInstallableScope(pluginScope)
-              ? await uninstallPluginOp(pluginId, pluginScope, false)
-              : await uninstallPluginOp(pluginId, 'user', false)
-            let success = result.success
+            const result = isInstallableScope(pluginScope as PersistablePluginScope)
+              ? await uninstallPluginOp(pluginId, pluginScope as InstallableScope, false)
+              : await uninstallPluginOp(pluginId, 'user', false);
+            let success = result.success;
             if (!success) {
               // Plugin was never installed (only in enabledPlugins settings).
               // Remove directly from all editable settings sources.

@@ -1,5 +1,6 @@
-import { describe, expect, test } from "bun:test";
-import { parseCellId, mapNotebookCellsToToolResult } from "../notebook";
+import { describe, expect, test } from 'bun:test'
+import type { NotebookCellSource } from '../../types/notebook.js'
+import { parseCellId, mapNotebookCellsToToolResult } from '../notebook'
 
 // ─── parseCellId ───────────────────────────────────────────────────────
 
@@ -59,10 +60,13 @@ describe("mapNotebookCellsToToolResult", () => {
       },
     ];
 
-    const result = mapNotebookCellsToToolResult(data, "tool-123");
-    expect(result.tool_use_id).toBe("tool-123");
-    expect(result.type).toBe("tool_result");
-  });
+    const result = mapNotebookCellsToToolResult(
+      data as NotebookCellSource[],
+      'tool-123',
+    )
+    expect(result.tool_use_id).toBe('tool-123')
+    expect(result.type).toBe('tool_result')
+  })
 
   test("content array contains text blocks for cell content", () => {
     const data = [
@@ -74,9 +78,12 @@ describe("mapNotebookCellsToToolResult", () => {
       },
     ];
 
-    const result = mapNotebookCellsToToolResult(data, "tool-1");
-    expect(result.content).toBeInstanceOf(Array);
-    expect(result.content!.length).toBeGreaterThanOrEqual(1);
+    const result = mapNotebookCellsToToolResult(
+      data as NotebookCellSource[],
+      'tool-1',
+    )
+    expect(result.content).toBeInstanceOf(Array)
+    expect(result.content!.length).toBeGreaterThanOrEqual(1)
 
     const firstBlock = result.content![0] as { type: string; text: string };
     expect(firstBlock.type).toBe("text");
@@ -100,7 +107,10 @@ describe("mapNotebookCellsToToolResult", () => {
       },
     ];
 
-    const result = mapNotebookCellsToToolResult(data, "tool-2");
+    const result = mapNotebookCellsToToolResult(
+      data as NotebookCellSource[],
+      'tool-2',
+    )
     // Two adjacent text blocks should be merged into one
     const textBlocks = result.content!.filter(
       (b: any) => b.type === "text"
@@ -134,10 +144,13 @@ describe("mapNotebookCellsToToolResult", () => {
       },
     ];
 
-    const result = mapNotebookCellsToToolResult(data, "tool-3");
-    const types = result.content!.map((b: any) => b.type);
-    expect(types).toContain("image");
-  });
+    const result = mapNotebookCellsToToolResult(
+      data as NotebookCellSource[],
+      'tool-3',
+    )
+    const types = (result.content as any[]).map((b: any) => b.type)
+    expect(types).toContain('image')
+  })
 
   test("markdown cell includes cell_type metadata", () => {
     const data = [
@@ -148,10 +161,13 @@ describe("mapNotebookCellsToToolResult", () => {
       },
     ];
 
-    const result = mapNotebookCellsToToolResult(data, "tool-4");
-    const textBlock = result.content![0] as { type: string; text: string };
-    expect(textBlock.text).toContain("<cell_type>markdown</cell_type>");
-  });
+    const result = mapNotebookCellsToToolResult(
+      data as NotebookCellSource[],
+      'tool-4',
+    )
+    const textBlock = result.content![0] as { type: string; text: string }
+    expect(textBlock.text).toContain('<cell_type>markdown</cell_type>')
+  })
 
   test("non-python code cell includes language metadata", () => {
     const data = [
@@ -163,8 +179,11 @@ describe("mapNotebookCellsToToolResult", () => {
       },
     ];
 
-    const result = mapNotebookCellsToToolResult(data, "tool-5");
-    const textBlock = result.content![0] as { type: string; text: string };
-    expect(textBlock.text).toContain("<language>scala</language>");
-  });
-});
+    const result = mapNotebookCellsToToolResult(
+      data as NotebookCellSource[],
+      'tool-5',
+    )
+    const textBlock = result.content![0] as { type: string; text: string }
+    expect(textBlock.text).toContain('<language>scala</language>')
+  })
+})

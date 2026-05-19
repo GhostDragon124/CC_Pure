@@ -443,8 +443,8 @@ const externalTips: Tip[] = [
   },
   {
     id: 'desktop-shortcut',
-    content: async ctx => {
-      const blue = color('suggestion', ctx.theme)
+    content: async (ctx?) => {
+      const blue = color('suggestion', ctx?.theme ?? 'dark')
       return `Continue your session in Claude Code Desktop with ${blue('/desktop')}`
     },
     cooldownSessions: 15,
@@ -489,24 +489,24 @@ const externalTips: Tip[] = [
   },
   {
     id: 'frontend-design-plugin',
-    content: async ctx => {
-      const blue = color('suggestion', ctx.theme)
+    content: async (ctx?) => {
+      const blue = color('suggestion', ctx?.theme ?? 'dark')
       return `Working with HTML/CSS? Install the frontend-design plugin:\n${blue(`/plugin install frontend-design@${OFFICIAL_MARKETPLACE_NAME}`)}`
     },
     cooldownSessions: 3,
-    isRelevant: async context =>
+    isRelevant: async (context?) =>
       isMarketplacePluginRelevant('frontend-design', context, {
         filePath: /\.(html|css|htm)$/i,
       }),
   },
   {
     id: 'vercel-plugin',
-    content: async ctx => {
-      const blue = color('suggestion', ctx.theme)
+    content: async (ctx?) => {
+      const blue = color('suggestion', ctx?.theme ?? 'dark')
       return `Working with Vercel? Install the vercel plugin:\n${blue(`/plugin install vercel@${OFFICIAL_MARKETPLACE_NAME}`)}`
     },
     cooldownSessions: 3,
-    isRelevant: async context =>
+    isRelevant: async (context?) =>
       isMarketplacePluginRelevant('vercel', context, {
         filePath: /(?:^|[/\\])vercel\.json$/i,
         cli: ['vercel'],
@@ -514,8 +514,8 @@ const externalTips: Tip[] = [
   },
   {
     id: 'effort-high-nudge',
-    content: async ctx => {
-      const blue = color('suggestion', ctx.theme)
+    content: async (ctx?) => {
+      const blue = color('suggestion', ctx?.theme ?? 'dark')
       const cmd = blue('/effort high')
       const variant = getFeatureValue_CACHED_MAY_BE_STALE<
         'off' | 'copy_a' | 'copy_b'
@@ -544,8 +544,8 @@ const externalTips: Tip[] = [
   },
   {
     id: 'subagent-fanout-nudge',
-    content: async ctx => {
-      const blue = color('suggestion', ctx.theme)
+    content: async (ctx?) => {
+      const blue = color('suggestion', ctx?.theme ?? 'dark')
       const variant = getFeatureValue_CACHED_MAY_BE_STALE<
         'off' | 'copy_a' | 'copy_b'
       >('tengu_tern_alloy', 'off')
@@ -566,8 +566,8 @@ const externalTips: Tip[] = [
   },
   {
     id: 'loop-command-nudge',
-    content: async ctx => {
-      const blue = color('suggestion', ctx.theme)
+    content: async (ctx?) => {
+      const blue = color('suggestion', ctx?.theme ?? 'dark')
       const variant = getFeatureValue_CACHED_MAY_BE_STALE<
         'off' | 'copy_a' | 'copy_b'
       >('tengu_timber_lark', 'off')
@@ -589,8 +589,8 @@ const externalTips: Tip[] = [
   },
   {
     id: 'guest-passes',
-    content: async ctx => {
-      const claude = color('claude', ctx.theme)
+    content: async (ctx?) => {
+      const claude = color('claude', ctx?.theme ?? 'dark')
       const reward = getCachedReferrerReward()
       return reward
         ? `Share Claude Code and earn ${claude(formatCreditAmount(reward))} of extra usage · ${claude('/passes')}`
@@ -608,8 +608,8 @@ const externalTips: Tip[] = [
   },
   {
     id: 'overage-credit',
-    content: async ctx => {
-      const claude = color('claude', ctx.theme)
+    content: async (ctx?) => {
+      const claude = color('claude', ctx?.theme ?? 'dark')
       const info = getCachedOverageCreditGrant()
       const amount = info ? formatGrantAmount(info) : null
       if (!amount) return ''
@@ -677,7 +677,9 @@ export async function getRelevantTips(context?: TipContext): Promise<Tip[]> {
 
   // Otherwise, filter built-in tips as before and combine with custom
   const tips = [...externalTips, ...internalOnlyTips]
-  const isRelevant = await Promise.all(tips.map(_ => _.isRelevant(context)))
+  const isRelevant = await Promise.all(
+    tips.map(_ => _.isRelevant?.(context) ?? Promise.resolve(true)),
+  )
   const filtered = tips
     .filter((_, index) => isRelevant[index])
     .filter(_ => getSessionsSinceLastShown(_.id) >= _.cooldownSessions)

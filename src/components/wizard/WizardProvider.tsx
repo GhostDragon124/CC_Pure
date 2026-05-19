@@ -9,9 +9,7 @@ import React, {
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js'
 import type { WizardContextValue, WizardProviderProps } from './types.js'
 
-// Use any here for the context since it will be cast properly when used
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const WizardContext = createContext<WizardContextValue<any> | null>(null)
+export const WizardContext = createContext<WizardContextValue<Record<string, unknown>> | null>(null);
 
 export function WizardProvider<T extends Record<string, unknown>>({
   steps,
@@ -21,11 +19,18 @@ export function WizardProvider<T extends Record<string, unknown>>({
   children,
   title,
   showStepCounter = true,
-}: WizardProviderProps<T>): ReactNode {
-  const [currentStepIndex, setCurrentStepIndex] = useState(0)
-  const [wizardData, setWizardData] = useState<T>(initialData)
-  const [isCompleted, setIsCompleted] = useState(false)
-  const [navigationHistory, setNavigationHistory] = useState<number[]>([])
+}: WizardProviderProps & {
+  initialData?: T;
+  onComplete: (data: T) => void;
+  onCancel: () => void;
+  children?: ReactNode;
+  title: string;
+  showStepCounter?: boolean;
+}): ReactNode {
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [wizardData, setWizardData] = useState<T>(initialData);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [navigationHistory, setNavigationHistory] = useState<number[]>([]);
 
   useExitOnCtrlCDWithKeybindings()
 
@@ -124,8 +129,8 @@ export function WizardProvider<T extends Record<string, unknown>>({
   }
 
   return (
-    <WizardContext.Provider value={contextValue}>
+    <WizardContext.Provider value={contextValue as unknown as WizardContextValue<Record<string, unknown>>}>
       {children || <CurrentStepComponent />}
     </WizardContext.Provider>
-  )
+  );
 }
