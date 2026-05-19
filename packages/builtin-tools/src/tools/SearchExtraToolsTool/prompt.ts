@@ -25,7 +25,7 @@ function getToolLocationHint(): string {
 
 const PROMPT_TAIL = ` Returns matching tool names.
 
-IMPORTANT: ExecuteExtraTool is always available in your tool list. After this search returns tool names, you MUST call ExecuteExtraTool with {"tool_name": "<returned_name>", "params": {...}} to invoke the deferred tool. This is the ONLY way to execute deferred tools — do not read source code or analyze whether the tool is callable, just use ExecuteExtraTool directly.
+## Two-step workflow (MUST follow exactly)
 
 Deferred tools CANNOT be called directly. You MUST use this two-step pattern:
 
