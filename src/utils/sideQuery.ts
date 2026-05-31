@@ -35,7 +35,6 @@ import { normalizeModelStringForAPI } from './model/model.js'
 import { getAPIProvider } from './model/providers.js'
 import { getOpenAIClient } from '../services/api/openai/client.js'
 import { getGrokClient } from '../services/api/grok/client.js'
-import { anthropicMessagesToOpenAI } from '../services/api/openai/convertMessages.js'
 import { resolveOpenAIModel } from '../services/api/openai/modelMapping.js'
 import { resolveGrokModel } from '../services/api/grok/modelMapping.js'
 import {
@@ -222,10 +221,9 @@ async function sideQueryViaOpenAICompatible(
     if (openaiToolChoice) requestParams.tool_choice = openaiToolChoice
   }
 
-  const response = await client.chat.completions.create(
-    requestParams as any,
-    { signal },
-  )
+  const response = await client.chat.completions.create(requestParams as any, {
+    signal,
+  })
 
   const choice = response.choices[0]
   const message = choice?.message
@@ -303,9 +301,14 @@ async function sideQueryViaOpenAICompatible(
  * Use this instead of direct client.beta.messages.create() calls to ensure
  * proper OAuth token validation with fingerprint attribution headers.
  *
- * Third-party provider routing (OpenAI, Grok, Gemini) is handled transparently —
- * when the user configures a third-party provider, sideQuery automatically
- * routes to the correct API adapter instead of sending requests to Anthropic.
+ * This handles:
+ * - Fingerprint computation for OAuth validation
+ * - Attribution header injection
+ * - CLI system prompt prefix
+ * - Proper betas for the model
+ * - API metadata
+ * - Model string normalization (strips [1m] suffix for API)
+ * - Third-party provider routing (OpenAI, Grok, Gemini)
  *
  * @example
  * // Permission explainer
@@ -603,7 +606,8 @@ async function sideQueryViaGemini(
   const body: Record<string, unknown> = {
     contents,
     ...(systemInstruction && { systemInstruction }),
-    ...(geminiTools && (geminiTools as unknown[]).length > 0 && { tools: geminiTools }),
+    ...(geminiTools &&
+      (geminiTools as unknown[]).length > 0 && { tools: geminiTools }),
     ...(geminiToolConfig && {
       toolConfig: { functionCallingConfig: geminiToolConfig },
     }),
