@@ -5663,9 +5663,9 @@ async function run(): Promise<CommanderCommand> {
 	program.addOption(
 		new Option(
 			"--teammate-mode <mode>",
-			'How to spawn teammates: "tmux", "in-process", or "auto"',
+			'How to spawn teammates: "tmux", "windows-terminal", "in-process", or "auto"',
 		)
-			.choices(["auto", "tmux", "in-process"])
+			.choices(["auto", "tmux", "windows-terminal", "in-process"])
 			.hideHelp(),
 	);
 	program.addOption(
@@ -7003,7 +7003,7 @@ type TeammateOptions = {
 	agentColor?: string;
 	planModeRequired?: boolean;
 	parentSessionId?: string;
-	teammateMode?: "auto" | "tmux" | "in-process";
+	teammateMode?: "auto" | "tmux" | "windows-terminal" | "in-process";
 	agentType?: string;
 };
 
@@ -7031,6 +7031,7 @@ function extractTeammateOptions(options: unknown): TeammateOptions {
 		teammateMode:
 			teammateMode === "auto" ||
 			teammateMode === "tmux" ||
+			teammateMode === "windows-terminal" ||
 			teammateMode === "in-process"
 				? teammateMode
 				: undefined,

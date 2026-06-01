@@ -668,6 +668,8 @@ type WaitResult =
   | {
       type: 'new_message'
       message: string
+      autonomyRunId?: string
+      autonomyRootDir?: string
       from: string
       color?: string
       summary?: string
@@ -710,7 +712,9 @@ async function waitForNextPromptOrShutdown(
       task.type === 'in_process_teammate' &&
       task.pendingUserMessages.length > 0
     ) {
-      const message = task.pendingUserMessages[0]! // Safe: checked length > 0
+      const pending = task.pendingUserMessages[0]! // Safe: checked length > 0
+      const message =
+        typeof pending === 'string' ? pending : pending.message
       // Pop the message from the queue
       setAppState(prev => {
         const prevTask = prev.tasks[taskId]
@@ -734,6 +738,12 @@ async function waitForNextPromptOrShutdown(
       return {
         type: 'new_message',
         message,
+        ...(typeof pending !== 'string' && pending.autonomyRunId
+          ? { autonomyRunId: pending.autonomyRunId }
+          : {}),
+        ...(typeof pending !== 'string' && pending.autonomyRootDir
+          ? { autonomyRootDir: pending.autonomyRootDir }
+          : {}),
         from: 'user',
       }
     }

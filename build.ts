@@ -1,36 +1,13 @@
 import { readdir, readFile, writeFile, cp } from 'fs/promises'
 import { join } from 'path'
 import { getMacroDefines } from './scripts/defines.ts'
+import { DEFAULT_BUILD_FEATURES } from './scripts/defines.ts'
 
 const outdir = 'dist'
 
 // Step 1: Clean output directory
 const { rmSync } = await import('fs')
 rmSync(outdir, { recursive: true, force: true })
-
-// Default features that match the official CLI build.
-// Additional features can be enabled via FEATURE_<NAME>=1 env vars.
-const DEFAULT_BUILD_FEATURES = [
-  'AGENT_TRIGGERS_REMOTE',
-  'CHICAGO_MCP',
-  'VOICE_MODE',
-  'SHOT_STATS',
-  'PROMPT_CACHE_BREAK_DETECTION',
-  'TOKEN_BUDGET',
-  // P0: local features
-  'AGENT_TRIGGERS',
-  'ULTRATHINK',
-  'BUILTIN_EXPLORE_PLAN_AGENTS',
-  'LODESTONE',
-  // P1: API-dependent features
-  'EXTRACT_MEMORIES',
-  'VERIFICATION_AGENT',
-  'KAIROS_BRIEF',
-  'AWAY_SUMMARY',
-  'ULTRAPLAN',
-  // P2: daemon + remote control server
-  'DAEMON',
-]
 
 // Collect FEATURE_* env vars → Bun.build features
 const envFeatures = Object.keys(process.env)
