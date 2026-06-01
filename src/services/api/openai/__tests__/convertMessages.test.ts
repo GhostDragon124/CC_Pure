@@ -432,7 +432,8 @@ describe('DeepSeek thinking mode (enableThinking)', () => {
       { enableThinking: true },
     )
     const assistant = result.filter(m => m.role === 'assistant')[0] as any
-    expect(assistant.reasoning_content).toBeUndefined()
+    // DeepSeek v4 requires reasoning_content to be echoed back, even when empty
+    expect(assistant.reasoning_content).toBe('')
   })
 
   test('sets content to null when only thinking and tool_calls present', () => {
