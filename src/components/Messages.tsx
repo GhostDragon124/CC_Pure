@@ -50,6 +50,8 @@ import {
 import { plural } from '../utils/stringUtils.js'
 import { renderableSearchText } from '../utils/transcriptSearch.js'
 import { Divider } from '@anthropic/ink'
+import { BRIEF_TOOL_NAME as BRIEF_TOOL_NAME_VALUE } from '../tools/BriefTool/prompt.js'
+import { SEND_USER_FILE_TOOL_NAME as SEND_USER_FILE_TOOL_NAME_VALUE } from '../tools/SendUserFileTool/prompt.js'
 import type { UnseenDivider } from './FullscreenLayout.js'
 import { LogoV2 } from './LogoV2/LogoV2.js'
 import { StreamingMarkdown } from './Markdown.js'
@@ -66,6 +68,7 @@ import { OffscreenFreeze } from './OffscreenFreeze.js'
 import type { ToolUseConfirm } from './permissions/PermissionRequest.js'
 import { StatusNotices } from './StatusNotices.js'
 import type { JumpHandle } from './VirtualMessageList.js'
+import { VirtualMessageList } from './VirtualMessageList.js'
 
 // Memoed logo header: this box is the FIRST sibling before all MessageRows
 // in main-screen mode. If it becomes dirty on every Messages re-render,
@@ -101,20 +104,13 @@ const proactiveModule =
   feature('PROACTIVE') || feature('KAIROS')
     ? require('../proactive/index.js')
     : null
-const BRIEF_TOOL_NAME: string | null =
-  feature('KAIROS') || feature('KAIROS_BRIEF')
-    ? (
-        require('../tools/BriefTool/prompt.js') as typeof import('../tools/BriefTool/prompt.js')
-      ).BRIEF_TOOL_NAME
-    : null
-const SEND_USER_FILE_TOOL_NAME: string | null = feature('KAIROS')
-  ? (
-      require('../tools/SendUserFileTool/prompt.js') as typeof import('../tools/SendUserFileTool/prompt.js')
-    ).SEND_USER_FILE_TOOL_NAME
-  : null
-
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { VirtualMessageList } from './VirtualMessageList.js'
+
+const BRIEF_TOOL_NAME: string | null =
+  feature('KAIROS') || feature('KAIROS_BRIEF') ? BRIEF_TOOL_NAME_VALUE : null
+const SEND_USER_FILE_TOOL_NAME: string | null = feature('KAIROS')
+  ? SEND_USER_FILE_TOOL_NAME_VALUE
+  : null
 
 /**
  * In brief-only mode, filter messages to show ONLY Brief tool_use blocks,
