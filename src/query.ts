@@ -1713,7 +1713,7 @@ async function* queryLoop(
       updatedToolUseContext,
       null,
       queuedCommandsSnapshot,
-      [...messagesForQuery, ...assistantMessages, ...toolResults],
+      messagesForQuery.concat(assistantMessages, toolResults),
       querySource,
     )) {
       yield attachment
