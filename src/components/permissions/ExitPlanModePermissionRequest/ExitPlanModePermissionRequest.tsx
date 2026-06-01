@@ -529,6 +529,7 @@ export function ExitPlanModePermissionRequest({
       }))
 
       setHasExitedPlanMode(true)
+      setNeedsPlanModeExitAttachment(true)
       onDone()
       onReject()
       // Reject the tool use to unblock the query loop

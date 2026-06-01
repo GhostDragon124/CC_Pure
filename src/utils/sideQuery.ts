@@ -42,6 +42,11 @@ import {
   anthropicToolsToOpenAI,
   anthropicToolChoiceToOpenAI,
 } from '../services/api/openai/convertTools.js'
+import {
+  resolveGeminiModel,
+  anthropicToolsToGemini,
+  anthropicToolChoiceToGemini,
+} from '@ant/model-provider'
 
 type MessageParam = Anthropic.MessageParam
 type TextBlockParam = Anthropic.TextBlockParam
@@ -336,8 +341,9 @@ export async function sideQuery(opts: SideQueryOptions): Promise<BetaMessage> {
   if (provider === 'openai' || provider === 'grok') {
     return sideQueryViaOpenAICompatible(opts)
   }
-  // Gemini is not yet implemented in CC_Pure (lacks Gemini dependencies).
-  // Falls through to Anthropic path for now.
+  if (provider === 'gemini') {
+    return sideQueryViaGemini(opts)
+  }
 
   const client = await getAnthropicClient({
     maxRetries,
@@ -520,4 +526,195 @@ export async function sideQuery(opts: SideQueryOptions): Promise<BetaMessage> {
   endTrace(langfuseTrace)
 
   return response
+}
+
+/**
+ * Gemini side query. Converts Anthropic-format params to Gemini
+ * generateContent format, sends a non-streaming request via fetch,
+ * and wraps the response back into a BetaMessage shape.
+ */
+async function sideQueryViaGemini(
+  opts: SideQueryOptions,
+): Promise<BetaMessage> {
+  const {
+    model,
+    system,
+    messages,
+    tools,
+    tool_choice,
+    max_tokens = 1024,
+    temperature,
+    signal,
+  } = opts
+
+  const normalizedModel = normalizeModelStringForAPI(model)
+  const geminiModel = resolveGeminiModel(normalizedModel)
+
+  // Build Gemini contents from Anthropic MessageParam[]
+  const contents: Array<{
+    role: 'user' | 'model'
+    parts: Array<{ text: string }>
+  }> = []
+  for (const m of messages) {
+    if (m.role !== 'user' && m.role !== 'assistant') continue
+    const text =
+      typeof m.content === 'string'
+        ? m.content
+        : Array.isArray(m.content)
+          ? m.content
+              .filter(
+                (b): b is { type: 'text'; text: string } => b.type === 'text',
+              )
+              .map(b => b.text)
+              .join('\n')
+          : ''
+    if (text) {
+      contents.push({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text }],
+      })
+    }
+  }
+
+  // Build system instruction
+  const systemText = extractSystemText(system)
+  const systemInstruction = systemText
+    ? { parts: [{ text: systemText }] }
+    : undefined
+
+  // Convert tools and tool_choice
+  const geminiTools =
+    tools && tools.length > 0
+      ? (anthropicToolsToGemini as (t: unknown) => unknown)(tools)
+      : undefined
+  const geminiToolConfig = tool_choice
+    ? anthropicToolChoiceToGemini(tool_choice)
+    : undefined
+
+  const baseUrl = (
+    process.env.GEMINI_BASE_URL ||
+    'https://generativelanguage.googleapis.com/v1beta'
+  ).replace(/\/+$/, '')
+  const modelPath = geminiModel.startsWith('models/')
+    ? geminiModel
+    : `models/${geminiModel}`
+  const url = `${baseUrl}/${modelPath}:generateContent`
+
+  const body: Record<string, unknown> = {
+    contents,
+    ...(systemInstruction && { systemInstruction }),
+    ...(geminiTools && (geminiTools as unknown[]).length > 0 && { tools: geminiTools }),
+    ...(geminiToolConfig && {
+      toolConfig: { functionCallingConfig: geminiToolConfig },
+    }),
+  }
+
+  if (temperature !== undefined || max_tokens !== undefined) {
+    body.generationConfig = {
+      ...(temperature !== undefined && { temperature }),
+      ...(max_tokens !== undefined && { maxOutputTokens: max_tokens }),
+    }
+  }
+
+  const start = Date.now()
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': process.env.GEMINI_API_KEY || '',
+    },
+    body: JSON.stringify(body),
+    signal,
+  })
+
+  if (!res.ok) {
+    const errorBody = await res.text()
+    throw new Error(
+      `Gemini API request failed (${res.status} ${res.statusText}): ${errorBody || 'empty response body'}`,
+    )
+  }
+
+  const geminiResponse = (await res.json()) as {
+    candidates?: Array<{
+      content?: {
+        role?: string
+        parts?: Array<{
+          text?: string
+          functionCall?: { name?: string; args?: Record<string, unknown> }
+        }>
+      }
+      finishReason?: string
+    }>
+    usageMetadata?: {
+      promptTokenCount?: number
+      candidatesTokenCount?: number
+      totalTokenCount?: number
+    }
+    id?: string
+  }
+
+  // Build content blocks from Gemini response
+  const contentBlocks: Array<
+    | { type: 'text'; text: string }
+    | { type: 'tool_use'; id: string; name: string; input: unknown }
+  > = []
+
+  const candidate = geminiResponse.candidates?.[0]
+  const parts = candidate?.content?.parts
+  if (parts) {
+    for (const part of parts) {
+      if (part.text) {
+        contentBlocks.push({ type: 'text', text: part.text })
+      }
+      if (part.functionCall) {
+        contentBlocks.push({
+          type: 'tool_use',
+          id: `toolu_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          name: part.functionCall.name ?? '',
+          input: part.functionCall.args ?? {},
+        })
+      }
+    }
+  }
+
+  const now = Date.now()
+  const lastCompletion = getLastApiCompletionTimestamp()
+  logEvent('tengu_api_success', {
+    requestId: (geminiResponse.id ??
+      '') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    querySource:
+      opts.querySource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    model:
+      geminiModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    inputTokens: geminiResponse.usageMetadata?.promptTokenCount ?? 0,
+    outputTokens: geminiResponse.usageMetadata?.candidatesTokenCount ?? 0,
+    cachedInputTokens: 0,
+    uncachedInputTokens: geminiResponse.usageMetadata?.promptTokenCount ?? 0,
+    durationMsIncludingRetries: now - start,
+    timeSinceLastApiCallMs:
+      lastCompletion !== null ? now - lastCompletion : undefined,
+  })
+  setLastApiCompletionTimestamp(now)
+
+  const stopReason =
+    candidate?.finishReason === 'STOP'
+      ? 'end_turn'
+      : candidate?.finishReason === 'MAX_TOKENS'
+        ? 'max_tokens'
+        : 'end_turn'
+
+  return {
+    id: geminiResponse.id ?? `gemini_${Date.now()}`,
+    type: 'message',
+    role: 'assistant',
+    content: contentBlocks as BetaMessage['content'],
+    model: geminiModel,
+    stop_reason: stopReason as BetaMessage['stop_reason'],
+    stop_sequence: null,
+    usage: {
+      input_tokens: geminiResponse.usageMetadata?.promptTokenCount ?? 0,
+      output_tokens: geminiResponse.usageMetadata?.candidatesTokenCount ?? 0,
+    },
+  } as BetaMessage
 }
