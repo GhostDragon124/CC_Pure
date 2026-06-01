@@ -688,9 +688,7 @@ export function startDeferredPrefetches(): void {
 	void countFilesRoundedRg(getCwd(), AbortSignal.timeout(3000), []);
 
 	// Analytics and feature flag initialization
-	// CC_Pure: Analytics gate initialization is permanently disabled.
-	// Rationale: avoid GrowthBook-backed analytics/feature-gate evaluation during startup.
-	// void initializeAnalyticsGates();
+	void initializeAnalyticsGates();
 	void prefetchOfficialMcpUrls();
 
 	void refreshModelCapabilities();

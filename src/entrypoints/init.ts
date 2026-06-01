@@ -92,19 +92,18 @@ export const init = memoize(async (): Promise<void> => {
     // loading OpenTelemetry sdk-logs at startup). growthbook.js is already in
     // the module cache by this point (firstPartyEventLogger imports it), so the
     // second dynamic import adds no load cost.
-    // CC_Pure: GrowthBook remote config and 1P Event Logging are permanently disabled.
-    // Rationale: prevent startup-time remote feature flag fetching and Anthropic 1P event export.
-    // Original code kept below for auditability.
-    //
-    // void Promise.all([
-    //   import('../services/analytics/firstPartyEventLogger.js'),
-    //   import('../services/analytics/growthbook.js'),
-    // ]).then(([fp, gb]) => {
-    //   fp.initialize1PEventLogging()
-    //   gb.onGrowthBookRefresh(() => {
-    //     void fp.reinitialize1PEventLoggingIfConfigChanged()
-    //   })
-    // })
+    void Promise.all([
+      import('../services/analytics/firstPartyEventLogger.js'),
+      import('../services/analytics/growthbook.js'),
+    ]).then(([fp, gb]) => {
+      fp.initialize1PEventLogging()
+      // Rebuild the logger provider if tengu_1p_event_batch_config changes
+      // mid-session. Change detection (isEqual) is inside the handler so
+      // unchanged refreshes are no-ops.
+      gb.onGrowthBookRefresh(() => {
+        void fp.reinitialize1PEventLoggingIfConfigChanged()
+      })
+    })
     profileCheckpoint('init_after_1p_event_logging')
 
     // Populate OAuth account info if it is not already cached in config. This is needed since the
@@ -291,9 +290,20 @@ export function initializeTelemetryAfterTrust(): void {
 }
 
 async function doInitializeTelemetry(): Promise<void> {
-  // CC_Pure: Telemetry initialization is permanently disabled.
-  // Rationale: avoid loading OpenTelemetry SDK and prevent metrics/logs/traces setup.
-  return
+  if (telemetryInitialized) {
+    // Already initialized, nothing to do
+    return
+  }
+
+  // Skip entire OTel initialization when telemetry is not enabled.
+  // Prevents PerformanceMeasure accumulation in long-running sessions.
+  if (!isEnvTruthy(process.env.CLAUDE_CODE_ENABLE_TELEMETRY)) {
+    telemetryInitialized = true
+    logForDebugging(
+      '[3P telemetry] Skipped — CLAUDE_CODE_ENABLE_TELEMETRY not set',
+    )
+    return
+  }
 
   // Set flag before init to prevent double initialization
   telemetryInitialized = true

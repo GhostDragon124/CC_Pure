@@ -13,7 +13,5 @@ import { initializeAnalyticsSink } from '../services/analytics/sink.js'
  */
 export function initSinks(): void {
   initializeErrorLogSink()
-  // CC_Pure: Analytics sink is permanently disabled.
-  // Rationale: keep local error logging, but do not attach telemetry/analytics event pipelines.
-  // initializeAnalyticsSink()
+  initializeAnalyticsSink()
 }
