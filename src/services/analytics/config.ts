@@ -17,8 +17,13 @@ import { isTelemetryDisabled } from '../../utils/privacyLevel.js'
  * - Privacy level is no-telemetry or essential-traffic
  */
 export function isAnalyticsDisabled(): boolean {
-  // CC_Pure: 永久禁用所有遥测上报（Anthropic 数据收集已完全移除）
-  return true;
+  return (
+    process.env.NODE_ENV === 'test' ||
+    isEnvTruthy(process.env.CLAUDE_CODE_USE_BEDROCK) ||
+    isEnvTruthy(process.env.CLAUDE_CODE_USE_VERTEX) ||
+    isEnvTruthy(process.env.CLAUDE_CODE_USE_FOUNDRY) ||
+    isTelemetryDisabled()
+  )
 }
 
 /**

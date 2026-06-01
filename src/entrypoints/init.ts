@@ -92,8 +92,10 @@ export const init = memoize(async (): Promise<void> => {
     // loading OpenTelemetry sdk-logs at startup). growthbook.js is already in
     // the module cache by this point (firstPartyEventLogger imports it), so the
     // second dynamic import adds no load cost.
-    // CC_Pure: GrowthBook + 1P Event Logging 已永久禁用
-    // (原代码保留以供参考)
+    // CC_Pure: GrowthBook remote config and 1P Event Logging are permanently disabled.
+    // Rationale: prevent startup-time remote feature flag fetching and Anthropic 1P event export.
+    // Original code kept below for auditability.
+    //
     // void Promise.all([
     //   import('../services/analytics/firstPartyEventLogger.js'),
     //   import('../services/analytics/growthbook.js'),
@@ -289,8 +291,9 @@ export function initializeTelemetryAfterTrust(): void {
 }
 
 async function doInitializeTelemetry(): Promise<void> {
-  // CC_Pure: 遥测已完全禁用
-  return;
+  // CC_Pure: Telemetry initialization is permanently disabled.
+  // Rationale: avoid loading OpenTelemetry SDK and prevent metrics/logs/traces setup.
+  return
 
   // Set flag before init to prevent double initialization
   telemetryInitialized = true
