@@ -16,6 +16,7 @@ import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 
 import { getCacheControl } from '../../services/api/claude.js'
 import { parsePromptTooLongTokenCounts } from '../../services/api/errors.js'
 import { getDefaultMaxRetries } from '../../services/api/withRetry.js'
+import type { LangfuseSpan } from '../../services/langfuse/index.js'
 import type { Tool, ToolPermissionContext, Tools } from '../../Tool.js'
 import type { Message } from '../../types/message.js'
 import type {
@@ -722,6 +723,7 @@ async function classifyYoloActionXml(
     userPrompts: number
   },
   signal: AbortSignal,
+  parentSpan: LangfuseSpan | null | undefined,
   dumpContextInfo: {
     mainLoopTokens: number
     classifierChars: number
@@ -789,6 +791,7 @@ async function classifyYoloActionXml(
         ],
         maxRetries: getDefaultMaxRetries(),
         signal,
+        parentSpan,
         ...(mode !== 'fast' && { stop_sequences: ['</block>'] }),
         querySource: 'auto_mode',
       }
@@ -876,6 +879,7 @@ async function classifyYoloActionXml(
       ],
       maxRetries: getDefaultMaxRetries(),
       signal,
+      parentSpan,
       querySource: 'auto_mode' as const,
     }
     const stage2Raw = await sideQuery(stage2Opts)
@@ -1015,6 +1019,7 @@ export async function classifyYoloAction(
   tools: Tools,
   context: ToolPermissionContext,
   signal: AbortSignal,
+  parentSpan?: LangfuseSpan | null,
 ): Promise<YoloClassifierResult> {
   const lookup = buildToolLookup(tools)
   const actionCompact = toCompact(action, lookup)
@@ -1117,6 +1122,7 @@ export async function classifyYoloAction(
       model,
       promptLengths,
       signal,
+      parentSpan,
       {
         mainLoopTokens: mainLoopTokens ?? tokenCountWithEstimation(messages),
         classifierChars,
@@ -1155,6 +1161,7 @@ export async function classifyYoloAction(
       },
       maxRetries: getDefaultMaxRetries(),
       signal,
+      parentSpan,
       querySource: 'auto_mode' as const,
     }
     const result = await sideQuery(sideQueryOpts)

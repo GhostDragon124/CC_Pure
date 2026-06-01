@@ -18,6 +18,12 @@ import type { SDKAssistantMessageError } from '../../../entrypoints/agentSdkType
 import type { SystemPrompt } from '../../../utils/systemPromptType.js'
 import type { ThinkingConfig } from '../../../utils/thinking.js'
 import type { Options } from '../claude.js'
+import { recordLLMObservation } from '../../../services/langfuse/tracing.js'
+import {
+  convertMessagesToLangfuse,
+  convertOutputToLangfuse,
+  convertToolsToLangfuse,
+} from '../../../services/langfuse/convert.js'
 import { streamGeminiGenerateContent } from './client.js'
 import { anthropicMessagesToGemini } from './convertMessages.js'
 import {
@@ -110,6 +116,7 @@ export async function* queryModelGemini(
     let partialMessage: any = undefined
     let ttftMs = 0
     const start = Date.now()
+    const collectedMessages: AssistantMessage[] = []
 
     for await (const event of adaptedStream) {
       switch (event.type) {
@@ -167,6 +174,7 @@ export async function* queryModelGemini(
             uuid: randomUUID(),
             timestamp: new Date().toISOString(),
           }
+          collectedMessages.push(message)
           yield message
           break
         }
@@ -181,6 +189,31 @@ export async function* queryModelGemini(
         ...(event.type === 'message_start' ? { ttftMs } : undefined),
       } as StreamEvent
     }
+
+    // Record LLM observation in Langfuse (no-op if not configured).
+    recordLLMObservation(options.langfuseTrace ?? null, {
+      model: geminiModel,
+      provider: 'gemini',
+      input: convertMessagesToLangfuse(messagesForAPI, systemPrompt),
+      output: convertOutputToLangfuse(collectedMessages),
+      usage: {
+        input_tokens: 0,
+        output_tokens: 0,
+      },
+      startTime: new Date(start),
+      endTime: new Date(),
+      completionStartTime: ttftMs > 0 ? new Date(start + ttftMs) : undefined,
+      tools: convertToolsToLangfuse(toolSchemas as unknown[]),
+      thinking:
+        thinkingConfig.type !== 'disabled'
+          ? {
+              type: thinkingConfig.type,
+              ...(thinkingConfig.type === 'enabled' && {
+                budgetTokens: thinkingConfig.budgetTokens,
+              }),
+            }
+          : undefined,
+    })
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error)
     logForDebugging(`[Gemini] Error: ${errorMessage}`, { level: 'error' })

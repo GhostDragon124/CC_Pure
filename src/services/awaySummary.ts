@@ -9,6 +9,9 @@ import {
 import { getSmallFastModel } from '../utils/model/model.js'
 import { asSystemPrompt } from '../utils/systemPromptType.js'
 import { queryModelWithoutStreaming } from './api/claude.js'
+import { createTrace, endTrace, isLangfuseEnabled } from './langfuse/index.js'
+import { getSessionId } from '../bootstrap/state.js'
+import { getAPIProvider } from '../utils/model/providers.js'
 import { getSessionMemoryContent } from './SessionMemory/sessionMemoryUtils.js'
 
 // Recap only needs recent context — truncate to avoid "prompt too long" on
@@ -34,6 +37,16 @@ export async function generateAwaySummary(
     return null
   }
 
+  const model = getSmallFastModel()
+  const langfuseTrace = isLangfuseEnabled()
+    ? createTrace({
+        sessionId: getSessionId(),
+        model,
+        provider: getAPIProvider(),
+        name: 'away-summary',
+      })
+    : null
+
   try {
     const memory = await getSessionMemoryContent()
     const recent = messages.slice(-RECENT_MESSAGE_WINDOW)
@@ -46,7 +59,7 @@ export async function generateAwaySummary(
       signal,
       options: {
         getToolPermissionContext: async () => getEmptyToolPermissionContext(),
-        model: getSmallFastModel(),
+        model,
         toolChoice: undefined,
         isNonInteractiveSession: false,
         hasAppendSystemPrompt: false,
@@ -54,6 +67,7 @@ export async function generateAwaySummary(
         querySource: 'away_summary',
         mcpTools: [],
         skipCacheWrite: true,
+        langfuseTrace,
       },
     })
 
@@ -61,14 +75,17 @@ export async function generateAwaySummary(
       logForDebugging(
         `[awaySummary] API error: ${getAssistantMessageText(response)}`,
       )
+      endTrace(langfuseTrace, undefined, 'error')
       return null
     }
+    endTrace(langfuseTrace)
     return getAssistantMessageText(response)
   } catch (err) {
     if (err instanceof APIUserAbortError || signal.aborted) {
       return null
     }
     logForDebugging(`[awaySummary] generation failed: ${err}`)
+    endTrace(langfuseTrace, undefined, 'error')
     return null
   }
 }

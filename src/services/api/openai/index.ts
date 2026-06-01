@@ -46,6 +46,12 @@ import {
   isDeferredTool,
   TOOL_SEARCH_TOOL_NAME,
 } from '../../../tools/ToolSearchTool/prompt.js'
+import { recordLLMObservation } from '../../../services/langfuse/tracing.js'
+import {
+  convertMessagesToLangfuse,
+  convertOutputToLangfuse,
+  convertToolsToLangfuse,
+} from '../../../services/langfuse/convert.js'
 
 /**
  * Detect whether DeepSeek-style thinking mode should be enabled.
@@ -263,6 +269,7 @@ export async function* queryModelOpenAI(
     }
     let ttftMs = 0
     const start = Date.now()
+    const collectedMessages: AssistantMessage[] = []
 
     for await (const event of adaptedStream) {
       switch (event.type) {
@@ -322,6 +329,7 @@ export async function* queryModelOpenAI(
             uuid: randomUUID(),
             timestamp: new Date().toISOString(),
           }
+          collectedMessages.push(m)
           yield m
           break
         }
@@ -354,6 +362,25 @@ export async function* queryModelOpenAI(
         ...(event.type === 'message_start' ? { ttftMs } : undefined),
       } as StreamEvent
     }
+
+    // Record LLM observation in Langfuse (no-op if not configured).
+    recordLLMObservation(options.langfuseTrace ?? null, {
+      model: openaiModel,
+      provider: 'openai',
+      input: convertMessagesToLangfuse(openaiMessages),
+      output: convertOutputToLangfuse(collectedMessages),
+      usage: {
+        input_tokens: usage.input_tokens,
+        output_tokens: usage.output_tokens,
+        cache_creation_input_tokens: usage.cache_creation_input_tokens,
+        cache_read_input_tokens: usage.cache_read_input_tokens,
+      },
+      startTime: new Date(start),
+      endTime: new Date(),
+      completionStartTime: ttftMs > 0 ? new Date(start + ttftMs) : undefined,
+      tools: convertToolsToLangfuse(toolSchemas as unknown[]),
+      ...(enableThinking && { thinking: { type: 'enabled' } }),
+    })
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error)
     logForDebugging(`[OpenAI] Error: ${errorMessage}`, { level: 'error' })

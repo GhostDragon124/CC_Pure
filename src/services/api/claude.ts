@@ -228,6 +228,13 @@ import {
 } from '../compact/microCompact.js'
 import { getInitializationStatus } from '../lsp/manager.js'
 import { isToolFromMcpServer } from '../mcp/utils.js'
+import { recordLLMObservation } from '../langfuse/index.js'
+import type { LangfuseSpan } from '../langfuse/index.js'
+import {
+  convertMessagesToLangfuse,
+  convertOutputToLangfuse,
+  convertToolsToLangfuse,
+} from '../langfuse/convert.js'
 import { withStreamingVCR, withVCR } from '../vcr.js'
 import { CLIENT_REQUEST_ID_HEADER, getAnthropicClient } from './client.js'
 import {
@@ -737,6 +744,8 @@ export type Options = {
   // so the model can pace itself. `remaining` is computed by the caller
   // (query.ts decrements across the agentic loop).
   taskBudget?: { total: number; remaining?: number }
+  /** Langfuse root trace span for observability. No-op if null/undefined. */
+  langfuseTrace?: LangfuseSpan | null
 }
 
 export async function queryModelWithoutStreaming({
@@ -1793,6 +1802,10 @@ async function* queryModel(
   // captures only primitives instead of paramsFromContext's full closure scope
   // (messagesForAPI, system, allTools, betas — the entire request-building
   // context), which would otherwise be pinned until the promise resolves.
+  // Also capture thinking params for Langfuse observability.
+  // Pass the entire thinking config object so all fields flow through without
+  // cherry-picking.
+  let langfuseThinking: BetaMessageStreamParams['thinking'] | undefined
   {
     const queryParams = paramsFromContext({
       model: options.model,
@@ -1802,6 +1815,9 @@ async function* queryModel(
     const logBetas = useBetas ? (queryParams.betas ?? []) : []
     const logThinkingType = queryParams.thinking?.type ?? 'disabled'
     const logEffortValue = queryParams.output_config?.effort
+    if (queryParams.thinking && queryParams.thinking.type !== 'disabled') {
+      langfuseThinking = queryParams.thinking
+    }
     void options.getToolPermissionContext().then(permissionContext => {
       logAPIQuery({
         model: options.model,
@@ -2915,6 +2931,26 @@ async function* queryModel(
   // limit) until getToolPermissionContext() resolves.
   const logMessageCount = messagesForAPI.length
   const logMessageTokens = tokenCountFromLastAPIResponse(messagesForAPI)
+
+  // Record LLM observation in Langfuse (no-op if not configured).
+  recordLLMObservation(options.langfuseTrace ?? null, {
+    model: resolvedModel,
+    provider: getAPIProvider(),
+    input: convertMessagesToLangfuse(messagesForAPI, systemPrompt),
+    output: convertOutputToLangfuse(newMessages),
+    usage: {
+      input_tokens: usage.input_tokens,
+      output_tokens: usage.output_tokens,
+      cache_creation_input_tokens: usage.cache_creation_input_tokens,
+      cache_read_input_tokens: usage.cache_read_input_tokens,
+    },
+    startTime: new Date(startIncludingRetries),
+    endTime: new Date(),
+    completionStartTime: ttftMs > 0 ? new Date(start + ttftMs) : undefined,
+    tools: convertToolsToLangfuse(toolSchemas as unknown[]),
+    thinking: langfuseThinking,
+  })
+
   void options.getToolPermissionContext().then(permissionContext => {
     logAPISuccessAndDuration({
       model:

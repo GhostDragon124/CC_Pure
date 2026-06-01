@@ -1,5 +1,8 @@
 import { feature } from 'bun:bundle'
-import { getInvokedSkillsForAgent } from '../../bootstrap/state.js'
+import {
+  getInvokedSkillsForAgent,
+  getSessionId,
+} from '../../bootstrap/state.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -7,6 +10,11 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { queryModelWithoutStreaming } from '../../services/api/claude.js'
+import {
+  createTrace,
+  endTrace,
+  isLangfuseEnabled,
+} from '../../services/langfuse/index.js'
 import { getEmptyToolPermissionContext } from '../../Tool.js'
 import type { Message } from '../../types/message.js'
 import { createAbortController } from '../abortController.js'
@@ -20,6 +28,7 @@ import {
   extractTextContent,
 } from '../messages.js'
 import { getSmallFastModel } from '../model/model.js'
+import { getAPIProvider } from '../model/providers.js'
 import { jsonParse } from '../slowOperations.js'
 import { asSystemPrompt } from '../systemPromptType.js'
 import {
@@ -209,6 +218,16 @@ export async function applySkillImprovement(
 
   const updateList = updates.map(u => `- ${u.section}: ${u.change}`).join('\n')
 
+  const model = getSmallFastModel()
+  const langfuseTrace = isLangfuseEnabled()
+    ? createTrace({
+        sessionId: getSessionId(),
+        model,
+        provider: getAPIProvider(),
+        name: 'skill-improvement-apply',
+      })
+    : null
+
   const response = await queryModelWithoutStreaming({
     messages: [
       createUserMessage({
@@ -238,7 +257,7 @@ Rules:
     signal: createAbortController().signal,
     options: {
       getToolPermissionContext: async () => getEmptyToolPermissionContext(),
-      model: getSmallFastModel(),
+      model,
       toolChoice: undefined,
       isNonInteractiveSession: false,
       hasAppendSystemPrompt: false,
@@ -246,8 +265,11 @@ Rules:
       agents: [],
       querySource: 'skill_improvement_apply',
       mcpTools: [],
+      langfuseTrace,
     },
   })
+
+  endTrace(langfuseTrace)
 
   const responseText = extractTextContent(Array.isArray(response.message.content) ? response.message.content : []).trim()
 

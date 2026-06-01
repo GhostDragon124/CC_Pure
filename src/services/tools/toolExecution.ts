@@ -57,6 +57,7 @@ import type {
   ProgressMessage,
   StopHookInfo,
 } from '../../types/message.js'
+import { recordToolObservation } from '../langfuse/index.js'
 import { count } from '../../utils/array.js'
 import { createAttachmentMessage } from '../../utils/attachments.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -1300,6 +1301,17 @@ async function checkPermissionsAndCallTool(
         : String(result.data ?? '')
     endToolSpan(toolResultStr)
 
+    // Record tool observation in Langfuse (no-op if not configured).
+    recordToolObservation(toolUseContext.langfuseTrace ?? null, {
+      toolName: tool.name,
+      toolUseId: toolUseID,
+      input: processedInput,
+      output: toolResultStr,
+      startTime: new Date(startTime),
+      isError: false,
+      parentBatchSpan: toolUseContext.langfuseBatchSpan,
+    })
+
     // Map the tool result to API format once and cache it. This block is reused
     // by addToolResult (skipping the remap) and measured here for analytics.
     const mappedToolResultBlock = tool.mapToolResultToToolResultBlockParam(
@@ -1608,6 +1620,17 @@ async function checkPermissionsAndCallTool(
       error: errorMessage(error),
     })
     endToolSpan()
+
+    // Record error observation in Langfuse (no-op if not configured).
+    recordToolObservation(toolUseContext.langfuseTrace ?? null, {
+      toolName: tool?.name ?? 'unknown',
+      toolUseId: toolUseID,
+      input: processedInput ?? input,
+      output: errorMessage(error),
+      startTime: new Date(startTime),
+      isError: true,
+      parentBatchSpan: toolUseContext.langfuseBatchSpan,
+    })
 
     // Handle MCP auth errors by updating the client status to 'needs-auth'
     // This updates the /mcp display to show the server needs re-authorization
