@@ -23,7 +23,7 @@ export function WizardProvider<T extends Record<string, unknown>>({
   initialData?: T;
   onComplete: (data: T) => void;
   onCancel: () => void;
-  children: ReactNode;
+  children?: ReactNode;
   title: string;
   showStepCounter?: boolean;
 }): ReactNode {

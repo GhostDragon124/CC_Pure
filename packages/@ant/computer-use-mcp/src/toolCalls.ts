@@ -2149,7 +2149,7 @@ async function handleScreenshot(
 
     const monitorNote = await buildMonitorNote(
       adapter,
-      shot.displayId,
+      shot.displayId ?? 0,
       overrides.lastScreenshot?.displayId,
       overrides.onDisplayPinned !== undefined,
     );
@@ -2218,7 +2218,7 @@ async function handleScreenshot(
 
   const monitorNote = await buildMonitorNote(
     adapter,
-    shot.displayId,
+    shot.displayId ?? 0,
     overrides.lastScreenshot?.displayId,
     overrides.onDisplayPinned !== undefined,
   );

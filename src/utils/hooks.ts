@@ -387,7 +387,7 @@ function validateHookJson(
   const validation = hookJSONOutputSchema().safeParse(parsed)
   if (validation.success) {
     logForDebugging('Successfully parsed and validated hook JSON output')
-    return { json: validation.data }
+    return { json: validation.data as HookJSONOutput }
   }
   const errors = validation.error.issues
     .map(err => `  - ${err.path.join('.')}: ${err.message}`)
@@ -463,7 +463,7 @@ function parseHttpHookOutput(body: string): {
       logForDebugging(
         'HTTP hook returned empty body, treating as empty JSON object',
       )
-      return { json: validation.data }
+      return { json: validation.data as HookJSONOutput }
     }
   }
 
@@ -2377,7 +2377,7 @@ async function* executeHooks({
         )
         // Inject timing fields for hook visibility
         if (promptResult.message?.type === 'attachment') {
-          const att = promptResult.message.attachment
+          const att = promptResult.message.attachment!
           if (
             att.type === 'hook_success' ||
             att.type === 'hook_non_blocking_error'
@@ -2417,7 +2417,7 @@ async function* executeHooks({
         )
         // Inject timing fields for hook visibility
         if (agentResult.message?.type === 'attachment') {
-          const att = agentResult.message.attachment
+          const att = agentResult.message.attachment!
           if (
             att.type === 'hook_success' ||
             att.type === 'hook_non_blocking_error'
@@ -2548,7 +2548,7 @@ async function* executeHooks({
           return
         }
 
-        if (httpJson) {
+        if (httpJson && isSyncHookJSONOutput(httpJson)) {
           const processed = processHookJSONOutput({
             json: httpJson,
             command: hook.url,
@@ -4564,7 +4564,9 @@ function parseElicitationHookOutput(
   }
 
   try {
-    const parsed = hookJSONOutputSchema().parse(JSON.parse(trimmed))
+    const parsed = hookJSONOutputSchema().parse(
+      JSON.parse(trimmed),
+    ) as HookJSONOutput
     if (isAsyncHookJSONOutput(parsed)) {
       return {}
     }

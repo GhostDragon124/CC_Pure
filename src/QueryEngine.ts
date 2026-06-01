@@ -564,16 +564,16 @@ export class QueryEngine {
       for (const msg of messagesFromUserInput) {
         if (
           msg.type === 'user' &&
-          typeof msg.message.content === 'string' &&
-          (msg.message.content.includes(`<${LOCAL_COMMAND_STDOUT_TAG}>`) ||
-            msg.message.content.includes(`<${LOCAL_COMMAND_STDERR_TAG}>`) ||
+          typeof msg.message!.content === 'string' &&
+          (msg.message!.content.includes(`<${LOCAL_COMMAND_STDOUT_TAG}>`) ||
+            msg.message!.content.includes(`<${LOCAL_COMMAND_STDERR_TAG}>`) ||
             msg.isCompactSummary)
         ) {
           yield {
             type: 'user',
             message: {
               ...msg.message,
-              content: stripAnsi(msg.message.content),
+              content: stripAnsi(msg.message!.content),
             },
             session_id: getSessionId(),
             parent_tool_use_id: null,
@@ -1090,7 +1090,7 @@ export class QueryEngine {
     const edeResultType = result?.type ?? 'undefined'
     const edeLastContentType =
       result?.type === 'assistant'
-        ? (last(result.message.content)?.type ?? 'none')
+        ? (last(result.message!.content as import('@anthropic-ai/sdk/resources/beta/messages/messages.js').BetaContentBlock[])?.type ?? 'none')
         : 'n/a'
 
     // Flush buffered transcript writes before yielding result.
@@ -1148,7 +1148,7 @@ export class QueryEngine {
     let isApiError = false
 
     if (result.type === 'assistant') {
-      const lastContent = last(result.message.content)
+      const lastContent = last(result.message!.content as import('@anthropic-ai/sdk/resources/beta/messages/messages.js').BetaContentBlock[])
       if (
         lastContent?.type === 'text' &&
         !SYNTHETIC_MESSAGES.has(lastContent.text)

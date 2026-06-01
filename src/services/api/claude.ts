@@ -599,13 +599,13 @@ export function userMessageToMessageParam(
   querySource?: QuerySource,
 ): MessageParam {
   if (addCache) {
-    if (typeof message.message.content === 'string') {
+    if (typeof message.message!.content === 'string') {
       return {
         role: 'user',
         content: [
           {
             type: 'text',
-            text: message.message.content,
+            text: message.message!.content,
             ...(enablePromptCaching && {
               cache_control: getCacheControl({ querySource }),
             }),
@@ -615,9 +615,9 @@ export function userMessageToMessageParam(
     } else {
       return {
         role: 'user',
-        content: message.message.content.map((_, i) => ({
+        content: message.message!.content!.map((_, i) => ({
           ..._,
-          ...(i === message.message.content.length - 1
+          ...(i === message.message!.content!.length - 1
             ? enablePromptCaching
               ? { cache_control: getCacheControl({ querySource }) }
               : {}
@@ -631,9 +631,9 @@ export function userMessageToMessageParam(
   // to addCacheBreakpoints share the same array and each splices in duplicate cache_edits.
   return {
     role: 'user',
-    content: Array.isArray(message.message.content)
-      ? [...message.message.content]
-      : message.message.content,
+    content: (Array.isArray(message.message!.content)
+      ? [...message.message!.content]
+      : message.message!.content) as import('@anthropic-ai/sdk/resources/beta/messages/messages.js').BetaContentBlockParam[],
   }
 }
 
@@ -644,13 +644,13 @@ export function assistantMessageToMessageParam(
   querySource?: QuerySource,
 ): MessageParam {
   if (addCache) {
-    if (typeof message.message.content === 'string') {
+    if (typeof message.message!.content === 'string') {
       return {
         role: 'assistant',
         content: [
           {
             type: 'text',
-            text: message.message.content,
+            text: message.message!.content,
             ...(enablePromptCaching && {
               cache_control: getCacheControl({ querySource }),
             }),
@@ -660,11 +660,11 @@ export function assistantMessageToMessageParam(
     } else {
       return {
         role: 'assistant',
-        content: message.message.content.map((_, i) => {
+        content: message.message!.content!.map((_, i) => {
           const contentBlock = stripGeminiProviderMetadata(_)
           return {
             ...contentBlock,
-            ...(i === message.message.content.length - 1 &&
+            ...(i === message.message!.content!.length - 1 &&
             contentBlock.type !== 'thinking' &&
             contentBlock.type !== 'redacted_thinking' &&
             (feature('CONNECTOR_TEXT')
@@ -682,9 +682,9 @@ export function assistantMessageToMessageParam(
   return {
     role: 'assistant',
     content:
-      typeof message.message.content === 'string'
-        ? message.message.content
-        : message.message.content.map(stripGeminiProviderMetadata) as BetaContentBlockParam[],
+      typeof message.message!.content === 'string'
+        ? message.message!.content
+        : message.message!.content!.map(stripGeminiProviderMetadata) as BetaContentBlockParam[],
   }
 }
 
@@ -992,8 +992,8 @@ export function stripExcessMediaItems(
 ): (UserMessage | AssistantMessage)[] {
   let toRemove = 0
   for (const msg of messages) {
-    if (!Array.isArray(msg.message.content)) continue
-    for (const block of msg.message.content) {
+    if (!Array.isArray(msg.message!.content)) continue
+    for (const block of msg.message!.content) {
       if (isMedia(block)) toRemove++
       if (isToolResult(block) && Array.isArray(block.content)) {
         for (const nested of block.content) {
@@ -1007,7 +1007,7 @@ export function stripExcessMediaItems(
 
   return messages.map(msg => {
     if (toRemove <= 0) return msg
-    const content = msg.message.content
+    const content = msg.message!.content
     if (!Array.isArray(content)) return msg
 
     const before = toRemove

@@ -7,6 +7,7 @@ import { clearClassifierApprovals } from '../../utils/classifierApprovals.js'
 import { resetGetMemoryFilesCache } from '../../utils/claudemd.js'
 import { clearSessionMessagesCache } from '../../utils/sessionStorage.js'
 import { clearBetaTracingState } from '../../utils/telemetry/betaSessionTracing.js'
+import { logError } from '../../utils/log.js'
 import { resetMicrocompactState } from './microCompact.js'
 
 /**

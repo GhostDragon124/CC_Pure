@@ -430,7 +430,13 @@ export async function getURLMarkdownContent(
   // This lets GC reclaim up to MAX_HTTP_CONTENT_LENGTH (10MB) before Turndown
   // builds its DOM tree (which can be 3-5x the HTML size).
   ;(response as { data: unknown }).data = null
-  const contentType = response.headers['content-type'] ?? ''
+  const contentTypeHeader = response.headers['content-type']
+  const contentType =
+    typeof contentTypeHeader === 'string'
+      ? contentTypeHeader
+      : contentTypeHeader === undefined || contentTypeHeader === null
+        ? ''
+        : String(contentTypeHeader)
 
   // Binary content: save raw bytes to disk with a proper extension so Claude
   // can inspect the file later. We still fall through to the utf-8 decode +
@@ -519,9 +525,9 @@ export async function applyPromptToMarkdown(
     throw new AbortError()
   }
 
-  const { content } = assistantMessage.message
-  if (content.length > 0) {
-    const contentBlock = content[0]
+  const { content } = assistantMessage.message!
+  if (content!.length > 0) {
+    const contentBlock = content![0]
     if (contentBlock && typeof contentBlock === 'object' && 'text' in contentBlock) {
       return (contentBlock as { text: string }).text
     }

@@ -37,7 +37,9 @@ const DEFAULT_CACHE_THRESHOLD = 80
  */
 export function getCacheThreshold(): number {
   const settings = getInitialSettings()
-  return settings.cacheThreshold ?? DEFAULT_CACHE_THRESHOLD
+  return typeof settings.cacheThreshold === 'number'
+    ? settings.cacheThreshold
+    : DEFAULT_CACHE_THRESHOLD
 }
 
 /**
