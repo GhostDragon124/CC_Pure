@@ -92,7 +92,31 @@ export type ChannelPermissionRequestParams = {
    *  input is in the local terminal dialog; this is a phone-sized
    *  preview. Server decides whether/how to show it. */
   input_preview: string
+  /** Optional source-channel routing hint for servers that support
+   *  multi-chat routing. */
+  channel_context?: {
+    source_server?: string
+    chat_id?: string
+  }
 }
+
+export const ChannelPermissionRequestNotificationSchema = lazySchema(() =>
+  z.object({
+    method: z.literal(CHANNEL_PERMISSION_REQUEST_METHOD),
+    params: z.object({
+      request_id: z.string(),
+      tool_name: z.string(),
+      description: z.string(),
+      input_preview: z.string(),
+      channel_context: z
+        .object({
+          source_server: z.string().optional(),
+          chat_id: z.string().optional(),
+        })
+        .optional(),
+    }),
+  }),
+)
 
 /**
  * Meta keys become XML attribute NAMES — a crafted key like

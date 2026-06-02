@@ -126,7 +126,7 @@ Use this tool to discover messaging targets before sending cross-session message
     }
 
     for (const peer of await bridgePeers.listBridgePeers()) {
-      addPeer(peer)
+      addPeer({ ...peer, address: peer.peerId } as any)
     }
 
     return {

@@ -82,3 +82,17 @@ export async function postInterClaudeMessage(
     return { ok: false, error: msg }
   }
 }
+
+/** List peers connected via the bridge. CC_Pure: not implemented. */
+export async function listBridgePeers(): Promise<
+  Array<{
+    peerId: string
+    messagingSocketPath?: string
+    name?: string
+    kind?: string
+    cwd?: string
+    pid?: number
+  }>
+> {
+  return []
+}
