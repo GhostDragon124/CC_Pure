@@ -33,7 +33,8 @@ export function preconnectAnthropicApi(): void {
   if (fired) return
   fired = true
 
-  // CC_Pure: skip preconnect when non-essential traffic is disabled
+  // Also skip when non-essential traffic is disabled via
+  // CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC / DISABLE_TELEMETRY / proxy env.
   if (isEssentialTrafficOnly()) return
 
   // Skip if using a cloud provider — different endpoint + auth
