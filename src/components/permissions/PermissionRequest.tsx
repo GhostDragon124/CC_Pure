@@ -58,7 +58,7 @@ const WorkflowPermissionRequest = feature('WORKFLOW_SCRIPTS')
 
 const MonitorTool = feature('MONITOR_TOOL')
   ? (
-      require('../../tools/MonitorTool/MonitorTool.js') as typeof import('../../tools/MonitorTool/MonitorTool.js')
+      require('@claude-code-best/builtin-tools/tools/MonitorTool/MonitorTool.js') as typeof import('@claude-code-best/builtin-tools/tools/MonitorTool/MonitorTool.js')
     ).MonitorTool
   : null
 

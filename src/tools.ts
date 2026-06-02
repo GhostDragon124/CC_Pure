@@ -11,19 +11,6 @@ import { NotebookEditTool } from './tools/NotebookEditTool/NotebookEditTool.js'
 import { WebFetchTool } from './tools/WebFetchTool/WebFetchTool.js'
 import { TaskStopTool } from './tools/TaskStopTool/TaskStopTool.js'
 import { BriefTool } from './tools/BriefTool/BriefTool.js'
-import { SleepTool as SleepToolValue } from './tools/SleepTool/SleepTool.js'
-import { CronCreateTool } from './tools/ScheduleCronTool/CronCreateTool.js'
-import { CronDeleteTool } from './tools/ScheduleCronTool/CronDeleteTool.js'
-import { CronListTool } from './tools/ScheduleCronTool/CronListTool.js'
-import { RemoteTriggerTool as RemoteTriggerToolValue } from './tools/RemoteTriggerTool/RemoteTriggerTool.js'
-import { MonitorTool as MonitorToolValue } from './tools/MonitorTool/MonitorTool.js'
-import { SendUserFileTool as SendUserFileToolValue } from './tools/SendUserFileTool/SendUserFileTool.js'
-import { PushNotificationTool as PushNotificationToolValue } from './tools/PushNotificationTool/PushNotificationTool.js'
-import { TeamCreateTool as TeamCreateToolValue } from './tools/TeamCreateTool/TeamCreateTool.js'
-import { TeamDeleteTool as TeamDeleteToolValue } from './tools/TeamDeleteTool/TeamDeleteTool.js'
-import { SendMessageTool as SendMessageToolValue } from './tools/SendMessageTool/SendMessageTool.js'
-import { initBundledWorkflows } from './tools/WorkflowTool/bundled/index.js'
-import { WorkflowTool as WorkflowToolValue } from './tools/WorkflowTool/WorkflowTool.js'
 import * as coordinatorModeModuleValue from './coordinator/coordinatorMode.js'
 // Dead code elimination: conditional import for ant-only tools
 /* eslint-disable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
@@ -37,20 +24,34 @@ const SuggestBackgroundPRTool =
         .SuggestBackgroundPRTool
     : null
 const SleepTool =
-  feature('PROACTIVE') || feature('KAIROS') ? SleepToolValue : null
-const cronTools = [CronCreateTool, CronDeleteTool, CronListTool]
+  feature('PROACTIVE') || feature('KAIROS')
+    ? require('@claude-code-best/builtin-tools/tools/SleepTool/SleepTool.js')
+        .SleepTool
+    : null
+const cronTools = [
+  require('@claude-code-best/builtin-tools/tools/ScheduleCronTool/CronCreateTool.js')
+    .CronCreateTool,
+  require('@claude-code-best/builtin-tools/tools/ScheduleCronTool/CronDeleteTool.js')
+    .CronDeleteTool,
+  require('@claude-code-best/builtin-tools/tools/ScheduleCronTool/CronListTool.js')
+    .CronListTool,
+]
 const RemoteTriggerTool = feature('AGENT_TRIGGERS_REMOTE')
-  ? RemoteTriggerToolValue
+  ? require('@claude-code-best/builtin-tools/tools/RemoteTriggerTool/RemoteTriggerTool.js')
+      .RemoteTriggerTool
   : null
 const MonitorTool = feature('MONITOR_TOOL')
-  ? MonitorToolValue
+  ? require('@claude-code-best/builtin-tools/tools/MonitorTool/MonitorTool.js')
+      .MonitorTool
   : null
 const SendUserFileTool = feature('KAIROS')
-  ? SendUserFileToolValue
+  ? require('@claude-code-best/builtin-tools/tools/SendUserFileTool/SendUserFileTool.js')
+      .SendUserFileTool
   : null
 const PushNotificationTool =
   feature('KAIROS') || feature('KAIROS_PUSH_NOTIFICATION')
-    ? PushNotificationToolValue
+    ? require('@claude-code-best/builtin-tools/tools/PushNotificationTool/PushNotificationTool.js')
+        .PushNotificationTool
     : null
 const SubscribePRTool = feature('KAIROS_GITHUB_WEBHOOKS')
   ? require('./tools/SubscribePRTool/SubscribePRTool.js').SubscribePRTool
@@ -63,9 +64,18 @@ import { ExitPlanModeV2Tool } from './tools/ExitPlanModeTool/ExitPlanModeV2Tool.
 import { TestingPermissionTool } from './tools/testing/TestingPermissionTool.js'
 import { GrepTool } from './tools/GrepTool/GrepTool.js'
 import { TungstenTool } from './tools/TungstenTool/TungstenTool.js'
-const getTeamCreateTool = () => TeamCreateToolValue
-const getTeamDeleteTool = () => TeamDeleteToolValue
-const getSendMessageTool = () => SendMessageToolValue
+// Lazy require to break circular dependency: tools.ts -> TeamCreateTool/TeamDeleteTool -> ... -> tools.ts
+/* eslint-disable @typescript-eslint/no-require-imports */
+const getTeamCreateTool = () =>
+  require('@claude-code-best/builtin-tools/tools/TeamCreateTool/TeamCreateTool.js')
+    .TeamCreateTool as typeof import('@claude-code-best/builtin-tools/tools/TeamCreateTool/TeamCreateTool.js').TeamCreateTool
+const getTeamDeleteTool = () =>
+  require('@claude-code-best/builtin-tools/tools/TeamDeleteTool/TeamDeleteTool.js')
+    .TeamDeleteTool as typeof import('@claude-code-best/builtin-tools/tools/TeamDeleteTool/TeamDeleteTool.js').TeamDeleteTool
+const getSendMessageTool = () =>
+  require('@claude-code-best/builtin-tools/tools/SendMessageTool/SendMessageTool.js')
+    .SendMessageTool as typeof import('@claude-code-best/builtin-tools/tools/SendMessageTool/SendMessageTool.js').SendMessageTool
+/* eslint-enable @typescript-eslint/no-require-imports */
 import { AskUserQuestionTool } from './tools/AskUserQuestionTool/AskUserQuestionTool.js'
 import { LSPTool } from './tools/LSPTool/LSPTool.js'
 import { ListMcpResourcesTool } from './tools/ListMcpResourcesTool/ListMcpResourcesTool.js'
@@ -124,8 +134,9 @@ const ListPeersTool = feature('UDS_INBOX')
   : null
 const WorkflowTool = feature('WORKFLOW_SCRIPTS')
   ? (() => {
-      initBundledWorkflows()
-      return WorkflowToolValue
+      require('@claude-code-best/builtin-tools/tools/WorkflowTool/bundled/index.js').initBundledWorkflows()
+      return require('@claude-code-best/builtin-tools/tools/WorkflowTool/WorkflowTool.js')
+        .WorkflowTool
     })()
   : null
 /* eslint-enable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */

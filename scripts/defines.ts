@@ -59,10 +59,10 @@ export const DEFAULT_BUILD_FEATURES = [
   'PROACTIVE', // 主动自主代理模式（SleepTool 控制 tick 节奏，省 token）
   'DAEMON', // 守护进程模式，长驻 supervisor 管理后台 worker（非 GB 级主因）
   'ACP', // ACP 代理协议，支持外部 agent 接入
-  // 'WORKFLOW_SCRIPTS', // 已禁用：stub 空壳，启用后 __esm() 循环初始化导致构建产物 hang
+  // 'WORKFLOW_SCRIPTS', // 已禁用：stub 空壳 + builtin-tools 跨包 import 'src/...' → __esm() 循环初始化死锁
   // 'HISTORY_SNIP', // 已禁用：snip 功能暂时关闭
   // 'CONTEXT_COLLAPSE', // 已禁用：实现是空壳 stub，启用后会抑制 auto compact 导致上下文管理完全失效
-  // 'MONITOR_TOOL', // 已禁用：stub 空壳，启用后 __esm() 循环初始化导致构建产物 hang
+  // 'MONITOR_TOOL', // 已禁用：stub 空壳 + builtin-tools 跨包 import 'src/...' → __esm() 循环初始化死锁
   // 'FORK_SUBAGENT',            // 已禁用：通过 Agent tool 的特殊方式实现了等效功能，无需再开
   'KAIROS', // Kairos 定时任务系统核心
   'COORDINATOR_MODE', // 多 worker 编排模式（AgentSummary 泄露已在 52b61c2c 修复）
