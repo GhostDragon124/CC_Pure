@@ -48,7 +48,7 @@
     "lint": "biome lint src/",
     "lint:fix": "biome lint --fix src/",
     "format": "biome format --write src/",
-    "prepare": "git config core.hooksPath .githooks",
+    "prepare": "husky",
     "test": "bun test",
     "check:unused": "knip-bun",
     "health": "bun run scripts/health-check.ts",
@@ -60,8 +60,6 @@
     "@agentclientprotocol/sdk": "^0.19.0"
   },
   "devDependencies": {
-    "vite": "^6.0.0",
-    "openai": "^6.33.0",
     "@alcalzone/ansi-tokenize": "^0.3.0",
     "@ant/claude-for-chrome-mcp": "workspace:*",
     "@ant/computer-use-input": "workspace:*",
@@ -74,6 +72,7 @@
     "@anthropic-ai/sandbox-runtime": "^0.0.44",
     "@anthropic-ai/sdk": "^0.80.0",
     "@anthropic-ai/vertex-sdk": "^0.14.4",
+    "@anthropic/ink": "workspace:*",
     "@aws-sdk/client-bedrock": "^3.1020.0",
     "@aws-sdk/client-bedrock-runtime": "^3.1020.0",
     "@aws-sdk/client-sts": "^3.1020.0",
@@ -139,16 +138,18 @@
     "he": "^1.2.0",
     "highlight.js": "^11.11.1",
     "https-proxy-agent": "^8.0.0",
+    "husky": "^9.1.7",
     "ignore": "^7.0.5",
-    "@anthropic/ink": "workspace:*",
     "image-processor-napi": "workspace:*",
     "indent-string": "^5.0.0",
     "jsonc-parser": "^3.3.1",
     "knip": "^6.1.1",
+    "lint-staged": "^17.0.7",
     "lodash-es": "^4.17.23",
     "lru-cache": "^11.2.7",
     "marked": "^17.0.5",
     "modifiers-napi": "workspace:*",
+    "openai": "^6.33.0",
     "p-map": "^7.0.4",
     "picomatch": "^4.0.4",
     "plist": "^3.1.0",
@@ -171,6 +172,7 @@
     "undici": "^7.24.6",
     "url-handler-napi": "workspace:*",
     "usehooks-ts": "^3.1.1",
+    "vite": "^6.0.0",
     "vscode-jsonrpc": "^8.2.1",
     "vscode-languageserver-protocol": "^3.17.5",
     "vscode-languageserver-types": "^3.17.5",
@@ -179,5 +181,13 @@
     "xss": "^1.0.15",
     "yaml": "^2.8.3",
     "zod": "^4.3.6"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs,jsx}": [
+      "biome check --fix --no-errors-on-unmatched"
+    ],
+    "*.{json,jsonc}": [
+      "biome format --write --no-errors-on-unmatched"
+    ]
   }
 }
