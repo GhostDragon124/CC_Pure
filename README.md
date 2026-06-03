@@ -1,4 +1,4 @@
-# CC_Pure — 纯净版 Claude Code
+# CCB_Pure — 纯净版 Claude Code
 
 [![Bun](https://img.shields.io/badge/runtime-Bun-black?style=flat-square&logo=bun)](https://bun.sh/)
 [![tsc](https://img.shields.io/badge/tsc-0%20errors-brightgreen?style=flat-square)](https://www.typescriptlang.org/)
