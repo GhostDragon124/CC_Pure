@@ -42,8 +42,8 @@ bun run dev
 ### 配置本地快捷命令
 
 ```bash
-# 创建 cc 命令（一行搞定）
-cat > ~/.local/bin/cc << 'EOF'
+# 创建 ccp 命令（一行搞定）
+cat > ~/.local/bin/ccp << 'EOF'
 #!/usr/bin/env bash
 export PATH="$HOME/.bun/bin:$PATH"
 export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
@@ -51,18 +51,18 @@ export DISABLE_TELEMETRY=1
 export NO_PROXY=localhost,127.0.0.1,.local
 exec bun /path/to/CC_Pure/dist-nosplit/cli.js "$@"
 EOF
-chmod +x ~/.local/bin/cc
+chmod +x ~/.local/bin/ccp
 
 # 使用
-cc -p "hello world"    # pipe 模式
-cc                     # 交互 REPL
+ccp -p "hello world"    # pipe 模式
+ccp                     # 交互 REPL
 ```
 
 ### 验证
 
 ```bash
-cc --version           # 输出: 2.6.5 (Claude Code)
-cc -p "1+1"            # 输出: 2
+ccp --version           # 输出: 2.6.5 (Claude Code)
+ccp -p "1+1"            # 输出: 2
 ```
 
 ---
