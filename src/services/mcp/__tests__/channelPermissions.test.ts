@@ -1,7 +1,12 @@
 import { mock, describe, expect, test } from "bun:test";
 
 mock.module("src/utils/slowOperations.js", () => ({
+  clone: structuredClone,
+  cloneDeep: structuredClone,
+  jsonParse: JSON.parse,
   jsonStringify: (v: unknown) => JSON.stringify(v),
+  slowLogging: () => ({ [Symbol.dispose]: () => {} }),
+  writeFileSync_DEPRECATED: () => {},
 }));
 mock.module("src/services/analytics/growthbook.js", () => ({
   getFeatureValue_CACHED_MAY_BE_STALE: () => false,

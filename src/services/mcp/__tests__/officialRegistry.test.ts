@@ -4,6 +4,7 @@ mock.module("axios", () => ({
   default: { get: async () => ({ data: { servers: [] } }) },
 }));
 mock.module("src/utils/debug.js", () => ({
+  logAntError: () => {},
   logForDebugging: () => {},
 }));
 mock.module("src/utils/errors.js", () => ({

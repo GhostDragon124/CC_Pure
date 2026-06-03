@@ -1,3 +1,4 @@
+import { parse as shellParse } from 'shell-quote'
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
 import { checkHasTrustDialogAccepted } from '../../utils/config.js'
 import { logAntError } from '../../utils/debug.js'
@@ -58,8 +59,22 @@ export async function getMcpHeadersFromHelper(
 
   try {
     logMCPDebug(serverName, 'Executing headersHelper to get dynamic headers')
-    const execResult = await execFileNoThrowWithCwd(config.headersHelper, [], {
-      shell: true,
+
+    // Parse the headersHelper command string into tokens.
+    // Reject any input containing shell operators to prevent injection.
+    const tokens = shellParse(config.headersHelper)
+    if (!tokens.every((t: unknown) => typeof t === 'string')) {
+      throw new Error(
+        `headersHelper must be an executable path with arguments only, no shell operators allowed`,
+      )
+    }
+    const commandTokens = tokens as string[]
+    if (commandTokens.length === 0) {
+      throw new Error('headersHelper command is empty')
+    }
+    const [cmd, ...args] = commandTokens
+
+    const execResult = await execFileNoThrowWithCwd(cmd, args, {
       timeout: 10000,
       // Pass server context so one helper script can serve multiple MCP servers
       // (git credential-helper style). See deshaw/anthropic-issues#28.
