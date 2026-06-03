@@ -45,7 +45,7 @@ import {
 import {
   isDeferredTool,
   TOOL_SEARCH_TOOL_NAME,
-} from '@claude-code-best/builtin-tools/tools/ToolSearchTool/prompt.js'
+} from '../../../tools/ToolSearchTool/prompt.js'
 import { recordLLMObservation } from '../../../services/langfuse/tracing.js'
 import {
   convertMessagesToLangfuse,

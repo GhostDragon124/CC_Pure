@@ -47,7 +47,7 @@ import { parseGitCommitId } from '@claude-code-best/builtin-tools/tools/shared/g
 import {
   isDeferredTool,
   TOOL_SEARCH_TOOL_NAME,
-} from '@claude-code-best/builtin-tools/tools/ToolSearchTool/prompt.js'
+} from '../../tools/ToolSearchTool/prompt.js'
 import { getAllBaseTools } from '../../tools.js'
 import type { HookProgress } from '../../types/hooks.js'
 import type {

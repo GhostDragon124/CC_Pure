@@ -1,3 +1,2 @@
-// Auto-generated stub — replace with real implementation
-export {};
-export const WorkflowPermissionRequest: (props: Record<string, unknown>) => null = () => null;
+// STUB: Original removed to fix Bun ARM splitting deadlock.
+export function WorkflowPermissionRequest(): null { return null }

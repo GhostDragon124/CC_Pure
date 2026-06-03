@@ -76,3 +76,23 @@ if (!rgScript.success) {
 } else {
   console.log(`Bundled download-ripgrep script to ${outdir}/`)
 }
+
+// Step 6: Build no-split single-file bundle for `ccb` CLI
+// Code-split build hangs on chunk lazy-loading with Bun 1.3.11,
+// so we provide a no-split alternative for the `ccb` launcher.
+const noSplitDir = 'dist-nosplit'
+rmSync(noSplitDir, { recursive: true, force: true })
+const noSplitResult = await Bun.build({
+  entrypoints: ['src/entrypoints/cli.tsx'],
+  outdir: noSplitDir,
+  target: 'bun',
+  splitting: false,
+  define: getMacroDefines(),
+  features,
+})
+if (!noSplitResult.success) {
+  console.error('No-split build failed:')
+  for (const log of noSplitResult.logs) console.error(log)
+} else {
+  console.log(`No-split bundle: ${noSplitResult.outputs.length} file → ${noSplitDir}/`)
+}

@@ -1,3 +1,5 @@
-// Auto-generated stub — replace with real implementation
-export {};
-export const MonitorTool: Record<string, unknown> = {};
+// STUB: Original removed to fix Bun ARM splitting deadlock.
+export const MonitorTool = {
+  name: 'Monitor',
+  isEnabled: () => false,
+}

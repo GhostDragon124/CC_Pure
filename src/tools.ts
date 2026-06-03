@@ -80,7 +80,7 @@ import { AskUserQuestionTool } from '@claude-code-best/builtin-tools/tools/AskUs
 import { LSPTool } from '@claude-code-best/builtin-tools/tools/LSPTool/LSPTool.js'
 import { ListMcpResourcesTool } from '@claude-code-best/builtin-tools/tools/ListMcpResourcesTool/ListMcpResourcesTool.js'
 import { ReadMcpResourceTool } from '@claude-code-best/builtin-tools/tools/ReadMcpResourceTool/ReadMcpResourceTool.js'
-import { ToolSearchTool } from '@claude-code-best/builtin-tools/tools/ToolSearchTool/ToolSearchTool.js'
+import { ToolSearchTool } from './tools/ToolSearchTool/ToolSearchTool.js'
 import { EnterPlanModeTool } from '@claude-code-best/builtin-tools/tools/EnterPlanModeTool/EnterPlanModeTool.js'
 import { EnterWorktreeTool } from '@claude-code-best/builtin-tools/tools/EnterWorktreeTool/EnterWorktreeTool.js'
 import { ExitWorktreeTool } from '@claude-code-best/builtin-tools/tools/ExitWorktreeTool/ExitWorktreeTool.js'
@@ -248,8 +248,6 @@ export function getAllBaseTools(): Tools {
     ...(process.env.NODE_ENV === 'test' ? [TestingPermissionTool] : []),
     ListMcpResourcesTool,
     ReadMcpResourceTool,
-    // Include ToolSearchTool when tool search might be enabled (optimistic check)
-    // The actual decision to defer tools happens at request time in claude.ts
     ...(isToolSearchEnabledOptimistic() ? [ToolSearchTool] : []),
   ]
 }

@@ -74,7 +74,7 @@ export default defineConfig({
     // inlined into the bundle — they must be resolved from node_modules
     // at runtime.  doubaoime-asr uses opus-encdec which does
     // require.resolve('opus-encdec/dist/libopus-encoder.wasm.js').
-    external: ['doubaoime-asr', 'opus-encdec'],
+    external: ['doubaoime-asr', 'opus-encdec', '@claude-code-best/weixin'],
   },
 
   build: {
@@ -93,6 +93,7 @@ export default defineConfig({
 
     rollupOptions: {
       input: resolve(projectRoot, 'src/entrypoints/cli.tsx'),
+      external: ['@claude-code-best/weixin'],
 
       output: {
         format: 'es',

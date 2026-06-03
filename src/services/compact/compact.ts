@@ -18,7 +18,7 @@ import {
   FILE_READ_TOOL_NAME,
   FILE_UNCHANGED_STUB,
 } from '@claude-code-best/builtin-tools/tools/FileReadTool/prompt.js'
-import { ToolSearchTool } from '@claude-code-best/builtin-tools/tools/ToolSearchTool/ToolSearchTool.js'
+import { ToolSearchTool } from '../../tools/ToolSearchTool/ToolSearchTool.js'
 import type { AgentId } from '../../types/ids.js'
 import type {
   AssistantMessage,

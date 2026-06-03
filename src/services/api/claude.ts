@@ -195,7 +195,7 @@ import {
   formatDeferredToolLine,
   isDeferredTool,
   TOOL_SEARCH_TOOL_NAME,
-} from '@claude-code-best/builtin-tools/tools/ToolSearchTool/prompt.js'
+} from '../../tools/ToolSearchTool/prompt.js'
 import { count } from '../../utils/array.js'
 import { insertBlockAfterToolResults } from '../../utils/contentArray.js'
 import { validateBoundedIntEnvVar } from '../../utils/envValidation.js'

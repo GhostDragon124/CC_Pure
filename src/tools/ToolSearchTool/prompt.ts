@@ -2,9 +2,10 @@ import { feature } from 'bun:bundle'
 import { isReplBridgeActive } from 'src/bootstrap/state.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import type { Tool } from 'src/Tool.js'
-import { AGENT_TOOL_NAME } from '../AgentTool/constants.js'
-import { BRIEF_TOOL_NAME as BRIEF_TOOL_NAME_VALUE } from '../BriefTool/prompt.js'
-import { SEND_USER_FILE_TOOL_NAME as SEND_USER_FILE_TOOL_NAME_VALUE } from '../SendUserFileTool/prompt.js'
+
+const AGENT_TOOL_NAME = 'Agent'
+const BRIEF_TOOL_NAME_VALUE = 'SendUserMessage'
+const SEND_USER_FILE_TOOL_NAME_VALUE = 'SendUserFile'
 
 // Dead code elimination: Brief tool names are only used when KAIROS/KAIROS_BRIEF is on.
 const BRIEF_TOOL_NAME: string | null =
@@ -69,9 +70,10 @@ export function isDeferredTool(tool: Tool): boolean {
   // Lazy require: static import of forkSubagent → coordinatorMode creates a cycle
   // through constants/tools.ts at module init.
   if (feature('FORK_SUBAGENT') && tool.name === AGENT_TOOL_NAME) {
-    type ForkMod = typeof import('../AgentTool/forkSubagent.js')
+    type ForkMod =
+      typeof import('@claude-code-best/builtin-tools/tools/AgentTool/forkSubagent.js')
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const m = require('../AgentTool/forkSubagent.js') as ForkMod
+    const m = require('@claude-code-best/builtin-tools/tools/AgentTool/forkSubagent.js') as ForkMod
     if (m.isForkSubagentEnabled()) return false
   }
 
