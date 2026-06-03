@@ -6,7 +6,6 @@ import type { CanUseToolFn } from 'src/hooks/useCanUseTool.js'
 import type { ToolUseContext } from 'src/Tool.js'
 import { registerAsyncAgent } from 'src/tasks/LocalAgentTask/LocalAgentTask.js'
 import { assembleToolPool } from 'src/tools.js'
-import { filterParentToolsForFork } from 'src/utils/agentToolFilter.js'
 import { asAgentId } from 'src/types/ids.js'
 import { runWithAgentContext } from 'src/utils/agentContext.js'
 import { runWithCwdOverride } from 'src/utils/cwd.js'
@@ -28,12 +27,12 @@ import type { SystemPrompt } from 'src/utils/systemPromptType.js'
 import { getTaskOutputPath } from 'src/utils/task/diskOutput.js'
 import { getParentSessionId } from 'src/utils/teammate.js'
 import { reconstructForSubagentResume } from 'src/utils/toolResultStorage.js'
-import { runAsyncAgentLifecycle } from './agentToolUtils.js'
-import { GENERAL_PURPOSE_AGENT } from './built-in/generalPurposeAgent.js'
-import { FORK_AGENT, isForkSubagentEnabled } from './forkSubagent.js'
-import type { AgentDefinition } from './loadAgentsDir.js'
-import { isBuiltInAgent } from './loadAgentsDir.js'
-import { runAgent } from './runAgent.js'
+import { runAsyncAgentLifecycle } from '@claude-code-best/builtin-tools/tools/AgentTool/agentToolUtils.js'
+import { GENERAL_PURPOSE_AGENT } from '@claude-code-best/builtin-tools/tools/AgentTool/built-in/generalPurposeAgent.js'
+import { FORK_AGENT, isForkSubagentEnabled } from '@claude-code-best/builtin-tools/tools/AgentTool/forkSubagent.js'
+import type { AgentDefinition } from '@claude-code-best/builtin-tools/tools/AgentTool/loadAgentsDir.js'
+import { isBuiltInAgent } from '@claude-code-best/builtin-tools/tools/AgentTool/loadAgentsDir.js'
+import { runAgent } from '@claude-code-best/builtin-tools/tools/AgentTool/runAgent.js'
 
 export type ResumeAgentResult = {
   agentId: string
@@ -161,7 +160,7 @@ export async function resumeAgentBackground({
     mode: selectedAgent.permissionMode ?? 'acceptEdits',
   }
   const workerTools = isResumedFork
-    ? filterParentToolsForFork(toolUseContext.options.tools)
+    ? toolUseContext.options.tools
     : assembleToolPool(workerPermissionContext, appState.mcp.tools)
 
   const runAgentParams: Parameters<typeof runAgent>[0] = {

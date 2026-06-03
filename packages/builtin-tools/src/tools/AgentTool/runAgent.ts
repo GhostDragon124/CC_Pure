@@ -27,6 +27,7 @@ import type {
 } from 'src/services/mcp/types.js'
 import type { Tool, Tools, ToolUseContext } from 'src/Tool.js'
 import { killShellTasksForAgent } from 'src/tasks/LocalShellTask/killShellTasks.js'
+import { killMonitorMcpTasksForAgent } from 'src/tasks/MonitorMcpTask/MonitorMcpTask.js'
 import type { Command } from 'src/types/command.js'
 import type { AgentId } from 'src/types/ids.js'
 import type {
@@ -85,11 +86,8 @@ import {
 } from 'src/utils/telemetry/perfettoTracing.js'
 import type { ContentReplacementState } from 'src/utils/toolResultStorage.js'
 import { createAgentId } from 'src/utils/uuid.js'
-import { resolveAgentTools } from './agentToolUtils.js'
-import { filterIncompleteToolCalls } from './filterIncompleteToolCalls.js'
-import { type AgentDefinition, isBuiltInAgent } from './loadAgentsDir.js'
-
-export { filterIncompleteToolCalls } from './filterIncompleteToolCalls.js'
+import { resolveAgentTools } from '@claude-code-best/builtin-tools/tools/AgentTool/agentToolUtils.js'
+import { type AgentDefinition, isBuiltInAgent } from '@claude-code-best/builtin-tools/tools/AgentTool/loadAgentsDir.js'
 
 /**
  * Initialize agent-specific MCP servers
@@ -767,7 +765,7 @@ export async function* runAgent({
       })
     : null
 
-  // Attach sub-agent trace to toolUseContext so query() reuses it
+  // Attach sub-agent trace to toolUseContext so query() reuses it.
   if (subTrace) {
     agentToolUseContext.langfuseTrace = subTrace
   }
@@ -842,7 +840,7 @@ export async function* runAgent({
       agentDefinition.callback()
     }
   } finally {
-    // End Langfuse sub-agent trace (no-op if not configured)
+    // End Langfuse sub-agent trace (no-op if not configured).
     endTrace(subTrace)
     // Clean up agent-specific MCP servers (runs on normal completion, abort, or error)
     await mcpCleanup()
@@ -875,18 +873,58 @@ export async function* runAgent({
     // `run_in_background` shell loop (e.g. test fixture fake-logs.sh) outlives
     // the agent as a PPID=1 zombie once the main session eventually exits.
     killShellTasksForAgent(agentId, toolUseContext.getAppState, rootSetAppState)
-    /* eslint-disable @typescript-eslint/no-require-imports */
     if (feature('MONITOR_TOOL')) {
-      const mcpMod =
-        require('src/tasks/MonitorMcpTask/MonitorMcpTask.js') as typeof import('src/tasks/MonitorMcpTask/MonitorMcpTask.js')
-      mcpMod.killMonitorMcpTasksForAgent(
+      killMonitorMcpTasksForAgent(
         agentId,
         toolUseContext.getAppState,
         rootSetAppState,
       )
     }
-    /* eslint-enable @typescript-eslint/no-require-imports */
   }
+}
+
+/**
+ * Filters out assistant messages with incomplete tool calls (tool uses without results).
+ * This prevents API errors when sending messages with orphaned tool calls.
+ */
+export function filterIncompleteToolCalls(messages: Message[]): Message[] {
+  // Build a set of tool use IDs that have results
+  const toolUseIdsWithResults = new Set<string>()
+
+  for (const message of messages) {
+    if (message?.type === 'user') {
+      const userMessage = message as UserMessage
+      const content = userMessage.message.content
+      if (Array.isArray(content)) {
+        for (const block of content) {
+          if (block.type === 'tool_result' && block.tool_use_id) {
+            toolUseIdsWithResults.add(block.tool_use_id)
+          }
+        }
+      }
+    }
+  }
+
+  // Filter out assistant messages that contain tool calls without results
+  return messages.filter(message => {
+    if (message?.type === 'assistant') {
+      const assistantMessage = message as AssistantMessage
+      const content = assistantMessage.message.content
+      if (Array.isArray(content)) {
+        // Check if this assistant message has any tool uses without results
+        const hasIncompleteToolCall = content.some(
+          block =>
+            block.type === 'tool_use' &&
+            block.id &&
+            !toolUseIdsWithResults.has(block.id),
+        )
+        // Exclude messages with incomplete tool calls
+        return !hasIncompleteToolCall
+      }
+    }
+    // Keep all non-assistant messages and assistant messages without tool calls
+    return true
+  })
 }
 
 async function getAgentSystemPrompt(

@@ -2,17 +2,19 @@ import { feature } from 'bun:bundle'
 import { getIsNonInteractiveSession } from 'src/bootstrap/state.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import { isEnvTruthy } from 'src/utils/envUtils.js'
-import { CLAUDE_CODE_GUIDE_AGENT } from './built-in/claudeCodeGuideAgent.js'
-import { EXPLORE_AGENT } from './built-in/exploreAgent.js'
-import { GENERAL_PURPOSE_AGENT } from './built-in/generalPurposeAgent.js'
-import { PLAN_AGENT } from './built-in/planAgent.js'
-import { STATUSLINE_SETUP_AGENT } from './built-in/statuslineSetup.js'
-import { VERIFICATION_AGENT } from './built-in/verificationAgent.js'
-import type { AgentDefinition } from './loadAgentsDir.js'
+import { CLAUDE_CODE_GUIDE_AGENT } from '@claude-code-best/builtin-tools/tools/AgentTool/built-in/claudeCodeGuideAgent.js'
+import { EXPLORE_AGENT } from '@claude-code-best/builtin-tools/tools/AgentTool/built-in/exploreAgent.js'
+import { GENERAL_PURPOSE_AGENT } from '@claude-code-best/builtin-tools/tools/AgentTool/built-in/generalPurposeAgent.js'
+import { PLAN_AGENT } from '@claude-code-best/builtin-tools/tools/AgentTool/built-in/planAgent.js'
+import { STATUSLINE_SETUP_AGENT } from '@claude-code-best/builtin-tools/tools/AgentTool/built-in/statuslineSetup.js'
+import { VERIFICATION_AGENT } from '@claude-code-best/builtin-tools/tools/AgentTool/built-in/verificationAgent.js'
+import type { AgentDefinition } from '@claude-code-best/builtin-tools/tools/AgentTool/loadAgentsDir.js'
 
 export function areExplorePlanAgentsEnabled(): boolean {
   if (feature('BUILTIN_EXPLORE_PLAN_AGENTS')) {
-    return true
+    // 3P default: true — Bedrock/Vertex keep agents enabled (matches pre-experiment
+    // external behavior). A/B test treatment sets false to measure impact of removal.
+    return getFeatureValue_CACHED_MAY_BE_STALE('tengu_amber_stoat', true)
   }
   return false
 }
