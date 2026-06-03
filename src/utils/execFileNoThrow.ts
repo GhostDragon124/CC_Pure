@@ -104,7 +104,9 @@ export function execFileNoThrowWithCwd(
   },
 ): Promise<{ stdout: string; stderr: string; code: number; error?: string }> {
   return new Promise(resolve => {
-    // Use execa for cross-platform .bat/.cmd compatibility on Windows
+    // Security: file must be a trusted value (known binary name); args passed
+    // as array prevent shell injection (no shell: true). The env parameter
+    // should not contain attacker-controlled PATH/LD_PRELOAD overrides.
     execa(file, args, {
       maxBuffer,
       cancelSignal: abortSignal,

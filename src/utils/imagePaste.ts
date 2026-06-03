@@ -190,6 +190,8 @@ export async function getImageFromClipboard(): Promise<ImageWithDimensions | nul
   const { commands, screenshotPath } = getClipboardCommands()
   try {
     // Check if clipboard has image
+    // Security: commands.checkImage is a fixed platform string (from
+    // getClipboardCommands()), not user-controllable input
     const checkResult = await execa(commands.checkImage, {
       shell: true,
       reject: false,
@@ -199,6 +201,7 @@ export async function getImageFromClipboard(): Promise<ImageWithDimensions | nul
     }
 
     // Save the image
+    // Security: commands.saveImage is a fixed platform string, not user-controllable
     const saveResult = await execa(commands.saveImage, {
       shell: true,
       reject: false,
@@ -233,6 +236,7 @@ export async function getImageFromClipboard(): Promise<ImageWithDimensions | nul
     const mediaType = detectImageFormatFromBase64(base64Image)
 
     // Cleanup (fire-and-forget, don't await)
+    // Security: commands.deleteFile is a fixed platform string, not user-controllable
     void execa(commands.deleteFile, { shell: true, reject: false })
 
     return {
@@ -250,6 +254,7 @@ export async function getImagePathFromClipboard(): Promise<string | null> {
 
   try {
     // Try to get text from clipboard
+    // Security: commands.getPath is a fixed platform string, not user-controllable
     const result = await execa(commands.getPath, {
       shell: true,
       reject: false,

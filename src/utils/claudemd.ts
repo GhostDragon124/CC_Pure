@@ -307,7 +307,8 @@ function stripHtmlCommentsFromTokens(tokens: ReturnType<Lexer['lex']>): {
   let result = ''
   let stripped = false
 
-  // A well-formed HTML comment span. Non-greedy so multiple comments on the
+  // Iteratively strip HTML comments until stable to prevent nested bypass
+  // (e.g. <!-- <!-- nested --> -->). Non-greedy so multiple comments on the
   // same line are matched independently; [\s\S] to span newlines.
   const commentSpan = /<!--[\s\S]*?-->/g
 
@@ -318,7 +319,12 @@ function stripHtmlCommentsFromTokens(tokens: ReturnType<Lexer['lex']>): {
         // Per CommonMark, a type-2 HTML block ends at the *line* containing
         // `-->`, so text after `-->` on that line is part of this token.
         // Strip only the comment spans and keep any residual content.
-        const residue = token.raw.replace(commentSpan, '')
+        let residue = token.raw
+        let prev = ''
+        while (residue !== prev) {
+          prev = residue
+          residue = residue.replace(commentSpan, '')
+        }
         stripped = true
         if (residue.trim().length > 0) {
           // Residual content exists (e.g. `<!-- note --> Use bun`): keep it.
@@ -505,7 +511,12 @@ function extractIncludePathsFromTokens(
         const trimmed = raw.trimStart()
         if (trimmed.startsWith('<!--') && trimmed.includes('-->')) {
           const commentSpan = /<!--[\s\S]*?-->/g
-          const residue = raw.replace(commentSpan, '')
+          let residue = raw
+          let prev = ''
+          while (residue !== prev) {
+            prev = residue
+            residue = residue.replace(commentSpan, '')
+          }
           if (residue.trim().length > 0) {
             extractPathsFromText(residue)
           }

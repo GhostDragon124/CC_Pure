@@ -5,13 +5,19 @@
 import he from 'he'
 
 export function stripHtmlToText(html: string): string {
+  // Iteratively strip script/style blocks until stable to prevent nested bypass
+  // (e.g. <<scr<script>ipt>...</script>)
+  let prev = ''
+  let content = html
+  const scriptStyleRegex = /<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi
+  while (content !== prev) {
+    prev = content
+    content = content.replace(scriptStyleRegex, '')
+  }
   return (
     he
       .decode(
-        html
-          // Remove script/style blocks and their content
-          .replace(/<script[\s\S]*?<\/script>/gi, '')
-          .replace(/<style[\s\S]*?<\/style>/gi, '')
+        content
           // Replace <br>, <p>, <li>, <tr> with newlines
           .replace(/<(br|p|li|tr)\b[^>]*\/?>/gi, '\n')
           // Replace </p>, </li>, </tr>, </div>, </h[1-6]> with newlines

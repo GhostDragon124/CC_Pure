@@ -6,20 +6,6 @@
 import { randomBytes } from 'crypto'
 import { tryParseShellCommand } from 'src/utils/bash/shellQuote.js'
 
-// BRE→ERE conversion placeholders (null-byte sentinels, never appear in user input)
-const BACKSLASH_PLACEHOLDER = '\x00BACKSLASH\x00'
-const PLUS_PLACEHOLDER = '\x00PLUS\x00'
-const QUESTION_PLACEHOLDER = '\x00QUESTION\x00'
-const PIPE_PLACEHOLDER = '\x00PIPE\x00'
-const LPAREN_PLACEHOLDER = '\x00LPAREN\x00'
-const RPAREN_PLACEHOLDER = '\x00RPAREN\x00'
-const BACKSLASH_PLACEHOLDER_RE = new RegExp(BACKSLASH_PLACEHOLDER, 'g')
-const PLUS_PLACEHOLDER_RE = new RegExp(PLUS_PLACEHOLDER, 'g')
-const QUESTION_PLACEHOLDER_RE = new RegExp(QUESTION_PLACEHOLDER, 'g')
-const PIPE_PLACEHOLDER_RE = new RegExp(PIPE_PLACEHOLDER, 'g')
-const LPAREN_PLACEHOLDER_RE = new RegExp(LPAREN_PLACEHOLDER, 'g')
-const RPAREN_PLACEHOLDER_RE = new RegExp(RPAREN_PLACEHOLDER, 'g')
-
 export type SedEditInfo = {
   /** The file path being edited */
   filePath: string
@@ -272,29 +258,68 @@ export function applySedSubstitution(
   // BRE: \+ means "one or more", + is literal
   // ERE/JS: + means "one or more", \+ is literal
   // We need to convert BRE escaping to ERE for JavaScript regex
+  //
+  // Use a single-pass character-by-character scan instead of chained
+  // replacements to avoid CodeQL incomplete-sanitization warnings.
   if (!sedInfo.extendedRegex) {
-    jsPattern = jsPattern
-      // Step 1: Protect literal backslashes (\\) first - in both BRE and ERE, \\ is literal backslash
-      .replace(/\\\\/g, BACKSLASH_PLACEHOLDER)
-      // Step 2: Replace escaped metacharacters with placeholders (these should become unescaped in JS)
-      .replace(/\\\+/g, PLUS_PLACEHOLDER)
-      .replace(/\\\?/g, QUESTION_PLACEHOLDER)
-      .replace(/\\\|/g, PIPE_PLACEHOLDER)
-      .replace(/\\\(/g, LPAREN_PLACEHOLDER)
-      .replace(/\\\)/g, RPAREN_PLACEHOLDER)
-      // Step 3: Escape unescaped metacharacters (these are literal in BRE)
-      .replace(/\+/g, '\\+')
-      .replace(/\?/g, '\\?')
-      .replace(/\|/g, '\\|')
-      .replace(/\(/g, '\\(')
-      .replace(/\)/g, '\\)')
-      // Step 4: Replace placeholders with their JS equivalents
-      .replace(BACKSLASH_PLACEHOLDER_RE, '\\\\')
-      .replace(PLUS_PLACEHOLDER_RE, '+')
-      .replace(QUESTION_PLACEHOLDER_RE, '?')
-      .replace(PIPE_PLACEHOLDER_RE, '|')
-      .replace(LPAREN_PLACEHOLDER_RE, '(')
-      .replace(RPAREN_PLACEHOLDER_RE, ')')
+    let result = ''
+    let i = 0
+    const chars = [...jsPattern]
+    while (i < chars.length) {
+      const ch = chars[i]!
+      if (ch === '\\' && i + 1 < chars.length) {
+        const next = chars[i + 1]!
+        if (next === '\\') {
+          // \\\\ → literal backslash (same in both BRE and ERE)
+          result += '\\\\'
+          i += 2
+        } else if (next === '+') {
+          // \+ (BRE: one-or-more) → + (ERE: one-or-more, unescape)
+          result += '+'
+          i += 2
+        } else if (next === '?') {
+          // \? (BRE: optional) → ? (ERE: optional)
+          result += '?'
+          i += 2
+        } else if (next === '|') {
+          // \| (BRE: alternation) → | (ERE: alternation)
+          result += '|'
+          i += 2
+        } else if (next === '(') {
+          // \( (BRE: group start) → ( (ERE: group start)
+          result += '('
+          i += 2
+        } else if (next === ')') {
+          // \) (BRE: group end) → ) (ERE: group end)
+          result += ')'
+          i += 2
+        } else {
+          // Other escaped character: keep as-is
+          result += ch + next
+          i += 2
+        }
+      } else if (ch === '+') {
+        // + is literal in BRE → escape for ERE/JS
+        result += '\\+'
+        i++
+      } else if (ch === '?') {
+        result += '\\?'
+        i++
+      } else if (ch === '|') {
+        result += '\\|'
+        i++
+      } else if (ch === '(') {
+        result += '\\('
+        i++
+      } else if (ch === ')') {
+        result += '\\)'
+        i++
+      } else {
+        result += ch
+        i++
+      }
+    }
+    jsPattern = result
   }
 
   // Unescape sed-specific escapes in replacement

@@ -69,6 +69,9 @@ export function execSyncWithDefaults_DEPRECATED(
   abortSignal?.throwIfAborted()
   using _ = slowLogging`exec: ${command.slice(0, 200)}`
   try {
+    // DEPRECATED: caller is responsible for sanitizing shell metacharacters
+    // in the command argument. This function uses shell: true which can lead
+    // to command injection if command contains untrusted input.
     const result = (execaSync as any)(command, {
       env: process.env,
       maxBuffer: 1_000_000,

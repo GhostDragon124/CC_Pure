@@ -92,14 +92,32 @@ export function extractDebugCategories(message: string): string[] {
 
   // Pattern 5: Look for secondary categories after the first pattern
   // e.g., "AutoUpdaterWrapper: Installation type: development"
-  const secondaryMatch = message.match(
-    /:\s*([^:]+?)(?:\s+(?:type|mode|status|event))?:/,
-  )
-  if (secondaryMatch && secondaryMatch[1]) {
-    const secondary = secondaryMatch[1].trim().toLowerCase()
-    // Only add if it's a reasonable category name (not too long, no spaces)
-    if (secondary.length < 30 && !secondary.includes(' ')) {
-      categories.push(secondary)
+  // Security (ReDoS): avoid nested optional quantifiers; use two separate
+  // linear-match patterns instead of one combined optional-group regex.
+  // Also limit input length to prevent pathological backtracking on long strings.
+  if (message.length <= 500) {
+    // First try keyword-filtered match (requires type/mode/status/event keyword)
+    const keywordMatch = message.match(
+      /:\s*([^:]+?)\s+(?:type|mode|status|event):/,
+    )
+    if (keywordMatch && keywordMatch[1]) {
+      const secondary = keywordMatch[1].trim().toLowerCase()
+      // Only add if it's a reasonable category name (not too long, no spaces)
+      if (secondary.length < 30 && !secondary.includes(' ')) {
+        categories.push(secondary)
+      }
+    } else {
+      // Fallback: match any "key: value" pattern without keyword filter.
+      // This replaces the optional keyword-group pattern which caused O(n²)
+      // backtracking. The `:` after the capture is required, so no alternatives
+      // exist for the engine to backtrack into.
+      const fallbackMatch = message.match(/:\s*([^:]+?):/)
+      if (fallbackMatch && fallbackMatch[1]) {
+        const secondary = fallbackMatch[1].trim().toLowerCase()
+        if (secondary.length < 30 && !secondary.includes(' ')) {
+          categories.push(secondary)
+        }
+      }
     }
   }
 

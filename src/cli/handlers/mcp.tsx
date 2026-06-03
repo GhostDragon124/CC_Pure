@@ -279,6 +279,9 @@ export async function mcpGetHandler(name: string): Promise<void> {
       if (server.oauth.callbackPort)
         parts.push(`callback_port ${server.oauth.callbackPort}`)
       // biome-ignore lint/suspicious/noConsole:: intentional console output
+      // Security: OAuth status strings are informational (configured/not-configured
+      // state checks), not actual secret values. Real secrets are redacted via
+      // redactValue on the headers/env fields above.
       console.log(`  OAuth: ${parts.join(', ')}`)
     }
   } else if (server.type === 'http') {
@@ -304,6 +307,9 @@ export async function mcpGetHandler(name: string): Promise<void> {
       if (server.oauth.callbackPort)
         parts.push(`callback_port ${server.oauth.callbackPort}`)
       // biome-ignore lint/suspicious/noConsole:: intentional console output
+      // Security: OAuth status strings are informational (configured/not-configured
+      // state checks), not actual secret values. Real secrets are redacted via
+      // redactValue on the headers/env fields above.
       console.log(`  OAuth: ${parts.join(', ')}`)
     }
   } else if (server.type === 'stdio') {

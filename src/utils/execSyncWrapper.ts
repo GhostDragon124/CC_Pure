@@ -34,5 +34,8 @@ export function execSync_DEPRECATED(
   options?: ExecSyncOptions,
 ): Buffer | string {
   using _ = slowLogging`execSync: ${command.slice(0, 100)}`
+  // Security: callers must ensure command arguments are from trusted sources.
+  // This wrapper uses child_process.execSync which invokes a shell and can
+  // lead to command injection if command contains untrusted input.
   return nodeExecSync(command, options)
 }

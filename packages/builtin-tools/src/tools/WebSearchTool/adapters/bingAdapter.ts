@@ -208,7 +208,14 @@ export function resolveBingUrl(rawUrl: string): string | undefined {
   }
 
   // Direct external URL (not a Bing-internal page)
-  if (!rawUrl.includes('bing.com')) return rawUrl
+  // Use proper URL parsing rather than substring matching to prevent bypass
+  try {
+    const parsed = new URL(rawUrl)
+    if (!parsed.hostname.includes('bing.com')) return rawUrl
+  } catch {
+    // Invalid URL — treat as non-external
+    return undefined
+  }
 
   return undefined
 }
