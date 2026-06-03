@@ -106,6 +106,32 @@ export function isBlockedOfficialName(name: string): boolean {
  */
 export const OFFICIAL_GITHUB_ORG = 'anthropics'
 
+function isOfficialGitHubOrgUrl(urlString: string): boolean {
+  try {
+    const url = new URL(urlString)
+    const hostname = url.hostname.toLowerCase()
+    const pathname = url.pathname.toLowerCase()
+
+    if (hostname !== 'github.com') {
+      return false
+    }
+
+    return pathname.startsWith(`/${OFFICIAL_GITHUB_ORG}/`)
+  } catch {
+    const sshMatch = urlString.match(/^git@([^:]+):(.+)$/i)
+    if (!sshMatch) {
+      return false
+    }
+
+    const hostname = sshMatch[1]?.toLowerCase()
+    const pathname = sshMatch[2]?.toLowerCase()
+    return (
+      hostname === 'github.com' &&
+      pathname?.startsWith(`${OFFICIAL_GITHUB_ORG}/`) === true
+    )
+  }
+}
+
 /**
  * Validate that a marketplace with a reserved name comes from the official source.
  *
@@ -139,13 +165,7 @@ export function validateOfficialNameSource(
 
   // Check for git URL source type
   if (source.source === 'git' && source.url) {
-    const url = source.url.toLowerCase()
-    // Check for HTTPS URL format: https://github.com/anthropics/...
-    // or SSH format: git@github.com:anthropics/...
-    const isHttpsAnthropics = url.includes('github.com/anthropics/')
-    const isSshAnthropics = url.includes('git@github.com:anthropics/')
-
-    if (isHttpsAnthropics || isSshAnthropics) {
+    if (isOfficialGitHubOrgUrl(source.url)) {
       return null // Valid: reserved name from official git URL
     }
 

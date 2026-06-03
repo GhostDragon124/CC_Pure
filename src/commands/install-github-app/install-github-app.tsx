@@ -11,6 +11,7 @@ import { type KeyboardEvent, Box } from '@anthropic/ink'
 import type { LocalJSXCommandOnDone } from '../../types/command.js'
 import { getAnthropicApiKey, isAnthropicAuthEnabled } from '../../utils/auth.js'
 import { openBrowser } from '../../utils/browser.js'
+import { OFFICIAL_GITHUB_ORG } from '../../utils/plugins/schemas.js'
 import { execFileNoThrow } from '../../utils/execFileNoThrow.js'
 import { getGithubRepo } from '../../utils/git.js'
 import { plural } from '../../utils/stringUtils.js'
@@ -27,6 +28,61 @@ import { SuccessStep } from './SuccessStep.js'
 import { setupGitHubActions } from './setupGitHubActions.js'
 import type { State, Warning, Workflow } from './types.js'
 import { WarningsStep } from './WarningsStep.js'
+
+type ParsedGitHubRepoUrl =
+  | { ok: true; repoName: string }
+  | { ok: false }
+
+function parsedGitHubRepoFromParts(
+  owner: string | undefined,
+  repo: string | undefined,
+): ParsedGitHubRepoUrl {
+  const normalizedRepo = repo?.replace(/\.git$/i, '')
+  if (!owner || !normalizedRepo) {
+    return { ok: false }
+  }
+
+  return { ok: true, repoName: `${owner}/${normalizedRepo}` }
+}
+
+function parseGitHubRepoUrl(repoName: string): ParsedGitHubRepoUrl | null {
+  let url: URL
+
+  try {
+    url = new URL(repoName)
+  } catch {
+    return null
+  }
+
+  const hostname = url.hostname.toLowerCase()
+  if (!hostname) {
+    const sshMatch = repoName.match(/^git@([^:]+):([^/]+)\/([^/]+)$/i)
+    if (!sshMatch) {
+      return null
+    }
+
+    if (sshMatch[1]?.toLowerCase() !== 'github.com') {
+      return { ok: false }
+    }
+
+    return parsedGitHubRepoFromParts(sshMatch[2], sshMatch[3])
+  }
+
+  if (hostname !== 'github.com') {
+    return { ok: false }
+  }
+
+  if (url.search || url.hash) {
+    return { ok: false }
+  }
+
+  const pathParts = url.pathname.split('/').filter(Boolean)
+  if (pathParts.length !== 2) {
+    return { ok: false }
+  }
+
+  return parsedGitHubRepoFromParts(pathParts[0], pathParts[1])
+}
 
 const INITIAL_STATE: State = {
   step: 'check-gh',
@@ -363,19 +419,19 @@ function InstallGitHubApp(props: {
 
       const repoWarnings: Warning[] = []
 
-      if (repoName.includes('github.com')) {
-        const match = repoName.match(/github\.com[:/]([^/]+\/[^/]+)(\.git)?$/)
-        if (!match) {
+      const parsedGitHubRepoUrl = parseGitHubRepoUrl(repoName)
+      if (parsedGitHubRepoUrl) {
+        if (!parsedGitHubRepoUrl.ok) {
           repoWarnings.push({
             title: 'Invalid GitHub URL format',
             message: 'The repository URL format appears to be invalid.',
             instructions: [
               'Use format: owner/repo or https://github.com/owner/repo',
-              'Example: anthropics/claude-cli',
+              `Example: ${OFFICIAL_GITHUB_ORG}/claude-cli`,
             ],
           })
         } else {
-          repoName = match[1]?.replace(/\.git$/, '') || ''
+          repoName = parsedGitHubRepoUrl.repoName
         }
       }
 
@@ -385,7 +441,7 @@ function InstallGitHubApp(props: {
           message: 'Repository should be in format "owner/repo"',
           instructions: [
             'Use format: owner/repo',
-            'Example: anthropics/claude-cli',
+            `Example: ${OFFICIAL_GITHUB_ORG}/claude-cli`,
           ],
         })
       }
