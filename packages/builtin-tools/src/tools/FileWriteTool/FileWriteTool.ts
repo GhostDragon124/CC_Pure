@@ -27,7 +27,10 @@ import {
 import { logFileOperation } from 'src/utils/fileOperationAnalytics.js'
 import { readFileSyncWithMetadata } from 'src/utils/fileRead.js'
 import { getFsImplementation } from 'src/utils/fsOperations.js'
-import { fetchSingleFileGitDiff, type ToolUseDiff } from 'src/utils/gitDiff.js'
+import {
+  fetchSingleFileGitDiff,
+  type ToolUseDiff,
+} from 'src/utils/gitDiff.js'
 import { lazySchema } from 'src/utils/lazySchema.js'
 import { logError } from 'src/utils/log.js'
 import { expandPath } from 'src/utils/path.js'
@@ -37,9 +40,9 @@ import {
 } from 'src/utils/permissions/filesystem.js'
 import type { PermissionDecision } from 'src/utils/permissions/PermissionResult.js'
 import { matchWildcardPattern } from 'src/utils/permissions/shellRuleMatching.js'
-import { FILE_UNEXPECTEDLY_MODIFIED_ERROR } from '../FileEditTool/constants.js'
-import { gitDiffSchema, hunkSchema } from '../FileEditTool/types.js'
-import { FILE_WRITE_TOOL_NAME, getWriteToolDescription } from './prompt.js'
+import { FILE_UNEXPECTEDLY_MODIFIED_ERROR } from '@claude-code-best/builtin-tools/tools/FileEditTool/constants.js'
+import { gitDiffSchema, hunkSchema } from '@claude-code-best/builtin-tools/tools/FileEditTool/types.js'
+import { FILE_WRITE_TOOL_NAME, getWriteToolDescription } from '@claude-code-best/builtin-tools/tools/FileWriteTool/prompt.js'
 import {
   getToolUseSummary,
   isResultTruncated,
@@ -48,7 +51,7 @@ import {
   renderToolUseMessage,
   renderToolUseRejectedMessage,
   userFacingName,
-} from './UI.js'
+} from '@claude-code-best/builtin-tools/tools/FileWriteTool/UI.js'
 
 const inputSchema = lazySchema(() =>
   z.strictObject({
@@ -193,18 +196,25 @@ export const FileWriteTool = buildTool({
     }
 
     const readTimestamp = toolUseContext.readFileState.get(fullFilePath)
+    if (!readTimestamp || readTimestamp.isPartialView) {
+      return {
+        result: false,
+        message:
+          'File has not been read yet. Read it first before writing to it.',
+        errorCode: 2,
+      }
+    }
 
     // Reuse mtime from the stat above — avoids a redundant statSync via
-    // getFileModificationTime.
-    if (readTimestamp) {
-      const lastWriteTime = Math.floor(fileMtimeMs)
-      if (lastWriteTime > readTimestamp.timestamp) {
-        return {
-          result: false,
-          message:
-            'File has been modified since read, either by the user or by a linter. Read it again before attempting to write it.',
-          errorCode: 3,
-        }
+    // getFileModificationTime. The readTimestamp guard above ensures this
+    // block is always reached when the file exists.
+    const lastWriteTime = Math.floor(fileMtimeMs)
+    if (lastWriteTime > readTimestamp.timestamp) {
+      return {
+        result: false,
+        message:
+          'File has been modified since read, either by the user or by a linter. Read it again before attempting to write it.',
+        errorCode: 3,
       }
     }
 

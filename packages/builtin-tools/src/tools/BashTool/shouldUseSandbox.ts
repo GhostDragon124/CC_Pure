@@ -8,7 +8,7 @@ import {
   matchWildcardPattern,
   stripAllLeadingEnvVars,
   stripSafeWrappers,
-} from './bashPermissions.js'
+} from '@claude-code-best/builtin-tools/tools/BashTool/bashPermissions.js'
 
 type SandboxInput = {
   command?: string

@@ -36,7 +36,10 @@ import {
 } from 'src/utils/fileRead.js'
 import { formatFileSize } from 'src/utils/format.js'
 import { getFsImplementation } from 'src/utils/fsOperations.js'
-import { fetchSingleFileGitDiff, type ToolUseDiff } from 'src/utils/gitDiff.js'
+import {
+  fetchSingleFileGitDiff,
+  type ToolUseDiff,
+} from 'src/utils/gitDiff.js'
 import { logError } from 'src/utils/log.js'
 import { expandPath } from 'src/utils/path.js'
 import {
@@ -46,18 +49,18 @@ import {
 import type { PermissionDecision } from 'src/utils/permissions/PermissionResult.js'
 import { matchWildcardPattern } from 'src/utils/permissions/shellRuleMatching.js'
 import { validateInputForSettingsFileEdit } from 'src/utils/settings/validateEditTool.js'
-import { NOTEBOOK_EDIT_TOOL_NAME } from '../NotebookEditTool/constants.js'
+import { NOTEBOOK_EDIT_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/NotebookEditTool/constants.js'
 import {
   FILE_EDIT_TOOL_NAME,
   FILE_UNEXPECTEDLY_MODIFIED_ERROR,
-} from './constants.js'
-import { getEditToolDescription } from './prompt.js'
+} from '@claude-code-best/builtin-tools/tools/FileEditTool/constants.js'
+import { getEditToolDescription } from '@claude-code-best/builtin-tools/tools/FileEditTool/prompt.js'
 import {
   type FileEditInput,
   type FileEditOutput,
   inputSchema,
   outputSchema,
-} from './types.js'
+} from '@claude-code-best/builtin-tools/tools/FileEditTool/types.js'
 import {
   getToolUseSummary,
   renderToolResultMessage,
@@ -65,12 +68,13 @@ import {
   renderToolUseMessage,
   renderToolUseRejectedMessage,
   userFacingName,
-} from './UI.js'
+} from '@claude-code-best/builtin-tools/tools/FileEditTool/UI.js'
 import {
   areFileEditsInputsEquivalent,
   findActualString,
   getPatchForEdit,
-} from './utils.js'
+  preserveQuoteStyle,
+} from '@claude-code-best/builtin-tools/tools/FileEditTool/utils.js'
 
 // V8/Bun string length limit is ~2^30 characters (~1 billion). For typical
 // ASCII/Latin-1 files, 1 byte on disk = 1 character, so 1 GiB in stat bytes
@@ -269,6 +273,18 @@ export const FileEditTool = buildTool({
     }
 
     const readTimestamp = toolUseContext.readFileState.get(fullFilePath)
+    if (!readTimestamp || readTimestamp.isPartialView) {
+      return {
+        result: false,
+        behavior: 'ask',
+        message:
+          'File has not been read yet. Read it first before writing to it.',
+        meta: {
+          isFilePathAbsolute: String(isAbsolute(file_path)),
+        },
+        errorCode: 6,
+      }
+    }
 
     // Check if file exists and get its last modified time
     if (readTimestamp) {
@@ -296,7 +312,7 @@ export const FileEditTool = buildTool({
 
     const file = fileContent
 
-    // Use findActualString to find exact match
+    // Use findActualString to handle quote normalization
     const actualOldString = findActualString(file, old_string)
     if (!actualOldString) {
       return {
@@ -451,16 +467,23 @@ export const FileEditTool = buildTool({
       }
     }
 
-    // 3. Find the exact string in file content
+    // 3. Use findActualString to handle quote normalization
     const actualOldString =
       findActualString(originalFileContents, old_string) || old_string
+
+    // Preserve curly quotes in new_string when the file uses them
+    const actualNewString = preserveQuoteStyle(
+      old_string,
+      actualOldString,
+      new_string,
+    )
 
     // 4. Generate patch
     const { patch, updatedFile } = getPatchForEdit({
       filePath: absoluteFilePath,
       fileContents: originalFileContents,
       oldString: actualOldString,
-      newString: new_string,
+      newString: actualNewString,
       replaceAll: replace_all,
     })
 
