@@ -4,7 +4,7 @@ import { isVoiceGrowthBookEnabled } from '../../voice/voiceModeEnabled.js'
 import {
   getOptionsForSetting,
   SUPPORTED_SETTINGS,
-} from './supportedSettings.js'
+} from '@claude-code-best/builtin-tools/tools/ConfigTool/supportedSettings.js'
 
 export const DESCRIPTION = 'Get or set Claude Code configuration settings.'
 

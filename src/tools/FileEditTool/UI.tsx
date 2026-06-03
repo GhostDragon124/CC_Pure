@@ -19,12 +19,12 @@ import { getPlansDirectory } from '../../utils/plans.js'
 import { readEditContext } from '../../utils/readEditContext.js'
 import { firstLineOf } from '../../utils/stringUtils.js'
 import type { ThemeName } from '../../utils/theme.js'
-import type { FileEditOutput } from './types.js'
+import type { FileEditOutput } from '@claude-code-best/builtin-tools/tools/FileEditTool/types.js'
 import {
   findActualString,
   getPatchForEdit,
   preserveQuoteStyle,
-} from './utils.js'
+} from '@claude-code-best/builtin-tools/tools/FileEditTool/utils.js'
 
 export function userFacingName(
   input:

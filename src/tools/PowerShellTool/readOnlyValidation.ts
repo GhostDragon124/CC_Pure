@@ -27,7 +27,7 @@ import {
   GIT_READ_ONLY_COMMANDS,
   validateFlags,
 } from '../../utils/shell/readOnlyCommandValidation.js'
-import { COMMON_PARAMETERS } from './commonParameters.js'
+import { COMMON_PARAMETERS } from '@claude-code-best/builtin-tools/tools/PowerShellTool/commonParameters.js'
 
 const DOTNET_READ_ONLY_FLAGS = new Set([
   '--version',

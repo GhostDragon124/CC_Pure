@@ -47,10 +47,10 @@ import type {
   outputSchema,
   Progress,
   RemoteLaunchedOutput,
-} from './AgentTool.js'
-import { inputSchema } from './AgentTool.js'
-import { getAgentColor } from './agentColorManager.js'
-import { GENERAL_PURPOSE_AGENT } from './built-in/generalPurposeAgent.js'
+} from '@claude-code-best/builtin-tools/tools/AgentTool/AgentTool.js'
+import { inputSchema } from '@claude-code-best/builtin-tools/tools/AgentTool/AgentTool.js'
+import { getAgentColor } from '@claude-code-best/builtin-tools/tools/AgentTool/agentColorManager.js'
+import { GENERAL_PURPOSE_AGENT } from '@claude-code-best/builtin-tools/tools/AgentTool/built-in/generalPurposeAgent.js'
 import { BetaUsage } from '@anthropic-ai/sdk/resources/beta.mjs'
 
 const MAX_PROGRESS_MESSAGES_TO_SHOW = 3

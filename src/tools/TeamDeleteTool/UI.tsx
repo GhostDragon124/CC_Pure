@@ -1,6 +1,6 @@
 import React from 'react'
 import { jsonParse } from '../../utils/slowOperations.js'
-import type { Output } from './TeamDeleteTool.js'
+import type { Output } from '@claude-code-best/builtin-tools/tools/TeamDeleteTool/TeamDeleteTool.js'
 
 export function renderToolUseMessage(
   _input: Record<string, unknown>,

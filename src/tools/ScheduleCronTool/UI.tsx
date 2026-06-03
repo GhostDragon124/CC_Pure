@@ -2,9 +2,9 @@ import React from 'react'
 import { MessageResponse } from '../../components/MessageResponse.js'
 import { Text } from '@anthropic/ink'
 import { truncate } from '../../utils/format.js'
-import type { CreateOutput } from './CronCreateTool.js'
-import type { DeleteOutput } from './CronDeleteTool.js'
-import type { ListOutput } from './CronListTool.js'
+import type { CreateOutput } from '@claude-code-best/builtin-tools/tools/ScheduleCronTool/CronCreateTool.js'
+import type { DeleteOutput } from '@claude-code-best/builtin-tools/tools/ScheduleCronTool/CronDeleteTool.js'
+import type { ListOutput } from '@claude-code-best/builtin-tools/tools/ScheduleCronTool/CronListTool.js'
 
 // --- CronCreate -------------------------------------------------------------
 

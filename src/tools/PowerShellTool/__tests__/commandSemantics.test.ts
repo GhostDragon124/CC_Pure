@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { interpretCommandResult } from "../commandSemantics";
+import { interpretCommandResult } from "@claude-code-best/builtin-tools/tools/PowerShellTool/commandSemantics";
 
 describe("interpretCommandResult", () => {
   describe("grep / rg", () => {

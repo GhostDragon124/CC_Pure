@@ -19,8 +19,8 @@ import {
   DEFAULT_MAX_AGE_DAYS,
   isDurableCronEnabled,
   isKairosCronEnabled,
-} from './prompt.js'
-import { renderCreateResultMessage, renderCreateToolUseMessage } from './UI.js'
+} from '@claude-code-best/builtin-tools/tools/ScheduleCronTool/prompt.js'
+import { renderCreateResultMessage, renderCreateToolUseMessage } from '@claude-code-best/builtin-tools/tools/ScheduleCronTool/UI.js'
 
 const MAX_JOBS = 50
 

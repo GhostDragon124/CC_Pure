@@ -17,15 +17,15 @@ import { parseCellId } from '../../utils/notebook.js'
 import { checkWritePermissionForTool } from '../../utils/permissions/filesystem.js'
 import type { PermissionDecision } from '../../utils/permissions/PermissionResult.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
-import { NOTEBOOK_EDIT_TOOL_NAME } from './constants.js'
-import { DESCRIPTION, PROMPT } from './prompt.js'
+import { NOTEBOOK_EDIT_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/NotebookEditTool/constants.js'
+import { DESCRIPTION, PROMPT } from '@claude-code-best/builtin-tools/tools/NotebookEditTool/prompt.js'
 import {
   getToolUseSummary,
   renderToolResultMessage,
   renderToolUseErrorMessage,
   renderToolUseMessage,
   renderToolUseRejectedMessage,
-} from './UI.js'
+} from '@claude-code-best/builtin-tools/tools/NotebookEditTool/UI.js'
 
 export const inputSchema = lazySchema(() =>
   z.strictObject({

@@ -20,9 +20,9 @@ import {
   isDangerousRemovalPath,
   validatePath,
 } from '../../utils/permissions/pathValidation.js'
-import type { BashTool } from './BashTool.js'
-import { stripSafeWrappers } from './bashPermissions.js'
-import { sedCommandIsAllowedByAllowlist } from './sedValidation.js'
+import type { BashTool } from '@claude-code-best/builtin-tools/tools/BashTool/BashTool.js'
+import { stripSafeWrappers } from '@claude-code-best/builtin-tools/tools/BashTool/bashPermissions.js'
+import { sedCommandIsAllowedByAllowlist } from '@claude-code-best/builtin-tools/tools/BashTool/sedValidation.js'
 
 export type PathCommand =
   | 'cd'

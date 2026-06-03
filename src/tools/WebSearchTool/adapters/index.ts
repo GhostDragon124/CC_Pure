@@ -4,11 +4,11 @@
  */
 
 import { isFirstPartyAnthropicBaseUrl } from '../../../utils/model/providers.js'
-import { ApiSearchAdapter } from './apiAdapter.js'
-import { BingSearchAdapter } from './bingAdapter.js'
-import type { WebSearchAdapter } from './types.js'
+import { ApiSearchAdapter } from '@claude-code-best/builtin-tools/tools/WebSearchTool/adapters/apiAdapter.js'
+import { BingSearchAdapter } from '@claude-code-best/builtin-tools/tools/WebSearchTool/adapters/bingAdapter.js'
+import type { WebSearchAdapter } from '@claude-code-best/builtin-tools/tools/WebSearchTool/adapters/types.js'
 
-export type { SearchResult, SearchOptions, SearchProgress, WebSearchAdapter } from './types.js'
+export type { SearchResult, SearchOptions, SearchProgress, WebSearchAdapter } from '@claude-code-best/builtin-tools/tools/WebSearchTool/adapters/types.js'
 
 let cachedAdapter: WebSearchAdapter | null = null
 

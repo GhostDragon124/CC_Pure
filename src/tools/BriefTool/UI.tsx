@@ -7,7 +7,7 @@ import type { ProgressMessage } from '../../types/message.js'
 import { getDisplayPath } from '../../utils/file.js'
 import { formatFileSize } from '../../utils/format.js'
 import { formatBriefTimestamp } from '../../utils/formatBriefTimestamp.js'
-import type { Output } from './BriefTool.js'
+import type { Output } from '@claude-code-best/builtin-tools/tools/BriefTool/BriefTool.js'
 
 export function renderToolUseMessage(): React.ReactNode {
   return ''

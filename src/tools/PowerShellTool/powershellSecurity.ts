@@ -25,7 +25,7 @@ import {
   getVariablesByScope,
   hasCommandNamed,
 } from '../../utils/powershell/parser.js'
-import { isClmAllowedType } from './clmTypes.js'
+import { isClmAllowedType } from '@claude-code-best/builtin-tools/tools/PowerShellTool/clmTypes.js'
 
 type PowerShellSecurityResult = {
   behavior: 'passthrough' | 'ask' | 'allow'

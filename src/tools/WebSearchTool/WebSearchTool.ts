@@ -3,14 +3,14 @@ import { z } from 'zod/v4'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { createAdapter } from './adapters/index.js'
-import { getWebSearchPrompt, WEB_SEARCH_TOOL_NAME } from './prompt.js'
+import { createAdapter } from '@claude-code-best/builtin-tools/tools/WebSearchTool/adapters/index.js'
+import { getWebSearchPrompt, WEB_SEARCH_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/WebSearchTool/prompt.js'
 import {
   getToolUseSummary,
   renderToolResultMessage,
   renderToolUseMessage,
   renderToolUseProgressMessage,
-} from './UI.js'
+} from '@claude-code-best/builtin-tools/tools/WebSearchTool/UI.js'
 
 const inputSchema = lazySchema(() =>
   z.strictObject({

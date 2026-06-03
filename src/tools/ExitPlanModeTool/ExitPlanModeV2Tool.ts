@@ -38,15 +38,15 @@ import {
   isTeammate,
 } from '../../utils/teammate.js'
 import { writeToMailbox } from '../../utils/teammateMailbox.js'
-import { AGENT_TOOL_NAME } from '../AgentTool/constants.js'
-import { TEAM_CREATE_TOOL_NAME } from '../TeamCreateTool/constants.js'
-import { EXIT_PLAN_MODE_V2_TOOL_NAME } from './constants.js'
-import { EXIT_PLAN_MODE_V2_TOOL_PROMPT } from './prompt.js'
+import { AGENT_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/AgentTool/constants.js'
+import { TEAM_CREATE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TeamCreateTool/constants.js'
+import { EXIT_PLAN_MODE_V2_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/ExitPlanModeTool/constants.js'
+import { EXIT_PLAN_MODE_V2_TOOL_PROMPT } from '@claude-code-best/builtin-tools/tools/ExitPlanModeTool/prompt.js'
 import {
   renderToolResultMessage,
   renderToolUseMessage,
   renderToolUseRejectedMessage,
-} from './UI.js'
+} from '@claude-code-best/builtin-tools/tools/ExitPlanModeTool/UI.js'
 import * as autoModeStateModuleValue from '../../utils/permissions/autoModeState.js'
 import * as permissionSetupModuleValue from '../../utils/permissions/permissionSetup.js'
 

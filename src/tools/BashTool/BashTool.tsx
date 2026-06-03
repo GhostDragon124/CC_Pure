@@ -74,24 +74,24 @@ import {
   getToolResultPath,
   PREVIEW_SIZE_BYTES,
 } from '../../utils/toolResultStorage.js'
-import { userFacingName as fileEditUserFacingName } from '../FileEditTool/UI.js'
-import { trackGitOperations } from '../shared/gitOperationTracking.js'
+import { userFacingName as fileEditUserFacingName } from '@claude-code-best/builtin-tools/tools/FileEditTool/UI.js'
+import { trackGitOperations } from '@claude-code-best/builtin-tools/tools/shared/gitOperationTracking.js'
 import {
   bashToolHasPermission,
   commandHasAnyCd,
   matchWildcardPattern,
   permissionRuleExtractPrefix,
-} from './bashPermissions.js'
-import { interpretCommandResult } from './commandSemantics.js'
+} from '@claude-code-best/builtin-tools/tools/BashTool/bashPermissions.js'
+import { interpretCommandResult } from '@claude-code-best/builtin-tools/tools/BashTool/commandSemantics.js'
 import {
   getDefaultTimeoutMs,
   getMaxTimeoutMs,
   getSimplePrompt,
-} from './prompt.js'
-import { checkReadOnlyConstraints } from './readOnlyValidation.js'
-import { parseSedEditCommand } from './sedEditParser.js'
-import { shouldUseSandbox } from './shouldUseSandbox.js'
-import { BASH_TOOL_NAME } from './toolName.js'
+} from '@claude-code-best/builtin-tools/tools/BashTool/prompt.js'
+import { checkReadOnlyConstraints } from '@claude-code-best/builtin-tools/tools/BashTool/readOnlyValidation.js'
+import { parseSedEditCommand } from '@claude-code-best/builtin-tools/tools/BashTool/sedEditParser.js'
+import { shouldUseSandbox } from '@claude-code-best/builtin-tools/tools/BashTool/shouldUseSandbox.js'
+import { BASH_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/BashTool/toolName.js'
 import {
   BackgroundHint,
   renderToolResultMessage,
@@ -99,7 +99,7 @@ import {
   renderToolUseMessage,
   renderToolUseProgressMessage,
   renderToolUseQueuedMessage,
-} from './UI.js'
+} from '@claude-code-best/builtin-tools/tools/BashTool/UI.js'
 import {
   buildImageToolResult,
   isImageOutput,
@@ -107,7 +107,7 @@ import {
   resizeShellImageOutput,
   stdErrAppendShellResetMessage,
   stripEmptyLines,
-} from './utils.js'
+} from '@claude-code-best/builtin-tools/tools/BashTool/utils.js'
 
 const EOL = '\n'
 

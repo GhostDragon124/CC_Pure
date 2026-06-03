@@ -22,13 +22,13 @@ import { ripGrep } from '../../utils/ripgrep.js'
 import { semanticBoolean } from '../../utils/semanticBoolean.js'
 import { semanticNumber } from '../../utils/semanticNumber.js'
 import { plural } from '../../utils/stringUtils.js'
-import { GREP_TOOL_NAME, getDescription } from './prompt.js'
+import { GREP_TOOL_NAME, getDescription } from '@claude-code-best/builtin-tools/tools/GrepTool/prompt.js'
 import {
   getToolUseSummary,
   renderToolResultMessage,
   renderToolUseErrorMessage,
   renderToolUseMessage,
-} from './UI.js'
+} from '@claude-code-best/builtin-tools/tools/GrepTool/UI.js'
 
 const inputSchema = lazySchema(() =>
   z.strictObject({

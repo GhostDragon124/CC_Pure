@@ -12,8 +12,8 @@ import { type Node, PARSE_ABORTED } from '../../utils/bash/parser.js'
 import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
 import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js'
 import { createPermissionRequestMessage } from '../../utils/permissions/permissions.js'
-import { BashTool } from './BashTool.js'
-import { bashCommandIsSafeAsync_DEPRECATED } from './bashSecurity.js'
+import { BashTool } from '@claude-code-best/builtin-tools/tools/BashTool/BashTool.js'
+import { bashCommandIsSafeAsync_DEPRECATED } from '@claude-code-best/builtin-tools/tools/BashTool/bashSecurity.js'
 
 export type CommandIdentityCheckers = {
   isNormalizedCdCommand: (command: string) => boolean

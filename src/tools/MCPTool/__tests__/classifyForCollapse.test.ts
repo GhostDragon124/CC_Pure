@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { classifyMcpToolForCollapse } from "../classifyForCollapse";
+import { classifyMcpToolForCollapse } from "@claude-code-best/builtin-tools/tools/MCPTool/classifyForCollapse";
 
 describe("classifyMcpToolForCollapse", () => {
   // Search tools

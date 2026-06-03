@@ -67,16 +67,16 @@ import { getPlatform } from '../../utils/platform.js'
 import { SandboxManager } from '../../utils/sandbox/sandbox-adapter.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { windowsPathToPosixPath } from '../../utils/windowsPaths.js'
-import { BashTool } from './BashTool.js'
-import { checkCommandOperatorPermissions } from './bashCommandHelpers.js'
+import { BashTool } from '@claude-code-best/builtin-tools/tools/BashTool/BashTool.js'
+import { checkCommandOperatorPermissions } from '@claude-code-best/builtin-tools/tools/BashTool/bashCommandHelpers.js'
 import {
   bashCommandIsSafeAsync_DEPRECATED,
   stripSafeHeredocSubstitutions,
-} from './bashSecurity.js'
-import { checkPermissionMode } from './modeValidation.js'
-import { checkPathConstraints } from './pathValidation.js'
-import { checkSedConstraints } from './sedValidation.js'
-import { shouldUseSandbox } from './shouldUseSandbox.js'
+} from '@claude-code-best/builtin-tools/tools/BashTool/bashSecurity.js'
+import { checkPermissionMode } from '@claude-code-best/builtin-tools/tools/BashTool/modeValidation.js'
+import { checkPathConstraints } from '@claude-code-best/builtin-tools/tools/BashTool/pathValidation.js'
+import { checkSedConstraints } from '@claude-code-best/builtin-tools/tools/BashTool/sedValidation.js'
+import { shouldUseSandbox } from '@claude-code-best/builtin-tools/tools/BashTool/shouldUseSandbox.js'
 
 // DCE cliff: Bun's feature() evaluator has a per-function complexity budget.
 // bashToolHasPermission is right at the limit. `import { X as Y }` aliases

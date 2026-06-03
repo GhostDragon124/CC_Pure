@@ -8,7 +8,7 @@ import type {
   Output,
   SearchResult,
   WebSearchProgress,
-} from './WebSearchTool.js'
+} from '@claude-code-best/builtin-tools/tools/WebSearchTool/WebSearchTool.js'
 
 function getSearchSummary(
   results: (SearchResult | string | null | undefined)[],

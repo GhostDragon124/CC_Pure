@@ -16,7 +16,7 @@ import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js'
 import type { Screen } from '../screens/REPL.js'
 import type { Tools } from '../Tool.js'
 import { findToolByName } from '../Tool.js'
-import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js'
+import type { AgentDefinitionsResult } from '@claude-code-best/builtin-tools/tools/AgentTool/loadAgentsDir.js'
 import type {
   Message as MessageType,
   NormalizedMessage,
@@ -50,8 +50,8 @@ import {
 import { plural } from '../utils/stringUtils.js'
 import { renderableSearchText } from '../utils/transcriptSearch.js'
 import { Divider } from '@anthropic/ink'
-import { BRIEF_TOOL_NAME as BRIEF_TOOL_NAME_VALUE } from '../tools/BriefTool/prompt.js'
-import { SEND_USER_FILE_TOOL_NAME as SEND_USER_FILE_TOOL_NAME_VALUE } from '../tools/SendUserFileTool/prompt.js'
+import { BRIEF_TOOL_NAME as BRIEF_TOOL_NAME_VALUE } from '@claude-code-best/builtin-tools/tools/BriefTool/prompt.js'
+import { SEND_USER_FILE_TOOL_NAME as SEND_USER_FILE_TOOL_NAME_VALUE } from '@claude-code-best/builtin-tools/tools/SendUserFileTool/prompt.js'
 import type { UnseenDivider } from './FullscreenLayout.js'
 import { LogoV2 } from './LogoV2/LogoV2.js'
 import { StreamingMarkdown } from './Markdown.js'

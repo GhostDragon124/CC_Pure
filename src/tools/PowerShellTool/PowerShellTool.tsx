@@ -61,8 +61,8 @@ import {
   getToolResultPath,
   PREVIEW_SIZE_BYTES,
 } from '../../utils/toolResultStorage.js'
-import { shouldUseSandbox } from '../BashTool/shouldUseSandbox.js'
-import { BackgroundHint } from '../BashTool/UI.js'
+import { shouldUseSandbox } from '@claude-code-best/builtin-tools/tools/BashTool/shouldUseSandbox.js'
+import { BackgroundHint } from '@claude-code-best/builtin-tools/tools/BashTool/UI.js'
 import {
   buildImageToolResult,
   isImageOutput,
@@ -70,24 +70,24 @@ import {
   resizeShellImageOutput,
   stdErrAppendShellResetMessage,
   stripEmptyLines,
-} from '../BashTool/utils.js'
-import { trackGitOperations } from '../shared/gitOperationTracking.js'
-import { interpretCommandResult } from './commandSemantics.js'
-import { powershellToolHasPermission } from './powershellPermissions.js'
-import { getDefaultTimeoutMs, getMaxTimeoutMs, getPrompt } from './prompt.js'
+} from '@claude-code-best/builtin-tools/tools/BashTool/utils.js'
+import { trackGitOperations } from '@claude-code-best/builtin-tools/tools/shared/gitOperationTracking.js'
+import { interpretCommandResult } from '@claude-code-best/builtin-tools/tools/PowerShellTool/commandSemantics.js'
+import { powershellToolHasPermission } from '@claude-code-best/builtin-tools/tools/PowerShellTool/powershellPermissions.js'
+import { getDefaultTimeoutMs, getMaxTimeoutMs, getPrompt } from '@claude-code-best/builtin-tools/tools/PowerShellTool/prompt.js'
 import {
   hasSyncSecurityConcerns,
   isReadOnlyCommand,
   resolveToCanonical,
-} from './readOnlyValidation.js'
-import { POWERSHELL_TOOL_NAME } from './toolName.js'
+} from '@claude-code-best/builtin-tools/tools/PowerShellTool/readOnlyValidation.js'
+import { POWERSHELL_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/PowerShellTool/toolName.js'
 import {
   renderToolResultMessage,
   renderToolUseErrorMessage,
   renderToolUseMessage,
   renderToolUseProgressMessage,
   renderToolUseQueuedMessage,
-} from './UI.js'
+} from '@claude-code-best/builtin-tools/tools/PowerShellTool/UI.js'
 
 // Never use os.EOL for terminal output — \r\n on Windows breaks Ink rendering
 const EOL = '\n'

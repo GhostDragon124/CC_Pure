@@ -68,7 +68,7 @@ import coordinatorCmdValue from './commands/coordinator.js'
 import workflowsCmdValue from './commands/workflows/index.js'
 import ultraplanValue from './commands/ultraplan.js'
 import buddyValue from './commands/buddy/index.js'
-import { getWorkflowCommands as getWorkflowCommandsValue } from './tools/WorkflowTool/createWorkflowCommand.js'
+import { getWorkflowCommands as getWorkflowCommandsValue } from '@claude-code-best/builtin-tools/tools/WorkflowTool/createWorkflowCommand.js'
 
 const proactive =
   feature('PROACTIVE') || feature('KAIROS')

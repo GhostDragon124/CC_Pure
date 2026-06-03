@@ -1,11 +1,11 @@
 import { mock, describe, expect, test } from "bun:test";
 
 // Mock heavy deps
-mock.module("../../utils/model/agent.js", () => ({
+mock.module("@claude-code-best/builtin-tools/tools/utils/model/agent.js", () => ({
   getDefaultSubagentModel: () => undefined,
 }));
 
-mock.module("../../utils/settings/constants.js", () => ({
+mock.module("@claude-code-best/builtin-tools/tools/utils/settings/constants.js", () => ({
   getSourceDisplayName: (source: string) => source,
 }));
 

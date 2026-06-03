@@ -13,7 +13,7 @@ import {
   convertLeadingTabsToSpaces,
   readFileSyncCached,
 } from '../../utils/file.js'
-import type { EditInput, FileEdit } from './types.js'
+import type { EditInput, FileEdit } from '@claude-code-best/builtin-tools/tools/FileEditTool/types.js'
 
 // Claude can't output curly quotes, so we define them as constants here for Claude to use
 // in the code. We do this because we normalize curly quotes to straight quotes

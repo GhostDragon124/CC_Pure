@@ -38,20 +38,20 @@ import {
 } from '../../utils/plugins/loadPluginAgents.js'
 import { HooksSchema, type HooksSettings } from '../../utils/settings/types.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { FILE_EDIT_TOOL_NAME } from '../FileEditTool/constants.js'
-import { FILE_READ_TOOL_NAME } from '../FileReadTool/prompt.js'
-import { FILE_WRITE_TOOL_NAME } from '../FileWriteTool/prompt.js'
+import { FILE_EDIT_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/FileEditTool/constants.js'
+import { FILE_READ_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/FileReadTool/prompt.js'
+import { FILE_WRITE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/FileWriteTool/prompt.js'
 import {
   AGENT_COLORS,
   type AgentColorName,
   setAgentColor,
-} from './agentColorManager.js'
-import { type AgentMemoryScope, loadAgentMemoryPrompt } from './agentMemory.js'
+} from '@claude-code-best/builtin-tools/tools/AgentTool/agentColorManager.js'
+import { type AgentMemoryScope, loadAgentMemoryPrompt } from '@claude-code-best/builtin-tools/tools/AgentTool/agentMemory.js'
 import {
   checkAgentMemorySnapshot,
   initializeFromSnapshot,
-} from './agentMemorySnapshot.js'
-import { getBuiltInAgents } from './builtInAgents.js'
+} from '@claude-code-best/builtin-tools/tools/AgentTool/agentMemorySnapshot.js'
+import { getBuiltInAgents } from '@claude-code-best/builtin-tools/tools/AgentTool/builtInAgents.js'
 
 // Type for MCP server specification in agent definitions
 // Can be either a reference to an existing server by name, or an inline definition as { [name]: config }

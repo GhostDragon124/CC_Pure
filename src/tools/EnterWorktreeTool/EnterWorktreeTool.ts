@@ -16,9 +16,9 @@ import {
   getCurrentWorktreeSession,
   validateWorktreeSlug,
 } from '../../utils/worktree.js'
-import { ENTER_WORKTREE_TOOL_NAME } from './constants.js'
-import { getEnterWorktreeToolPrompt } from './prompt.js'
-import { renderToolResultMessage, renderToolUseMessage } from './UI.js'
+import { ENTER_WORKTREE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/EnterWorktreeTool/constants.js'
+import { getEnterWorktreeToolPrompt } from '@claude-code-best/builtin-tools/tools/EnterWorktreeTool/prompt.js'
+import { renderToolResultMessage, renderToolUseMessage } from '@claude-code-best/builtin-tools/tools/EnterWorktreeTool/UI.js'
 
 const inputSchema = lazySchema(() =>
   z.strictObject({

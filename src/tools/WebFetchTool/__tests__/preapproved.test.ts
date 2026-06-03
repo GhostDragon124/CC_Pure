@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { isPreapprovedHost } from "../preapproved";
+import { isPreapprovedHost } from "@claude-code-best/builtin-tools/tools/WebFetchTool/preapproved";
 
 describe("isPreapprovedHost", () => {
   test("exact hostname match returns true", () => {

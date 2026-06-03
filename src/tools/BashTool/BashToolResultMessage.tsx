@@ -5,7 +5,7 @@ import { MessageResponse } from '../../components/MessageResponse.js'
 import { OutputLine } from '../../components/shell/OutputLine.js'
 import { ShellTimeDisplay } from '../../components/shell/ShellTimeDisplay.js'
 import { Box, Text } from '@anthropic/ink'
-import type { Out as BashOut } from './BashTool.js'
+import type { Out as BashOut } from '@claude-code-best/builtin-tools/tools/BashTool/BashTool.js'
 
 type Props = {
   content: Omit<BashOut, 'interrupted'>

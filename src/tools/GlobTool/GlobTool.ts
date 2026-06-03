@@ -14,14 +14,14 @@ import { expandPath, toRelativePath } from '../../utils/path.js'
 import { checkReadPermissionForTool } from '../../utils/permissions/filesystem.js'
 import type { PermissionDecision } from '../../utils/permissions/PermissionResult.js'
 import { matchWildcardPattern } from '../../utils/permissions/shellRuleMatching.js'
-import { DESCRIPTION, GLOB_TOOL_NAME } from './prompt.js'
+import { DESCRIPTION, GLOB_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/GlobTool/prompt.js'
 import {
   getToolUseSummary,
   renderToolResultMessage,
   renderToolUseErrorMessage,
   renderToolUseMessage,
   userFacingName,
-} from './UI.js'
+} from '@claude-code-best/builtin-tools/tools/GlobTool/UI.js'
 
 const inputSchema = lazySchema(() =>
   z.strictObject({

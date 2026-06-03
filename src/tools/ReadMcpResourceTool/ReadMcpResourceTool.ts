@@ -12,12 +12,12 @@ import {
 } from '../../utils/mcpOutputStorage.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { isOutputLineTruncated } from '../../utils/terminal.js'
-import { DESCRIPTION, PROMPT } from './prompt.js'
+import { DESCRIPTION, PROMPT } from '@claude-code-best/builtin-tools/tools/ReadMcpResourceTool/prompt.js'
 import {
   renderToolResultMessage,
   renderToolUseMessage,
   userFacingName,
-} from './UI.js'
+} from '@claude-code-best/builtin-tools/tools/ReadMcpResourceTool/UI.js'
 
 export const inputSchema = lazySchema(() =>
   z.object({

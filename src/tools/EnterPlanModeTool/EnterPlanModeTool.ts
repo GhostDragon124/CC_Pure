@@ -10,13 +10,13 @@ import { lazySchema } from '../../utils/lazySchema.js'
 import { applyPermissionUpdate } from '../../utils/permissions/PermissionUpdate.js'
 import { prepareContextForPlanMode } from '../../utils/permissions/permissionSetup.js'
 import { isPlanModeInterviewPhaseEnabled } from '../../utils/planModeV2.js'
-import { ENTER_PLAN_MODE_TOOL_NAME } from './constants.js'
-import { getEnterPlanModeToolPrompt } from './prompt.js'
+import { ENTER_PLAN_MODE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/EnterPlanModeTool/constants.js'
+import { getEnterPlanModeToolPrompt } from '@claude-code-best/builtin-tools/tools/EnterPlanModeTool/prompt.js'
 import {
   renderToolResultMessage,
   renderToolUseMessage,
   renderToolUseRejectedMessage,
-} from './UI.js'
+} from '@claude-code-best/builtin-tools/tools/EnterPlanModeTool/UI.js'
 
 const inputSchema = lazySchema(() =>
   z.strictObject({

@@ -3,7 +3,7 @@ import { z } from 'zod/v4'
 import type { ToolResultBlockParam } from '@anthropic-ai/sdk/resources/index.mjs'
 import { buildTool } from '../../Tool.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { SLEEP_TOOL_NAME, DESCRIPTION, SLEEP_TOOL_PROMPT } from './prompt.js'
+import { SLEEP_TOOL_NAME, DESCRIPTION, SLEEP_TOOL_PROMPT } from '@claude-code-best/builtin-tools/tools/SleepTool/prompt.js'
 import * as proactiveModuleValue from '../../proactive/index.js'
 
 const inputSchema = lazySchema(() =>

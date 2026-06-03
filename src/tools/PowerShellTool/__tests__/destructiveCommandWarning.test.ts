@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { getDestructiveCommandWarning } from "../destructiveCommandWarning";
+import { getDestructiveCommandWarning } from "@claude-code-best/builtin-tools/tools/PowerShellTool/destructiveCommandWarning";
 
 describe("getDestructiveCommandWarning", () => {
   describe("recursive force remove", () => {

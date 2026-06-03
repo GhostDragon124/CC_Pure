@@ -40,9 +40,9 @@ import {
 } from '../../utils/permissions/filesystem.js'
 import type { PermissionDecision } from '../../utils/permissions/PermissionResult.js'
 import { matchWildcardPattern } from '../../utils/permissions/shellRuleMatching.js'
-import { FILE_UNEXPECTEDLY_MODIFIED_ERROR } from '../FileEditTool/constants.js'
-import { gitDiffSchema, hunkSchema } from '../FileEditTool/types.js'
-import { FILE_WRITE_TOOL_NAME, getWriteToolDescription } from './prompt.js'
+import { FILE_UNEXPECTEDLY_MODIFIED_ERROR } from '@claude-code-best/builtin-tools/tools/FileEditTool/constants.js'
+import { gitDiffSchema, hunkSchema } from '@claude-code-best/builtin-tools/tools/FileEditTool/types.js'
+import { FILE_WRITE_TOOL_NAME, getWriteToolDescription } from '@claude-code-best/builtin-tools/tools/FileWriteTool/prompt.js'
 import {
   getToolUseSummary,
   isResultTruncated,
@@ -51,7 +51,7 @@ import {
   renderToolUseMessage,
   renderToolUseRejectedMessage,
   userFacingName,
-} from './UI.js'
+} from '@claude-code-best/builtin-tools/tools/FileWriteTool/UI.js'
 
 const inputSchema = lazySchema(() =>
   z.strictObject({

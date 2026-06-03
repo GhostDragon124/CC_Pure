@@ -22,7 +22,7 @@ import { getDisplayPath } from '../../utils/file.js'
 import { logError } from '../../utils/log.js'
 import { getPlansDirectory } from '../../utils/plans.js'
 import { openForScan, readCapped } from '../../utils/readEditContext.js'
-import type { Output } from './FileWriteTool.js'
+import type { Output } from '@claude-code-best/builtin-tools/tools/FileWriteTool/FileWriteTool.js'
 
 const MAX_LINES_TO_RENDER = 10
 // Model output uses \n regardless of platform, so always split on \n.

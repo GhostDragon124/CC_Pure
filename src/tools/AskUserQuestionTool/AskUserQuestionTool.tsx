@@ -18,7 +18,7 @@ import {
   ASK_USER_QUESTION_TOOL_PROMPT,
   DESCRIPTION,
   PREVIEW_FEATURE_PROMPT,
-} from './prompt.js'
+} from '@claude-code-best/builtin-tools/tools/AskUserQuestionTool/prompt.js'
 
 const questionOptionSchema = lazySchema(() =>
   z.object({

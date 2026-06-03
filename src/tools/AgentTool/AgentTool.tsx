@@ -86,11 +86,11 @@ import {
   hasWorktreeChanges,
   removeAgentWorktree,
 } from '../../utils/worktree.js'
-import { BASH_TOOL_NAME } from '../BashTool/toolName.js'
-import { BackgroundHint } from '../BashTool/UI.js'
-import { FILE_READ_TOOL_NAME } from '../FileReadTool/prompt.js'
-import { spawnTeammate } from '../shared/spawnMultiAgent.js'
-import { setAgentColor } from './agentColorManager.js'
+import { BASH_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/BashTool/toolName.js'
+import { BackgroundHint } from '@claude-code-best/builtin-tools/tools/BashTool/UI.js'
+import { FILE_READ_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/FileReadTool/prompt.js'
+import { spawnTeammate } from '@claude-code-best/builtin-tools/tools/shared/spawnMultiAgent.js'
+import { setAgentColor } from '@claude-code-best/builtin-tools/tools/AgentTool/agentColorManager.js'
 import {
   agentToolResultSchema,
   classifyHandoffIfNeeded,
@@ -99,28 +99,28 @@ import {
   finalizeAgentTool,
   getLastToolUseName,
   runAsyncAgentLifecycle,
-} from './agentToolUtils.js'
-import { GENERAL_PURPOSE_AGENT } from './built-in/generalPurposeAgent.js'
+} from '@claude-code-best/builtin-tools/tools/AgentTool/agentToolUtils.js'
+import { GENERAL_PURPOSE_AGENT } from '@claude-code-best/builtin-tools/tools/AgentTool/built-in/generalPurposeAgent.js'
 import {
   AGENT_TOOL_NAME,
   LEGACY_AGENT_TOOL_NAME,
   ONE_SHOT_BUILTIN_AGENT_TYPES,
-} from './constants.js'
+} from '@claude-code-best/builtin-tools/tools/AgentTool/constants.js'
 import {
   buildForkedMessages,
   buildWorktreeNotice,
   FORK_AGENT,
   isForkSubagentEnabled,
   isInForkChild,
-} from './forkSubagent.js'
-import type { AgentDefinition } from './loadAgentsDir.js'
+} from '@claude-code-best/builtin-tools/tools/AgentTool/forkSubagent.js'
+import type { AgentDefinition } from '@claude-code-best/builtin-tools/tools/AgentTool/loadAgentsDir.js'
 import {
   filterAgentsByMcpRequirements,
   hasRequiredMcpServers,
   isBuiltInAgent,
-} from './loadAgentsDir.js'
-import { getPrompt } from './prompt.js'
-import { runAgent } from './runAgent.js'
+} from '@claude-code-best/builtin-tools/tools/AgentTool/loadAgentsDir.js'
+import { getPrompt } from '@claude-code-best/builtin-tools/tools/AgentTool/prompt.js'
+import { runAgent } from '@claude-code-best/builtin-tools/tools/AgentTool/runAgent.js'
 import {
   renderGroupedAgentToolUse,
   renderToolResultMessage,
@@ -131,7 +131,7 @@ import {
   renderToolUseTag,
   userFacingName,
   userFacingNameBackgroundColor,
-} from './UI.js'
+} from '@claude-code-best/builtin-tools/tools/AgentTool/UI.js'
 import * as proactiveModuleValue from '../../proactive/index.js'
 
 const proactiveModule =

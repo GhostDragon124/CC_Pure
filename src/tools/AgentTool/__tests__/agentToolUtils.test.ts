@@ -137,16 +137,16 @@ mock.module("src/utils/tokens.js", () => ({
   getTokenCountFromUsage: () => 0,
 }));
 
-mock.module("src/tools/ExitPlanModeTool/constants.js", () => ({
+mock.module("@claude-code-best/builtin-tools/tools/ExitPlanModeTool/constants.js", () => ({
   EXIT_PLAN_MODE_V2_TOOL_NAME: "exit_plan_mode",
 }));
 
-mock.module("src/tools/AgentTool/constants.js", () => ({
+mock.module("@claude-code-best/builtin-tools/tools/AgentTool/constants.js", () => ({
   AGENT_TOOL_NAME: "agent",
   LEGACY_AGENT_TOOL_NAME: "task",
 }));
 
-mock.module("src/tools/AgentTool/loadAgentsDir.js", () => ({}));
+mock.module("../loadAgentsDir.js", () => ({}));
 
 mock.module("src/state/AppState.js", () => ({}));
 
@@ -155,7 +155,7 @@ mock.module("src/types/ids.js", () => ({
 }));
 
 // Break circular dep
-mock.module("src/tools/AgentTool/AgentTool.tsx", () => ({
+mock.module("../AgentTool.tsx", () => ({
   AgentTool: {},
   inputSchema: {},
   outputSchema: {},

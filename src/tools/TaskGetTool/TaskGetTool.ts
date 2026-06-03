@@ -7,8 +7,8 @@ import {
   isTodoV2Enabled,
   TaskStatusSchema,
 } from '../../utils/tasks.js'
-import { TASK_GET_TOOL_NAME } from './constants.js'
-import { DESCRIPTION, PROMPT } from './prompt.js'
+import { TASK_GET_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TaskGetTool/constants.js'
+import { DESCRIPTION, PROMPT } from '@claude-code-best/builtin-tools/tools/TaskGetTool/prompt.js'
 
 const inputSchema = lazySchema(() =>
   z.strictObject({

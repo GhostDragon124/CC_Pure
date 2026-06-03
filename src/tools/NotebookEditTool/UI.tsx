@@ -13,7 +13,7 @@ import { Box, Text } from '@anthropic/ink'
 import { FilePathLink } from '../../components/FilePathLink.js'
 import type { Tools } from '../../Tool.js'
 import { getDisplayPath } from '../../utils/file.js'
-import type { inputSchema, Output } from './NotebookEditTool.js'
+import type { inputSchema, Output } from '@claude-code-best/builtin-tools/tools/NotebookEditTool/NotebookEditTool.js'
 
 export function getToolUseSummary(
   input: Partial<z.infer<ReturnType<typeof inputSchema>>> | undefined,

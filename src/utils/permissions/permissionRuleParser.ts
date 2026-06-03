@@ -1,8 +1,8 @@
 import { feature } from 'bun:bundle'
-import { AGENT_TOOL_NAME } from '../../tools/AgentTool/constants.js'
-import { BRIEF_TOOL_NAME as BRIEF_TOOL_NAME_VALUE } from '../../tools/BriefTool/prompt.js'
-import { TASK_OUTPUT_TOOL_NAME } from '../../tools/TaskOutputTool/constants.js'
-import { TASK_STOP_TOOL_NAME } from '../../tools/TaskStopTool/prompt.js'
+import { AGENT_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/AgentTool/constants.js'
+import { BRIEF_TOOL_NAME as BRIEF_TOOL_NAME_VALUE } from '@claude-code-best/builtin-tools/tools/BriefTool/prompt.js'
+import { TASK_OUTPUT_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TaskOutputTool/constants.js'
+import { TASK_STOP_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TaskStopTool/prompt.js'
 import type { PermissionRuleValue } from './PermissionRule.js'
 
 const BRIEF_TOOL_NAME: string | null =

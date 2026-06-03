@@ -5,21 +5,21 @@ import { formatFileSize } from '../../utils/format.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import type { PermissionDecision } from '../../utils/permissions/PermissionResult.js'
 import { getRuleByContentsForTool } from '../../utils/permissions/permissions.js'
-import { isPreapprovedHost } from './preapproved.js'
-import { DESCRIPTION, WEB_FETCH_TOOL_NAME } from './prompt.js'
+import { isPreapprovedHost } from '@claude-code-best/builtin-tools/tools/WebFetchTool/preapproved.js'
+import { DESCRIPTION, WEB_FETCH_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/WebFetchTool/prompt.js'
 import {
   getToolUseSummary,
   renderToolResultMessage,
   renderToolUseMessage,
   renderToolUseProgressMessage,
-} from './UI.js'
+} from '@claude-code-best/builtin-tools/tools/WebFetchTool/UI.js'
 import {
   applyPromptToMarkdown,
   type FetchedContent,
   getURLMarkdownContent,
   isPreapprovedUrl,
   MAX_MARKDOWN_LENGTH,
-} from './utils.js'
+} from '@claude-code-best/builtin-tools/tools/WebFetchTool/utils.js'
 
 const inputSchema = lazySchema(() =>
   z.strictObject({

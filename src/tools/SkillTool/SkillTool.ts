@@ -63,20 +63,20 @@ import type { ModelAlias } from '../../utils/model/aliases.js'
 import { resolveSkillModelOverride } from '../../utils/model/model.js'
 import { recordSkillUsage } from '../../utils/suggestions/skillUsageTracking.js'
 import { createAgentId } from '../../utils/uuid.js'
-import { runAgent } from '../AgentTool/runAgent.js'
+import { runAgent } from '@claude-code-best/builtin-tools/tools/AgentTool/runAgent.js'
 import {
   getToolUseIDFromParentMessage,
   tagMessagesWithToolUseID,
-} from '../utils.js'
-import { SKILL_TOOL_NAME } from './constants.js'
-import { getPrompt } from './prompt.js'
+} from '@claude-code-best/builtin-tools/tools/utils.js'
+import { SKILL_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/SkillTool/constants.js'
+import { getPrompt } from '@claude-code-best/builtin-tools/tools/SkillTool/prompt.js'
 import {
   renderToolResultMessage,
   renderToolUseErrorMessage,
   renderToolUseMessage,
   renderToolUseProgressMessage,
   renderToolUseRejectedMessage,
-} from './UI.js'
+} from '@claude-code-best/builtin-tools/tools/SkillTool/UI.js'
 
 /**
  * Gets all commands including MCP skills/prompts from AppState.

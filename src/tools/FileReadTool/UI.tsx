@@ -10,7 +10,7 @@ import { FILE_NOT_FOUND_CWD_NOTE, getDisplayPath } from '../../utils/file.js'
 import { formatFileSize } from '../../utils/format.js'
 import { getPlansDirectory } from '../../utils/plans.js'
 import { getTaskOutputDir } from '../../utils/task/diskOutput.js'
-import type { Input, Output } from './FileReadTool.js'
+import type { Input, Output } from '@claude-code-best/builtin-tools/tools/FileReadTool/FileReadTool.js'
 
 /**
  * Check if a file path is an agent output file and extract the task ID.

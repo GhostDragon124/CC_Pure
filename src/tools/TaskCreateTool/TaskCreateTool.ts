@@ -12,8 +12,8 @@ import {
   isTodoV2Enabled,
 } from '../../utils/tasks.js'
 import { getAgentName, getTeamName } from '../../utils/teammate.js'
-import { TASK_CREATE_TOOL_NAME } from './constants.js'
-import { DESCRIPTION, getPrompt } from './prompt.js'
+import { TASK_CREATE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TaskCreateTool/constants.js'
+import { DESCRIPTION, getPrompt } from '@claude-code-best/builtin-tools/tools/TaskCreateTool/prompt.js'
 
 const inputSchema = lazySchema(() =>
   z.strictObject({

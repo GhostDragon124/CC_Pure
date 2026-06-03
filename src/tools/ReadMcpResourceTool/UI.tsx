@@ -6,7 +6,7 @@ import { Box, Text } from '@anthropic/ink'
 import type { ToolProgressData } from '../../Tool.js'
 import type { ProgressMessage } from '../../types/message.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import type { inputSchema, Output } from './ReadMcpResourceTool.js'
+import type { inputSchema, Output } from '@claude-code-best/builtin-tools/tools/ReadMcpResourceTool/ReadMcpResourceTool.js'
 
 export function renderToolUseMessage(
   input: Partial<z.infer<ReturnType<typeof inputSchema>>>,

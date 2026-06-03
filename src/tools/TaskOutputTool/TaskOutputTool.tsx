@@ -23,9 +23,9 @@ import { getTaskOutput } from '../../utils/task/diskOutput.js'
 import { updateTaskState } from '../../utils/task/framework.js'
 import { formatTaskOutput } from '../../utils/task/outputFormatting.js'
 import type { ThemeName } from '../../utils/theme.js'
-import { AgentPromptDisplay, AgentResponseDisplay } from '../AgentTool/UI.js'
-import BashToolResultMessage from '../BashTool/BashToolResultMessage.js'
-import { TASK_OUTPUT_TOOL_NAME } from './constants.js'
+import { AgentPromptDisplay, AgentResponseDisplay } from '@claude-code-best/builtin-tools/tools/AgentTool/UI.js'
+import BashToolResultMessage from '@claude-code-best/builtin-tools/tools/BashTool/BashToolResultMessage.js'
+import { TASK_OUTPUT_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TaskOutputTool/constants.js'
 
 const inputSchema = lazySchema(() =>
   z.strictObject({

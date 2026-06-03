@@ -40,8 +40,8 @@ import {
   isNullRedirectionTarget,
   isPowerShellParameter,
 } from '../../utils/powershell/parser.js'
-import { COMMON_SWITCHES, COMMON_VALUE_PARAMS } from './commonParameters.js'
-import { resolveToCanonical } from './readOnlyValidation.js'
+import { COMMON_SWITCHES, COMMON_VALUE_PARAMS } from '@claude-code-best/builtin-tools/tools/PowerShellTool/commonParameters.js'
+import { resolveToCanonical } from '@claude-code-best/builtin-tools/tools/PowerShellTool/readOnlyValidation.js'
 
 const MAX_DIRS_TO_LIST = 5
 // PowerShell wildcards are only * ? [ ] — braces are LITERAL characters

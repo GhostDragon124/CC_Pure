@@ -38,10 +38,10 @@ import {
   createShutdownRequestMessage,
   writeToMailbox,
 } from '../../utils/teammateMailbox.js'
-import { resumeAgentBackground } from '../AgentTool/resumeAgent.js'
-import { SEND_MESSAGE_TOOL_NAME } from './constants.js'
-import { DESCRIPTION, getPrompt } from './prompt.js'
-import { renderToolResultMessage, renderToolUseMessage } from './UI.js'
+import { resumeAgentBackground } from '@claude-code-best/builtin-tools/tools/AgentTool/resumeAgent.js'
+import { SEND_MESSAGE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/SendMessageTool/constants.js'
+import { DESCRIPTION, getPrompt } from '@claude-code-best/builtin-tools/tools/SendMessageTool/prompt.js'
+import { renderToolResultMessage, renderToolUseMessage } from '@claude-code-best/builtin-tools/tools/SendMessageTool/UI.js'
 
 const StructuredMessage = lazySchema(() =>
   z.discriminatedUnion('type', [

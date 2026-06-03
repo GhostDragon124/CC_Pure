@@ -20,7 +20,7 @@ import {
   type MCPToolResult,
 } from '../../utils/mcpValidation.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
-import type { inputSchema } from './MCPTool.js'
+import type { inputSchema } from '@claude-code-best/builtin-tools/tools/MCPTool/MCPTool.js'
 
 // Threshold for displaying warning about large MCP responses
 const MCP_OUTPUT_WARNING_THRESHOLD_TOKENS = 10_000

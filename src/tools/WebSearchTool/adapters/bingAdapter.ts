@@ -6,7 +6,7 @@
 import axios from 'axios'
 import he from 'he'
 import { AbortError } from '../../../utils/errors.js'
-import type { SearchResult, SearchOptions, WebSearchAdapter } from './types.js'
+import type { SearchResult, SearchOptions, WebSearchAdapter } from '@claude-code-best/builtin-tools/tools/WebSearchTool/adapters/types.js'
 
 const FETCH_TIMEOUT_MS = 30_000
 

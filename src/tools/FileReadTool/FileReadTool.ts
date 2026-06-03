@@ -73,8 +73,8 @@ import { matchWildcardPattern } from '../../utils/permissions/shellRuleMatching.
 import { readFileInRange } from '../../utils/readFileInRange.js'
 import { semanticNumber } from '../../utils/semanticNumber.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { BASH_TOOL_NAME } from '../BashTool/toolName.js'
-import { getDefaultFileReadingLimits } from './limits.js'
+import { BASH_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/BashTool/toolName.js'
+import { getDefaultFileReadingLimits } from '@claude-code-best/builtin-tools/tools/FileReadTool/limits.js'
 import {
   DESCRIPTION,
   FILE_READ_TOOL_NAME,
@@ -83,7 +83,7 @@ import {
   OFFSET_INSTRUCTION_DEFAULT,
   OFFSET_INSTRUCTION_TARGETED,
   renderPromptTemplate,
-} from './prompt.js'
+} from '@claude-code-best/builtin-tools/tools/FileReadTool/prompt.js'
 import {
   getToolUseSummary,
   renderToolResultMessage,
@@ -91,7 +91,7 @@ import {
   renderToolUseMessage,
   renderToolUseTag,
   userFacingName,
-} from './UI.js'
+} from '@claude-code-best/builtin-tools/tools/FileReadTool/UI.js'
 
 // Device files that would hang the process: infinite output or blocking input.
 // Checked by path only (no I/O). Safe devices like /dev/null are intentionally omitted.

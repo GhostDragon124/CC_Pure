@@ -11,7 +11,7 @@ import type { Tool } from '../../Tool.js'
 import type { ProgressMessage } from '../../types/message.js'
 import type { PowerShellProgress } from '../../types/tools.js'
 import type { ThemeName } from '../../utils/theme.js'
-import type { Out, PowerShellToolInput } from './PowerShellTool.js'
+import type { Out, PowerShellToolInput } from '@claude-code-best/builtin-tools/tools/PowerShellTool/PowerShellTool.js'
 
 // Constants for command display
 const MAX_COMMAND_DISPLAY_LINES = 2

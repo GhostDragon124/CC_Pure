@@ -23,9 +23,9 @@ import {
   keepWorktree,
   killTmuxSession,
 } from '../../utils/worktree.js'
-import { EXIT_WORKTREE_TOOL_NAME } from './constants.js'
-import { getExitWorktreeToolPrompt } from './prompt.js'
-import { renderToolResultMessage, renderToolUseMessage } from './UI.js'
+import { EXIT_WORKTREE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/ExitWorktreeTool/constants.js'
+import { getExitWorktreeToolPrompt } from '@claude-code-best/builtin-tools/tools/ExitWorktreeTool/prompt.js'
+import { renderToolResultMessage, renderToolUseMessage } from '@claude-code-best/builtin-tools/tools/ExitWorktreeTool/UI.js'
 
 const inputSchema = lazySchema(() =>
   z.strictObject({

@@ -5,7 +5,7 @@ import { Text } from '@anthropic/ink'
 import type { ToolProgressData } from '../../Tool.js'
 import type { ProgressMessage } from '../../types/message.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import type { Output } from './ListMcpResourcesTool.js'
+import type { Output } from '@claude-code-best/builtin-tools/tools/ListMcpResourcesTool/ListMcpResourcesTool.js'
 
 export function renderToolUseMessage(
   input: Partial<{ server?: string }>,

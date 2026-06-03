@@ -35,17 +35,17 @@ import {
   stripModulePrefix,
 } from '../../utils/powershell/parser.js'
 import { containsVulnerableUncPath } from '../../utils/shell/readOnlyCommandValidation.js'
-import { isDotGitPathPS, isGitInternalPathPS } from './gitSafety.js'
+import { isDotGitPathPS, isGitInternalPathPS } from '@claude-code-best/builtin-tools/tools/PowerShellTool/gitSafety.js'
 import {
   checkPermissionMode,
   isSymlinkCreatingCommand,
-} from './modeValidation.js'
+} from '@claude-code-best/builtin-tools/tools/PowerShellTool/modeValidation.js'
 import {
   checkPathConstraints,
   dangerousRemovalDeny,
   isDangerousRemovalRawPath,
-} from './pathValidation.js'
-import { powershellCommandIsSafe } from './powershellSecurity.js'
+} from '@claude-code-best/builtin-tools/tools/PowerShellTool/pathValidation.js'
+import { powershellCommandIsSafe } from '@claude-code-best/builtin-tools/tools/PowerShellTool/powershellSecurity.js'
 import {
   argLeaksValue,
   isAllowlistedCommand,
@@ -54,8 +54,8 @@ import {
   isReadOnlyCommand,
   isSafeOutputCommand,
   resolveToCanonical,
-} from './readOnlyValidation.js'
-import { POWERSHELL_TOOL_NAME } from './toolName.js'
+} from '@claude-code-best/builtin-tools/tools/PowerShellTool/readOnlyValidation.js'
+import { POWERSHELL_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/PowerShellTool/toolName.js'
 
 // Matches `$var = `, `$var += `, `$env:X = `, `$x ??= ` etc. Used to strip
 // nested assignment prefixes in the parse-failed fallback path.

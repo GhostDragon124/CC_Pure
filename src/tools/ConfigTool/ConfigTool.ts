@@ -19,19 +19,19 @@ import {
   updateSettingsForSource,
 } from '../../utils/settings/settings.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { CONFIG_TOOL_NAME } from './constants.js'
-import { DESCRIPTION, generatePrompt } from './prompt.js'
+import { CONFIG_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/ConfigTool/constants.js'
+import { DESCRIPTION, generatePrompt } from '@claude-code-best/builtin-tools/tools/ConfigTool/prompt.js'
 import {
   getConfig,
   getOptionsForSetting,
   getPath,
   isSupported,
-} from './supportedSettings.js'
+} from '@claude-code-best/builtin-tools/tools/ConfigTool/supportedSettings.js'
 import {
   renderToolResultMessage,
   renderToolUseMessage,
   renderToolUseRejectedMessage,
-} from './UI.js'
+} from '@claude-code-best/builtin-tools/tools/ConfigTool/UI.js'
 
 const inputSchema = lazySchema(() =>
   z.strictObject({

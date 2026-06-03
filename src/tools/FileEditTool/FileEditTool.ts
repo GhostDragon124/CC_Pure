@@ -49,18 +49,18 @@ import {
 import type { PermissionDecision } from '../../utils/permissions/PermissionResult.js'
 import { matchWildcardPattern } from '../../utils/permissions/shellRuleMatching.js'
 import { validateInputForSettingsFileEdit } from '../../utils/settings/validateEditTool.js'
-import { NOTEBOOK_EDIT_TOOL_NAME } from '../NotebookEditTool/constants.js'
+import { NOTEBOOK_EDIT_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/NotebookEditTool/constants.js'
 import {
   FILE_EDIT_TOOL_NAME,
   FILE_UNEXPECTEDLY_MODIFIED_ERROR,
-} from './constants.js'
-import { getEditToolDescription } from './prompt.js'
+} from '@claude-code-best/builtin-tools/tools/FileEditTool/constants.js'
+import { getEditToolDescription } from '@claude-code-best/builtin-tools/tools/FileEditTool/prompt.js'
 import {
   type FileEditInput,
   type FileEditOutput,
   inputSchema,
   outputSchema,
-} from './types.js'
+} from '@claude-code-best/builtin-tools/tools/FileEditTool/types.js'
 import {
   getToolUseSummary,
   renderToolResultMessage,
@@ -68,13 +68,13 @@ import {
   renderToolUseMessage,
   renderToolUseRejectedMessage,
   userFacingName,
-} from './UI.js'
+} from '@claude-code-best/builtin-tools/tools/FileEditTool/UI.js'
 import {
   areFileEditsInputsEquivalent,
   findActualString,
   getPatchForEdit,
   preserveQuoteStyle,
-} from './utils.js'
+} from '@claude-code-best/builtin-tools/tools/FileEditTool/utils.js'
 
 // V8/Bun string length limit is ~2^30 characters (~1 billion). For typical
 // ASCII/Latin-1 files, 1 byte on disk = 1 character, so 1 GiB in stat bytes

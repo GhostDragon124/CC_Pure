@@ -6,8 +6,8 @@ import { addInvokedSkill } from '../bootstrap/state.js'
 import {
   BRIEF_TOOL_NAME as BRIEF_TOOL_NAME_VALUE,
   LEGACY_BRIEF_TOOL_NAME as LEGACY_BRIEF_TOOL_NAME_VALUE,
-} from '../tools/BriefTool/prompt.js'
-import { SEND_USER_FILE_TOOL_NAME as SEND_USER_FILE_TOOL_NAME_VALUE } from '../tools/SendUserFileTool/prompt.js'
+} from '@claude-code-best/builtin-tools/tools/BriefTool/prompt.js'
+import { SEND_USER_FILE_TOOL_NAME as SEND_USER_FILE_TOOL_NAME_VALUE } from '@claude-code-best/builtin-tools/tools/SendUserFileTool/prompt.js'
 import { asSessionId } from '../types/ids.js'
 import type {
   AttributionSnapshotMessage,

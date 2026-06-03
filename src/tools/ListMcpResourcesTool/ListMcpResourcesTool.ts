@@ -9,8 +9,8 @@ import { lazySchema } from '../../utils/lazySchema.js'
 import { logMCPError } from '../../utils/log.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { isOutputLineTruncated } from '../../utils/terminal.js'
-import { DESCRIPTION, LIST_MCP_RESOURCES_TOOL_NAME, PROMPT } from './prompt.js'
-import { renderToolResultMessage, renderToolUseMessage } from './UI.js'
+import { DESCRIPTION, LIST_MCP_RESOURCES_TOOL_NAME, PROMPT } from '@claude-code-best/builtin-tools/tools/ListMcpResourcesTool/prompt.js'
+import { renderToolResultMessage, renderToolUseMessage } from '@claude-code-best/builtin-tools/tools/ListMcpResourcesTool/UI.js'
 
 const inputSchema = lazySchema(() =>
   z.object({

@@ -3,7 +3,7 @@ import { Box, Text } from '@anthropic/ink'
 import type { ToolProgressData } from '../../Tool.js'
 import type { ProgressMessage } from '../../types/message.js'
 import type { ThemeName } from '../../utils/theme.js'
-import type { Output } from './ExitWorktreeTool.js'
+import type { Output } from '@claude-code-best/builtin-tools/tools/ExitWorktreeTool/ExitWorktreeTool.js'
 
 export function renderToolUseMessage(): React.ReactNode {
   return 'Exiting worktree…'

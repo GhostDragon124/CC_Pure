@@ -5,7 +5,7 @@ import { Box, Text } from '@anthropic/ink'
 import type { ToolProgressData } from '../../Tool.js'
 import type { ProgressMessage } from '../../types/message.js'
 import { formatFileSize, truncate } from '../../utils/format.js'
-import type { Output } from './WebFetchTool.js'
+import type { Output } from '@claude-code-best/builtin-tools/tools/WebFetchTool/WebFetchTool.js'
 
 export function renderToolUseMessage(
   { url, prompt }: Partial<{ url: string; prompt: string }>,

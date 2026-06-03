@@ -2,7 +2,7 @@ import { z } from 'zod/v4'
 import type { ToolResultBlockParam } from '@anthropic-ai/sdk/resources/index.mjs'
 import { buildTool } from '../../Tool.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { SEND_USER_FILE_TOOL_NAME } from './prompt.js'
+import { SEND_USER_FILE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/SendUserFileTool/prompt.js'
 
 const inputSchema = lazySchema(() =>
   z.strictObject({

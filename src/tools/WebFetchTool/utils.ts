@@ -14,8 +14,8 @@ import {
 } from '../../utils/mcpOutputStorage.js'
 import { getSettings_DEPRECATED } from '../../utils/settings/settings.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
-import { isPreapprovedHost } from './preapproved.js'
-import { makeSecondaryModelPrompt } from './prompt.js'
+import { isPreapprovedHost } from '@claude-code-best/builtin-tools/tools/WebFetchTool/preapproved.js'
+import { makeSecondaryModelPrompt } from '@claude-code-best/builtin-tools/tools/WebFetchTool/prompt.js'
 
 // Custom error classes for domain blocking
 class DomainBlockedError extends Error {

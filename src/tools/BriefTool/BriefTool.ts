@@ -8,14 +8,14 @@ import { buildTool, type ToolDef } from '../../Tool.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { plural } from '../../utils/stringUtils.js'
-import { resolveAttachments, validateAttachmentPaths } from './attachments.js'
+import { resolveAttachments, validateAttachmentPaths } from '@claude-code-best/builtin-tools/tools/BriefTool/attachments.js'
 import {
   BRIEF_TOOL_NAME,
   BRIEF_TOOL_PROMPT,
   DESCRIPTION,
   LEGACY_BRIEF_TOOL_NAME,
-} from './prompt.js'
-import { renderToolResultMessage, renderToolUseMessage } from './UI.js'
+} from '@claude-code-best/builtin-tools/tools/BriefTool/prompt.js'
+import { renderToolResultMessage, renderToolUseMessage } from '@claude-code-best/builtin-tools/tools/BriefTool/UI.js'
 
 const inputSchema = lazySchema(() =>
   z.strictObject({

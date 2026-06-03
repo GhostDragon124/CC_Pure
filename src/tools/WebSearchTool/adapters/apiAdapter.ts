@@ -13,7 +13,7 @@ import { createUserMessage } from '../../../utils/messages.js'
 import { getMainLoopModel, getSmallFastModel } from '../../../utils/model/model.js'
 import { jsonParse } from '../../../utils/slowOperations.js'
 import { asSystemPrompt } from '../../../utils/systemPromptType.js'
-import type { SearchResult, SearchOptions, WebSearchAdapter } from './types.js'
+import type { SearchResult, SearchOptions, WebSearchAdapter } from '@claude-code-best/builtin-tools/tools/WebSearchTool/adapters/types.js'
 
 function makeToolSchema(input: { allowedDomains?: string[]; blockedDomains?: string[] }): BetaWebSearchTool20250305 {
   return {

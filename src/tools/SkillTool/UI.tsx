@@ -13,7 +13,7 @@ import type { Tools } from '../../Tool.js'
 import type { ProgressMessage } from '../../types/message.js'
 import { buildSubagentLookups, EMPTY_LOOKUPS } from '../../utils/messages.js'
 import { plural } from '../../utils/stringUtils.js'
-import type { inputSchema, Output, Progress } from './SkillTool.js'
+import type { inputSchema, Output, Progress } from '@claude-code-best/builtin-tools/tools/SkillTool/SkillTool.js'
 
 type Input = z.infer<ReturnType<typeof inputSchema>>
 

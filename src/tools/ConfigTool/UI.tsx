@@ -2,7 +2,7 @@ import React from 'react'
 import { MessageResponse } from '../../components/MessageResponse.js'
 import { Text } from '@anthropic/ink'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import type { Input, Output } from './ConfigTool.js'
+import type { Input, Output } from '@claude-code-best/builtin-tools/tools/ConfigTool/ConfigTool.js'
 
 export function renderToolUseMessage(input: Partial<Input>): React.ReactNode {
   if (!input.setting) return null

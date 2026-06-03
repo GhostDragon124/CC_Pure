@@ -30,9 +30,9 @@ import {
   setLeaderTeamName,
 } from '../../utils/tasks.js'
 import { generateWordSlug } from '../../utils/words.js'
-import { TEAM_CREATE_TOOL_NAME } from './constants.js'
-import { getPrompt } from './prompt.js'
-import { renderToolUseMessage } from './UI.js'
+import { TEAM_CREATE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TeamCreateTool/constants.js'
+import { getPrompt } from '@claude-code-best/builtin-tools/tools/TeamCreateTool/prompt.js'
+import { renderToolUseMessage } from '@claude-code-best/builtin-tools/tools/TeamCreateTool/UI.js'
 
 const inputSchema = lazySchema(() =>
   z.strictObject({
