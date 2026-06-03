@@ -20,6 +20,9 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Replace mirror URLs
+        run: sed -i '' 's|registry.npmmirror.com|registry.npmjs.org|g' bun.lock
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
