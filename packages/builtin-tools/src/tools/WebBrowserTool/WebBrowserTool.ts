@@ -2,6 +2,7 @@ import { z } from 'zod/v4'
 import type { ToolResultBlockParam } from 'src/Tool.js'
 import { buildTool } from 'src/Tool.js'
 import { lazySchema } from 'src/utils/lazySchema.js'
+import { stripHtmlToText } from 'src/utils/stripHtml.js'
 
 const WEB_BROWSER_TOOL_NAME = 'WebBrowser'
 
@@ -117,12 +118,7 @@ Use this for:
         const title = titleMatch?.[1]?.trim() ?? ''
 
         // Extract text content (strip HTML tags, scripts, styles)
-        let textContent = html
-          .replace(/<script[\s\S]*?<\/script>/gi, '')
-          .replace(/<style[\s\S]*?<\/style>/gi, '')
-          .replace(/<[^>]+>/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim()
+        let textContent = stripHtmlToText(html)
 
         // Truncate to reasonable size
         if (textContent.length > 50_000) {

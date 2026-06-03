@@ -6,6 +6,7 @@
 import axios from 'axios'
 import he from 'he'
 import { AbortError } from 'src/utils/errors.js'
+import { stripHtmlToText } from 'src/utils/stripHtml.js'
 import type { SearchResult, SearchOptions, WebSearchAdapter } from './types.js'
 
 const FETCH_TIMEOUT_MS = 30_000
@@ -137,7 +138,7 @@ export function extractBingResults(html: string): SearchResult[] {
     const url = resolveBingUrl(rawUrl)
     if (!url) continue
 
-    const title = decodeHtmlEntities(titleHtml.replace(/<[^>]+>/g, '').trim())
+    const title = stripHtmlToText(titleHtml)
 
     // Extract snippet: try b_lineclamp → b_caption <p> → b_caption fallback
     const snippet = extractSnippet(block)
@@ -153,7 +154,7 @@ function extractSnippet(block: string): string | undefined {
   const lineclampRegex = /<p[^>]*class="b_lineclamp[^"]*"[^>]*>([\s\S]*?)<\/p>/i
   let match = lineclampRegex.exec(block)
   if (match) {
-    return decodeHtmlEntities(match[1].replace(/<[^>]+>/g, '').trim())
+    return stripHtmlToText(match[1])
   }
 
   // 2. Try <p> inside b_caption
@@ -161,7 +162,7 @@ function extractSnippet(block: string): string | undefined {
     /<div[^>]*class="b_caption[^"]*"[^>]*>[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>/i
   match = captionPRegex.exec(block)
   if (match) {
-    return decodeHtmlEntities(match[1].replace(/<[^>]+>/g, '').trim())
+    return stripHtmlToText(match[1])
   }
 
   // 3. Fallback: any text inside b_caption <div>
@@ -169,8 +170,8 @@ function extractSnippet(block: string): string | undefined {
     /<div[^>]*class="b_caption[^"]*"[^>]*>([\s\S]*?)<\/div>/i
   const fallbackMatch = fallbackRegex.exec(block)
   if (fallbackMatch) {
-    const text = fallbackMatch[1].replace(/<[^>]+>/g, '').trim()
-    if (text) return decodeHtmlEntities(text)
+    const text = stripHtmlToText(fallbackMatch[1])
+    if (text) return text
   }
 
   return undefined

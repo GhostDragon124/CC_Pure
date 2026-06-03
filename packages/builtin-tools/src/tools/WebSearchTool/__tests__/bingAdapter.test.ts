@@ -244,7 +244,7 @@ describe('extractBingResults', () => {
     `
     const results = extractBingResults(html)
     expect(results).toHaveLength(1)
-    expect(results[0].title).toBe('Whitespace  Title')
+    expect(results[0].title).toBe('Whitespace Title')
   })
 
   test('handles snippet with HTML entities', () => {
