@@ -3,7 +3,8 @@
 [![Bun](https://img.shields.io/badge/runtime-Bun-black?style=flat-square&logo=bun)](https://bun.sh/)
 [![tsc](https://img.shields.io/badge/tsc-0%20errors-brightgreen?style=flat-square)](https://www.typescriptlang.org/)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)]()
-[![Tests](https://img.shields.io/badge/tests-3340%20pass-brightgreen?style=flat-square)]()
+[![Tests](https://img.shields.io/badge/tests-3068%20pass-brightgreen?style=flat-square)]()
+[![Security](https://img.shields.io/badge/CodeQL-187%20open-blue?style=flat-square)]()
 
 > 从 [Claude Code Best (CCB)](https://github.com/claude-code-best/claude-code) 分叉的纯净分支 — 去遥测、去企业全家桶、保留核心能力，可审计、可自建。
 
@@ -49,9 +50,25 @@ CC_Pure 基于 CCB v2.6.6 反编译源码，做了以下核心变更：
 | 指标 | v1.3.0 基线 | CC_Pure 当前 | 提升 |
 |------|:----------:|:----------:|:----:|
 | tsc 错误 | 62 | **0** | ✅ 全绿 |
-| 测试通过 | 3007 | **3340** | +333 |
+| 测试通过 | 3007 | **3068** | +61 |
 | 构建 | 不稳定 | **稳定（splitting: true, 562 files）** | ✅ |
 | 遥测外连 | 1 次 | **0** | ✅ |
+
+### 安全审计（Phase 0-4）
+
+四阶段安全审计通过 CodeQL（security-extended 套件）完成，核心路径告警全部清零：
+
+| 阶段 | 范围 | 修复要点 |
+|:----:|------|----------|
+| 0 | 基线建立 | 降级查询套件，过滤反编译噪音 |
+| 1 | 隐私泄露 | 凭证脱敏（redact helpers）、RCS 默认绑 127.0.0.1 |
+| 2 | 结构对齐 | 删除 `src/tools/`，修复 BashTool / AgentTool 回归 |
+| 3 | 漏洞修复 | shell 注入（headersHelper）、URL 解析、HTML 过滤 |
+| 4 | 残余告警 | 命令注入（which）、ReDoS（debugFilter）、净化绕过（stripHtml/sedEditParser） |
+
+**CodeQL 基线：** 199 → 187 open（-12），128 fixed（+16）。剩余告警均在 feature-flagged 模块（teleport/bridge/ACP/computer-use），不在本 fork 启用范围内。
+
+详见 [SECURITY.md](SECURITY.md)。
 
 ### 上游追踪
 
