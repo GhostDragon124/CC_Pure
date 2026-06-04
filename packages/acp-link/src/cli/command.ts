@@ -19,33 +19,33 @@ export const command = buildCommand({
         kind: "parsed",
         parse: numberParser,
         brief: "Port to listen on",
-        default: "9315",
+        optional: true,
       },
       host: {
         kind: "parsed",
         parse: String,
         brief: "Host to bind to (use 0.0.0.0 for remote access)",
-        default: "localhost",
+        optional: true,
       },
       debug: {
         kind: "boolean",
         brief: "Enable debug logging to file",
-        default: false,
+        optional: true,
       },
       "no-auth": {
         kind: "boolean",
         brief: "DANGEROUS: Disable authentication (not recommended)",
-        default: false,
+        optional: true,
       },
       https: {
         kind: "boolean",
         brief: "Enable HTTPS with auto-generated self-signed certificate",
-        default: false,
+        optional: true,
       },
       manager: {
         kind: "boolean",
         brief: "Start Manager Web UI (no proxy)",
-        default: false,
+        optional: true,
       },
       group: {
         kind: "parsed",
@@ -65,21 +65,22 @@ export const command = buildCommand({
         brief: "Agent command and arguments (use -- before agent flags)",
         parse: String,
         placeholder: "command",
+        optional: true,
       },
       minimum: 0,
     },
   },
   func: async function (
     this: LocalContext,
-    flags: { port: number; host: string; debug: boolean; "no-auth": boolean; https: boolean; manager: boolean; group: string | undefined },
+    flags: { port?: number; host?: string; debug?: boolean; "no-auth"?: boolean; https?: boolean; manager?: boolean; group?: string },
     ...args: readonly string[]
   ) {
-    const port = flags.port;
-    const host = flags.host;
-    const debug = flags.debug;
-    const noAuth = flags["no-auth"];
-    const https = flags.https;
-    const manager = flags.manager;
+    const port = flags.port ?? 9315;
+    const host = flags.host ?? "localhost";
+    const debug = flags.debug ?? false;
+    const noAuth = flags["no-auth"] ?? false;
+    const https = flags.https ?? false;
+    const manager = flags.manager ?? false;
     const group = flags.group;
 
     // Manager mode: start web UI only, no proxy
