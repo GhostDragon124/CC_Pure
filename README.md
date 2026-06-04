@@ -2,7 +2,7 @@
 
 [![Bun](https://img.shields.io/badge/runtime-Bun-black?style=flat-square&logo=bun)](https://bun.sh/)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)]()
-[![Tests](https://img.shields.io/badge/tests-3551-brightgreen?style=flat-square)]()
+[![Tests](https://img.shields.io/badge/tests-3699-brightgreen?style=flat-square)]()
 [![Security](https://img.shields.io/badge/CodeQL-0%20open-brightgreen?style=flat-square)]()
 
 > Claude Code 的纯净分叉 —— 去遥测、去企业全家桶、保留核心能力。可审计、可自建、数据主权归你。
