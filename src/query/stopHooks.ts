@@ -82,6 +82,8 @@ export async function* handleStopHooks(
   StopHookResult
 > {
   const hookStartTime = Date.now()
+  // CCP: poor mode module not present — always false
+  const poorMode = false
 
   const stopHookContext: REPLHookContext = {
     messages: [...messagesForQuery, ...assistantMessages],
@@ -150,7 +152,9 @@ export async function* handleStopHooks(
       // but before gracefulShutdownSync (see drainPendingExtraction).
       void extractMemoriesModule!.executeExtractMemories(
         stopHookContext,
-        toolUseContext.appendSystemMessage as ((msg: import('../types/message.js').SystemMessage) => void) | undefined,
+        toolUseContext.appendSystemMessage as
+          | ((msg: import('../types/message.js').SystemMessage) => void)
+          | undefined,
       )
     }
     if (!toolUseContext.agentId && !poorMode) {
@@ -225,7 +229,8 @@ export async function* handleStopHooks(
           ) {
             if (attachment.type === 'hook_non_blocking_error') {
               hookErrors.push(
-                (attachment.stderr as string) || `Exit code ${attachment.exitCode}`,
+                (attachment.stderr as string) ||
+                  `Exit code ${attachment.exitCode}`,
               )
               // Non-blocking errors always have output
               hasOutput = true
