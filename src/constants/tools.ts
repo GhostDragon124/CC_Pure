@@ -28,6 +28,7 @@ import { ENTER_WORKTREE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/
 import { EXIT_WORKTREE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/ExitWorktreeTool/constants.js'
 import { WORKFLOW_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/WorkflowTool/constants.js'
 import { VAULT_HTTP_FETCH_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/VaultHttpFetchTool/constants.js'
+import { LOCAL_MEMORY_RECALL_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/LocalMemoryRecallTool/constants.js'
 import {
   CRON_CREATE_TOOL_NAME,
   CRON_DELETE_TOOL_NAME,
@@ -44,6 +45,8 @@ export const ALL_AGENT_DISALLOWED_TOOLS = new Set([
   TASK_STOP_TOOL_NAME,
   // Prevent recursive workflow execution inside subagents.
   ...(feature('WORKFLOW_SCRIPTS') ? [WORKFLOW_TOOL_NAME] : []),
+  // Keep local-memory recall on the main thread only.
+  LOCAL_MEMORY_RECALL_TOOL_NAME,
   // Prevent subagents from accessing LocalVault secrets.
   VAULT_HTTP_FETCH_TOOL_NAME,
 ])
@@ -85,7 +88,9 @@ export const IN_PROCESS_TEAMMATE_ALLOWED_TOOLS = new Set([
   SEND_MESSAGE_TOOL_NAME,
   // Teammate-created crons are tagged with the creating agentId and routed to
   // that teammate's pendingUserMessages queue (see useScheduledTasks.ts).
-  CRON_CREATE_TOOL_NAME, CRON_DELETE_TOOL_NAME, CRON_LIST_TOOL_NAME,
+  CRON_CREATE_TOOL_NAME,
+  CRON_DELETE_TOOL_NAME,
+  CRON_LIST_TOOL_NAME,
 ])
 
 /*
