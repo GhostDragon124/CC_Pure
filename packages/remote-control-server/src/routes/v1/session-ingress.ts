@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { createBunWebSocket } from "hono/bun";
+import { upgradeWebSocket, websocket } from "../../transport/ws-shared";
 import { validateApiKey } from "../../auth/api-key";
 import { verifyWorkerJwt } from "../../auth/jwt";
 import {
@@ -9,8 +9,6 @@ import {
   ingestBridgeMessage,
 } from "../../transport/ws-handler";
 import { getSession, resolveExistingSessionId } from "../../services/session";
-
-const { upgradeWebSocket, websocket } = createBunWebSocket();
 
 const app = new Hono();
 
