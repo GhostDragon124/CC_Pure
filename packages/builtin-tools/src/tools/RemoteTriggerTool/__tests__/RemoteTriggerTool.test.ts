@@ -10,9 +10,11 @@ import {
 } from 'bun:test'
 import { authMock } from '../../../../../../tests/mocks/auth'
 import { setupAxiosMock } from '../../../../../../tests/mocks/axios'
+import { logMock } from '../../../../../../tests/mocks/log'
+import { debugMock } from '../../../../../../tests/mocks/debug'
 
 let requestStatus = 200
-const auditRecords: Record<string, unknown>[] = []
+let auditRecords: Array<Record<string, unknown>> = []
 
 const axiosHandle = setupAxiosMock()
 axiosHandle.stubs.request = async () => ({
@@ -29,6 +31,9 @@ afterAll(() => {
 
 mock.module('src/utils/auth.js', authMock)
 
+mock.module('src/utils/log.ts', logMock)
+mock.module('src/utils/debug.ts', debugMock)
+
 mock.module('src/services/oauth/client.js', () => ({
   getOrganizationUUID: async () => 'org',
 }))
@@ -39,6 +44,10 @@ mock.module('src/services/analytics/growthbook.js', () => ({
 
 mock.module('src/services/policyLimits/index.js', () => ({
   isPolicyAllowed: () => true,
+}))
+
+mock.module('bun:bundle', () => ({
+  feature: () => false,
 }))
 
 // Narrow mock for the side-effectful entries in `src/constants/oauth.js`.
