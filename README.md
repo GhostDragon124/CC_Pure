@@ -2,7 +2,7 @@
 
 [![Bun](https://img.shields.io/badge/runtime-Bun-black?style=flat-square&logo=bun)](https://bun.sh/)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)]()
-[![Tests](https://img.shields.io/badge/tests-3068%20pass-brightgreen?style=flat-square)]()
+[![Tests](https://img.shields.io/badge/tests-3383%20pass-brightgreen?style=flat-square)]()
 [![Security](https://img.shields.io/badge/CodeQL-0%20open-brightgreen?style=flat-square)]()
 
 > Claude Code 的纯净分叉 —— 去遥测、去企业全家桶、保留核心能力。可审计、可自建、数据主权归你。
@@ -71,6 +71,21 @@ ccp -p "1+1"            # 输出: 2
 
 CC Pure 基于 CCB v2.6.6 反编译源码，做了以下核心变更：
 
+### 上游同步策略
+
+持续追踪 [Claude Code Best](https://github.com/claude-code-best/claude-code) 上游更新，按安全优先原则选择性合并：
+
+| 版本 | 日期 | 合并数 | 说明 |
+|------|------|:------:|------|
+| v2.2.0 | 2026-06-04 | 2 | Batch 1a 安全加固 + ad09f38f 斜杠补全 |
+| v2.1.0 | 2026-06-04 | 2 | REVIEW 24 执行完毕 |
+| v2.0.0 | 2026-06-04 | 12 | P3 A 完成 |
+| v1.8.0 | 2026-06-04 | 23 | P2 完成 |
+| ... | 2026-06 | 10 | P0/P1 + 基础设施同步 |
+
+> **累计**：180 个候选 commit 全量审查 → ✅ 49 MERGE / 🟡 34 已存在 / ❌ 96 SKIP / ⏸️ 1 延后。
+> 详见本地文档 `~/文档/User_manual/CC_Pure_代码分析/CC_Pure_update_record/`。
+
 ### 移除的企业全家桶
 
 | 移除项 | 原因 |
@@ -103,7 +118,7 @@ tail -f ~/.claude/local_analytics.jsonl
 | BRIDGE_MODE | ✅ | WebSocket 远程控制 |
 | DAEMON | ✅ | 守护进程 + 后台 worker |
 | ULTRATHINK | ✅ | 扩展深度推理 |
-| ACP | ✅ | 外部 Agent 协议（Zed/Cursor 兼容） |
+| ACP | ⚠️ | 外部 Agent 协议 — stub (fail-closed)，默认关闭 |
 | VOICE_MODE | ✅ | 语音输入 |
 | KAIROS | ✅ | 定时任务系统 |
 | PROACTIVE | ✅ | 自主代理模式 |
@@ -118,7 +133,7 @@ tail -f ~/.claude/local_analytics.jsonl
 | 指标 | CCB 基线 | CC Pure 当前 | 提升 |
 |------|:--------:|:----------:|:----:|
 | tsc 错误 | 62 | **0** | ✅ |
-| 测试通过 | 3007 | **3068** | +61 |
+| 测试通过 | 3007 | **3383** | +376 |
 | 构建 | 不稳定 | **稳定（splitting: true）** | ✅ |
 | 遥测外连 | 有 | **0** | ✅ |
 | CodeQL open | 175+ | **0** | ✅ |
@@ -145,7 +160,7 @@ tail -f ~/.claude/local_analytics.jsonl
 bun install
 bun run dev           # 开发模式（默认全 feature 开启）
 bun run build         # 生产构建
-bun test              # 3068 tests
+bun test              # 3383 tests
 ```
 
 ---
