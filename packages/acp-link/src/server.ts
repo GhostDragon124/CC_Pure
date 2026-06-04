@@ -1282,6 +1282,16 @@ export async function startServer(config: ServerConfig): Promise<void> {
   process.on('SIGINT', shutdown)
   process.on('SIGTERM', shutdown)
 
+  // Graceful shutdown — close RCS upstream
+  const shutdown = async () => {
+    if (rcsUpstream) {
+      await rcsUpstream.close();
+    }
+    process.exit(0);
+  };
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
+
   // Keep the server running
   await new Promise(() => {})
 }
