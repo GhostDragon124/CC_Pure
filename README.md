@@ -77,6 +77,7 @@ CC Pure 基于 CCB v2.6.6 反编译源码，做了以下核心变更：
 
 | 版本 | 日期 | 合并数 | 说明 |
 |------|------|:------:|------|
+| v2.3.0 | 2026-06-04 | 7 commits | **RCS/Web 全量迁移 + SSH Remote**：vanilla JS → React（29 组件 + shadcn/ui），SSH stub 替换为 2029 行完整实现 |
 | v2.2.2 | 2026-06-04 | 16 文件 | **Autonomy 全量合并**：f2e9af49 PR #386 源码 + 11 测试文件，3699 pass |
 | v2.2.1 | 2026-06-04 | 2 | OpenAI fixes backfill：c82f5994 (stop_reason/usage/max_tokens) + 901628b4 (MCP 工具可见性) |
 | v2.2.0 | 2026-06-04 | 2 | Batch 1a 安全加固 + ad09f38f 斜杠补全 |
@@ -85,7 +86,7 @@ CC Pure 基于 CCB v2.6.6 反编译源码，做了以下核心变更：
 | v1.8.0 | 2026-06-04 | 23 | P2 完成 |
 | ... | 2026-06 | 10 | P0/P1 + 基础设施同步 |
 
-> **累计**：180 个候选 commit 全量审查 → ✅ 52 MERGE / 🟡 34 已存在 / ❌ 94 SKIP。
+> **累计**：187 个候选 commit 全量审查 → ✅ 59 MERGE / 🟡 34 已存在 / ❌ 94 SKIP。
 > 详见本地文档 `~/文档/User_manual/CC_Pure_代码分析/CC_Pure_update_record/`。
 
 ### 移除 / 降级的组件
@@ -122,8 +123,8 @@ tail -f ~/.claude/local_analytics.jsonl
 | **Agent 协议** | ACP | ✅ | 外部 Agent 协议，含 bridge / permissions / session / acp-link manager |
 | **浏览器** | Chrome Use | ✅ | Claude in Chrome 集成，通过浏览器扩展执行操作 |
 | | Computer Use | ✅ | GUI 自动化（截图/点击/输入），`packages/@ant/computer-use-mcp/` |
-| **远程控制** | BRIDGE_MODE | ✅ | Remote Control 私有部署，WebSocket 远程控制 + 会话管理 |
-| | SSH_REMOTE | ✅ | SSH 远程连接，本地 REPL + 远端工具执行 |
+| **远程控制** | BRIDGE_MODE | ✅ | Remote Control 私有部署（React Web UI + shadcn/ui 组件库），WebSocket + SSE 实时推送 |
+| | SSH_REMOTE | ✅ | SSH 远程连接（2029行完整实现），本地 REPL + 远端工具执行，SSHSessionManager + SSHProbe + SSHDeploy |
 | **自主代理** | PROACTIVE | ✅ | 主动自主代理模式，SleepTool 控制 tick 节奏 |
 | | DAEMON | ✅ | 守护进程 + 后台 worker |
 | | COORDINATOR_MODE | ✅ | 多 worker 编排 |
