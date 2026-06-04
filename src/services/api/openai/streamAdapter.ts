@@ -18,6 +18,10 @@ import { randomUUID } from 'crypto'
  *   prompt_tokens_details.cached_tokens       → cache_read_input_tokens
  *   (no OpenAI equivalent)                    → cache_creation_input_tokens (always 0)
  *
+ *   All four fields are emitted in the post-loop message_delta (not message_start)
+ *   so that trailing usage chunks sent after finish_reason are fully captured
+ *   before the final counts are reported.
+ *
  * Thinking support:
  *   DeepSeek and compatible providers send `delta.reasoning_content` for chain-of-thought.
  *   This is mapped to Anthropic's `thinking` content blocks:
@@ -38,7 +42,10 @@ export async function* adaptOpenAIStreamToAnthropic(
   let currentContentIndex = -1
 
   // Track tool_use blocks: tool_calls index → { contentIndex, id, name, arguments }
-  const toolBlocks = new Map<number, { contentIndex: number; id: string; name: string; arguments: string }>()
+  const toolBlocks = new Map<
+    number,
+    { contentIndex: number; id: string; name: string; arguments: string }
+  >()
 
   // Track thinking block state
   let thinkingBlockOpen = false
@@ -56,6 +63,11 @@ export async function* adaptOpenAIStreamToAnthropic(
 
   // Track all open content block indices (for cleanup)
   const openBlockIndices = new Set<number>()
+
+  // Deferred finish state: emit message_delta/message_stop after the stream loop
+  // so trailing usage-only chunks can update token counts first.
+  let pendingFinishReason: string | null = null
+  let pendingHasToolCalls = false
 
   for await (const chunk of stream) {
     const choice = chunk.choices?.[0]
@@ -203,7 +215,8 @@ export async function* adaptOpenAIStreamToAnthropic(
 
           // Start new tool_use block
           currentContentIndex++
-          const toolId = tc.id || `toolu_${randomUUID().replace(/-/g, '').slice(0, 24)}`
+          const toolId =
+            tc.id || `toolu_${randomUUID().replace(/-/g, '').slice(0, 24)}`
           const toolName = tc.function?.name || ''
 
           toolBlocks.set(tcIndex, {
@@ -242,7 +255,8 @@ export async function* adaptOpenAIStreamToAnthropic(
       }
     }
 
-    // Handle finish
+    // Handle finish: close open blocks now, but defer final message events until
+    // after the stream loop so trailing usage chunks are included.
     if (choice?.finish_reason) {
       // Close thinking block if still open
       if (thinkingBlockOpen) {
@@ -275,27 +289,8 @@ export async function* adaptOpenAIStreamToAnthropic(
         }
       }
 
-      // Map finish_reason to Anthropic stop_reason.
-      // Some backends return "stop" even when tool_calls are present —
-      // force "tool_use" when we saw any tool blocks to ensure the query
-      // loop actually executes the tools.
-      const hasToolCalls = toolBlocks.size > 0
-      const stopReason = hasToolCalls ? 'tool_use' : mapFinishReason(choice.finish_reason)
-
-      yield {
-        type: 'message_delta',
-        delta: {
-          stop_reason: stopReason,
-          stop_sequence: null,
-        },
-        usage: {
-          output_tokens: outputTokens,
-        },
-      } as BetaRawMessageStreamEvent
-
-      yield {
-        type: 'message_stop',
-      } as BetaRawMessageStreamEvent
+      pendingFinishReason = choice.finish_reason
+      pendingHasToolCalls = toolBlocks.size > 0
     }
   }
 
@@ -304,6 +299,33 @@ export async function* adaptOpenAIStreamToAnthropic(
     yield {
       type: 'content_block_stop',
       index: idx,
+    } as BetaRawMessageStreamEvent
+  }
+
+  if (pendingFinishReason !== null) {
+    const stopReason =
+      pendingFinishReason === 'length'
+        ? 'max_tokens'
+        : pendingHasToolCalls
+          ? 'tool_use'
+          : mapFinishReason(pendingFinishReason)
+
+    yield {
+      type: 'message_delta',
+      delta: {
+        stop_reason: stopReason,
+        stop_sequence: null,
+      },
+      usage: {
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
+        cache_read_input_tokens: cachedTokens,
+        cache_creation_input_tokens: 0,
+      },
+    } as BetaRawMessageStreamEvent
+
+    yield {
+      type: 'message_stop',
     } as BetaRawMessageStreamEvent
   }
 }

@@ -5,6 +5,7 @@ import type {
   StreamEvent,
   SystemAPIErrorMessage,
   AssistantMessage,
+  UserMessage,
 } from '../../../types/message.js'
 import type { Tools } from '../../../Tool.js'
 import { getOpenAIClient } from './client.js'
@@ -24,17 +25,130 @@ import {
 import { logForDebugging } from '../../../utils/debug.js'
 import { addToTotalSessionCost } from '../../../cost-tracker.js'
 import { calculateUSDCost } from '../../../utils/modelCost.js'
+import { getModelMaxOutputTokens } from '../../../utils/context.js'
+import { recordLLMObservation } from '../../../services/langfuse/tracing.js'
+import {
+  convertMessagesToLangfuse,
+  convertOutputToLangfuse,
+  convertToolsToLangfuse,
+} from '../../../services/langfuse/convert.js'
 import type { Options } from '../claude.js'
 import { randomUUID } from 'crypto'
 import {
   createAssistantAPIErrorMessage,
+  createUserMessage,
   normalizeContentFromAPI,
 } from '../../../utils/messages.js'
-import { isToolSearchEnabled } from '../../../utils/toolSearch.js'
 import {
+  isToolSearchEnabled,
+  extractDiscoveredToolNames,
+  isDeferredToolsDeltaEnabled,
+} from '../../../utils/toolSearch.js'
+import {
+  formatDeferredToolLine,
   isDeferredTool,
   TOOL_SEARCH_TOOL_NAME,
 } from '../../../tools/ToolSearchTool/prompt.js'
+
+/**
+ * Mirrors the Anthropic request path's deferred-tool announcement for OpenAI.
+ *
+ * OpenAI-compatible endpoints cannot consume Anthropic's `defer_loading` or
+ * `tool_reference` beta payloads directly, so the model needs the same textual
+ * list of deferred MCP tool names before it can ask ToolSearchTool to load
+ * their full schemas.
+ */
+function prependDeferredToolListIfNeeded(
+  messages: (AssistantMessage | UserMessage)[],
+  tools: Tools,
+  deferredToolNames: Set<string>,
+  useToolSearch: boolean,
+): (AssistantMessage | UserMessage)[] {
+  if (!useToolSearch || isDeferredToolsDeltaEnabled()) return messages
+
+  const deferredToolList = tools
+    .filter(tool => deferredToolNames.has(tool.name))
+    .map(formatDeferredToolLine)
+    .sort()
+    .join('\n')
+
+  if (!deferredToolList) return messages
+
+  return [
+    createUserMessage({
+      content: `<available-deferred-tools>\n${deferredToolList}\n</available-deferred-tools>`,
+      isMeta: true,
+    }),
+    ...messages,
+  ]
+}
+
+function isOpenAIConvertibleMessage(
+  msg: Message,
+): msg is AssistantMessage | UserMessage {
+  return msg.type === 'assistant' || msg.type === 'user'
+}
+
+function assembleFinalAssistantOutputs(params: {
+  partialMessage: any
+  contentBlocks: Record<number, any>
+  tools: Tools
+  agentId: string | undefined
+  usage: {
+    input_tokens: number
+    output_tokens: number
+    cache_creation_input_tokens: number
+    cache_read_input_tokens: number
+  }
+  stopReason: string | null
+  maxTokens: number
+}): (AssistantMessage | SystemAPIErrorMessage)[] {
+  const {
+    partialMessage,
+    contentBlocks,
+    tools,
+    agentId,
+    usage,
+    stopReason,
+    maxTokens,
+  } = params
+  const outputs: (AssistantMessage | SystemAPIErrorMessage)[] = []
+
+  const allBlocks = Object.keys(contentBlocks)
+    .sort((a, b) => Number(a) - Number(b))
+    .map(k => contentBlocks[Number(k)])
+    .filter(Boolean)
+
+  if (allBlocks.length > 0) {
+    outputs.push({
+      message: {
+        ...partialMessage,
+        content: normalizeContentFromAPI(allBlocks, tools, agentId),
+        usage,
+        stop_reason: stopReason,
+        stop_sequence: null,
+      },
+      requestId: undefined,
+      type: 'assistant',
+      uuid: randomUUID(),
+      timestamp: new Date().toISOString(),
+    } as AssistantMessage)
+  }
+
+  if (stopReason === 'max_tokens') {
+    outputs.push(
+      createAssistantAPIErrorMessage({
+        content:
+          `Output truncated: response exceeded the ${maxTokens} token limit. ` +
+          `Set CLAUDE_CODE_MAX_OUTPUT_TOKENS to override.`,
+        apiError: 'max_output_tokens',
+        error: 'max_output_tokens',
+      }),
+    )
+  }
+
+  return outputs
+}
 
 /**
  * OpenAI-compatible query path. Converts Anthropic-format messages/tools to
@@ -83,13 +197,15 @@ export async function* queryModelOpenAI(
     // at runtime. Keeping the tools array stable preserves the prompt cache.
     let filteredTools = tools
     if (useToolSearch && deferredToolNames.size > 0) {
+      const discoveredToolNames = extractDiscoveredToolNames(messages)
+
       filteredTools = tools.filter(tool => {
         // Always include non-deferred tools
         if (!deferredToolNames.has(tool.name)) return true
         // Always include ToolSearchTool (so it can discover more tools)
         if (toolMatchesName(tool, TOOL_SEARCH_TOOL_NAME)) return true
-        // All other deferred tools are excluded — use ExecuteExtraTool instead
-        return false
+        // Only include deferred tools whose schemas have already been discovered
+        return discoveredToolNames.has(tool.name)
       })
     }
 
@@ -117,12 +233,26 @@ export async function* queryModelOpenAI(
     )
 
     // 7. Convert messages and tools to OpenAI format
+    const enableThinking = isOpenAIThinkingEnabled(openaiModel)
+    const openAIConvertibleMessages = messagesForAPI.filter(
+      isOpenAIConvertibleMessage,
+    )
+    const messagesWithDeferredToolList = prependDeferredToolListIfNeeded(
+      openAIConvertibleMessages,
+      tools,
+      deferredToolNames,
+      useToolSearch,
+    )
     const openaiMessages = anthropicMessagesToOpenAI(
-      messagesForAPI,
+      messagesWithDeferredToolList,
       systemPrompt,
+      { enableThinking },
     )
     const openaiTools = anthropicToolsToOpenAI(standardTools)
     const openaiToolChoice = anthropicToolChoiceToOpenAI(options.toolChoice)
+
+    const { upperLimit } = getModelMaxOutputTokens(openaiModel)
+    const maxTokens = options.maxOutputTokensOverride ?? upperLimit
 
     // 8. Get client and make streaming request
     const client = getOpenAIClient({
@@ -132,28 +262,22 @@ export async function* queryModelOpenAI(
     })
 
     logForDebugging(
-      `[OpenAI] Calling model=${openaiModel}, messages=${openaiMessages.length}, tools=${openaiTools.length}`,
+      `[OpenAI] Calling model=${openaiModel}, messages=${openaiMessages.length}, tools=${openaiTools.length}, thinking=${enableThinking}`,
     )
 
     // 9. Call OpenAI API with streaming
-    const stream = await client.chat.completions.create(
-      {
-        model: openaiModel,
-        messages: openaiMessages,
-        ...(openaiTools.length > 0 && {
-          tools: openaiTools,
-          ...(openaiToolChoice && { tool_choice: openaiToolChoice }),
-        }),
-        stream: true,
-        stream_options: { include_usage: true },
-        ...(options.temperatureOverride !== undefined && {
-          temperature: options.temperatureOverride,
-        }),
-      },
-      {
-        signal,
-      },
-    )
+    const requestBody = buildOpenAIRequestBody({
+      model: openaiModel,
+      messages: openaiMessages,
+      tools: openaiTools,
+      toolChoice: openaiToolChoice,
+      enableThinking,
+      maxTokens,
+      temperatureOverride: options.temperatureOverride,
+    })
+    const stream = await client.chat.completions.create(requestBody, {
+      signal,
+    })
 
     // 10. Convert OpenAI stream to Anthropic events, then process into
     //    AssistantMessage + StreamEvent (matching the Anthropic path behavior)
@@ -161,7 +285,9 @@ export async function* queryModelOpenAI(
 
     // Accumulate content blocks and usage, same as the Anthropic path in claude.ts
     const contentBlocks: Record<number, any> = {}
+    const collectedMessages: AssistantMessage[] = []
     let partialMessage: any
+    let stopReason: string | null = null
     let usage = {
       input_tokens: 0,
       output_tokens: 0,
@@ -215,21 +341,7 @@ export async function* queryModelOpenAI(
           break
         }
         case 'content_block_stop': {
-          const idx = (event as any).index
-          const block = contentBlocks[idx]
-          if (!block || !partialMessage) break
-
-          const m: AssistantMessage = {
-            message: {
-              ...partialMessage,
-              content: normalizeContentFromAPI([block], tools, options.agentId),
-            },
-            requestId: undefined,
-            type: 'assistant',
-            uuid: randomUUID(),
-            timestamp: new Date().toISOString(),
-          }
-          yield m
+          // Block accumulation is complete; assembly happens at message_stop.
           break
         }
         case 'message_delta': {
@@ -237,21 +349,33 @@ export async function* queryModelOpenAI(
           if (deltaUsage) {
             usage = { ...usage, ...deltaUsage }
           }
-          // Update the stop_reason on the last yielded message
-          // (we don't have a reference here, but the consumer handles this)
+          if ((event as any).delta?.stop_reason != null) {
+            stopReason = (event as any).delta.stop_reason
+          }
           break
         }
-        case 'message_stop':
+        case 'message_stop': {
+          if (partialMessage) {
+            for (const output of assembleFinalAssistantOutputs({
+              partialMessage,
+              contentBlocks,
+              tools,
+              agentId: options.agentId,
+              usage,
+              stopReason,
+              maxTokens,
+            })) {
+              if (output.type === 'assistant') collectedMessages.push(output)
+              yield output
+            }
+            partialMessage = null
+          }
+          if (usage.input_tokens + usage.output_tokens > 0) {
+            const costUSD = calculateUSDCost(openaiModel, usage as any)
+            addToTotalSessionCost(costUSD, usage as any, options.model)
+          }
           break
-      }
-
-      // Track cost and token usage (matching the Anthropic path in claude.ts)
-      if (
-        event.type === 'message_stop' &&
-        usage.input_tokens + usage.output_tokens > 0
-      ) {
-        const costUSD = calculateUSDCost(openaiModel, usage as any)
-        addToTotalSessionCost(costUSD, usage as any, options.model)
+        }
       }
 
       // Also yield as StreamEvent for real-time display (matching Anthropic path)
@@ -260,6 +384,37 @@ export async function* queryModelOpenAI(
         event,
         ...(event.type === 'message_start' ? { ttftMs } : undefined),
       } as StreamEvent
+    }
+
+    recordLLMObservation(options.langfuseTrace ?? null, {
+      model: openaiModel,
+      provider: 'openai',
+      input: convertMessagesToLangfuse(openaiMessages),
+      output: convertOutputToLangfuse(collectedMessages),
+      usage: {
+        input_tokens: usage.input_tokens,
+        output_tokens: usage.output_tokens,
+        cache_creation_input_tokens: usage.cache_creation_input_tokens,
+        cache_read_input_tokens: usage.cache_read_input_tokens,
+      },
+      startTime: new Date(start),
+      endTime: new Date(),
+      completionStartTime: ttftMs > 0 ? new Date(start + ttftMs) : undefined,
+      tools: convertToolsToLangfuse(toolSchemas as unknown[]),
+    })
+
+    if (partialMessage) {
+      for (const output of assembleFinalAssistantOutputs({
+        partialMessage,
+        contentBlocks,
+        tools,
+        agentId: options.agentId,
+        usage,
+        stopReason,
+        maxTokens,
+      })) {
+        yield output
+      }
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error)
@@ -329,7 +484,6 @@ export function buildOpenAIRequestBody(params: {
     enableThinking = false,
     temperatureOverride,
     maxTokens,
-    systemPrompt,
   } = params
 
   const body: Record<string, unknown> = {
@@ -355,7 +509,7 @@ export function buildOpenAIRequestBody(params: {
   }
 
   if (maxTokens !== undefined) {
-    body.max_completion_tokens = maxTokens
+    body.max_tokens = maxTokens
   }
 
   return body
