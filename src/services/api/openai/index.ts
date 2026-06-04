@@ -271,3 +271,92 @@ export async function* queryModelOpenAI(
     })
   }
 }
+
+/**
+ * Checks whether OpenAI thinking/reasoning mode is enabled for a given model.
+ *
+ * Priority:
+ *   1. OPENAI_ENABLE_THINKING env var — if set to a truthy value (1/true/yes/on,
+ *      case-insensitive), thinking is forced ON for all models. If set to a falsy
+ *      value (0/false/empty), thinking is forced OFF for all models.
+ *   2. Model name auto-detect — if the env var is unset, any model whose name
+ *      contains "deepseek" (case-insensitive) gets thinking enabled.
+ *   3. Default: false.
+ */
+export function isOpenAIThinkingEnabled(model: string): boolean {
+  const env = process.env.OPENAI_ENABLE_THINKING
+  if (env !== undefined) {
+    const trimmed = env.trim().toLowerCase()
+    if (
+      trimmed === '1' ||
+      trimmed === 'true' ||
+      trimmed === 'yes' ||
+      trimmed === 'on'
+    ) {
+      return true
+    }
+    return false
+  }
+  return model.toLowerCase().includes('deepseek')
+}
+
+/**
+ * Builds an OpenAI-compatible chat completions request body.
+ *
+ * Injects thinking params for all three known formats simultaneously when
+ * enableThinking is true:
+ *   - thinking: { type: 'enabled' }  — official OpenAI/DeepSeek API
+ *   - enable_thinking: true           — vLLM / self-hosted
+ *   - chat_template_kwargs: { thinking: true } — vLLM chat template
+ *
+ * Temperature is excluded when thinking is on (thinking models reject it).
+ */
+export function buildOpenAIRequestBody(params: {
+  model: string
+  messages: unknown[]
+  tools: unknown[]
+  toolChoice: unknown
+  enableThinking?: boolean
+  temperatureOverride?: number
+  maxTokens?: number
+  systemPrompt?: unknown
+}): Record<string, unknown> {
+  const {
+    model,
+    messages,
+    tools,
+    toolChoice,
+    enableThinking = false,
+    temperatureOverride,
+    maxTokens,
+    systemPrompt,
+  } = params
+
+  const body: Record<string, unknown> = {
+    model,
+    messages,
+    stream: true,
+    stream_options: { include_usage: true },
+  }
+
+  if (tools.length > 0) {
+    body.tools = tools
+    if (toolChoice !== undefined) {
+      body.tool_choice = toolChoice
+    }
+  }
+
+  if (enableThinking) {
+    body.thinking = { type: 'enabled' }
+    body.enable_thinking = true
+    body.chat_template_kwargs = { thinking: true }
+  } else if (temperatureOverride !== undefined) {
+    body.temperature = temperatureOverride
+  }
+
+  if (maxTokens !== undefined) {
+    body.max_completion_tokens = maxTokens
+  }
+
+  return body
+}
