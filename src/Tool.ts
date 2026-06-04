@@ -178,6 +178,15 @@ export type ToolUseContext = {
     querySource?: QuerySource
     /** Optional callback to get the latest tools (e.g., after MCP servers connect mid-query) */
     refreshTools?: () => Tools
+    /**
+     * @internal TEST-ONLY ESCAPE HATCH. MUST remain undefined in production.
+     *
+     * Allows non-bundled unit-test harnesses to exercise the background
+     * forked slash command path that production assistant mode gates behind
+     * `feature('KAIROS')`. Setting this true outside NODE_ENV=test is rejected
+     * by processSlashCommand.
+     */
+    allowBackgroundForkedSlashCommands?: boolean
   }
   abortController: AbortController
   readFileState: FileStateCache
