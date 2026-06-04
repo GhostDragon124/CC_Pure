@@ -255,31 +255,6 @@ export function notifyPermissionModeChanged(mode: PermissionMode): void {
   permissionModeListener?.(mode)
 }
 
-// ── Automation state (PROACTIVE / KAIROS) ──────────────────────
-// Pushed by SleepTool when the autonomous agent enters/leaves sleep.
-// Consumers (CCR sidebar, PromptInput footer) render a status indicator
-// so the user knows the agent is intentionally idle, not crashed.
-
-export type AutomationState = {
-  enabled: boolean
-  phase: string | null // 'sleeping' | null
-  next_tick_at: number | null
-  sleep_until: number | null
-} | null
-
-type AutomationStateChangedListener = (state: AutomationState) => void
-let automationStateListener: AutomationStateChangedListener | null = null
-
-export function setAutomationStateChangedListener(
-  cb: AutomationStateChangedListener | null,
-): void {
-  automationStateListener = cb
-}
-
-export function notifyAutomationStateChanged(state: AutomationState): void {
-  automationStateListener?.(state)
-}
-
 export function resetSessionStateForTests(): void {
   stateListener = null
   metadataListener = null

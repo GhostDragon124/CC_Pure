@@ -1,8 +1,13 @@
 import { describe, expect, test } from 'bun:test'
+import { resolve, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-async function runIsolatedTestFile(path: string) {
-  const proc = Bun.spawn([process.execPath, 'test', path], {
-    cwd: process.cwd(),
+const testDir = dirname(fileURLToPath(import.meta.url))
+const projectRoot = resolve(testDir, '../../../../..')
+
+async function runIsolatedTestFile(relativePath: string) {
+  const proc = Bun.spawn([process.execPath, 'test', relativePath], {
+    cwd: projectRoot,
     env: process.env,
     stdout: 'pipe',
     stderr: 'pipe',
