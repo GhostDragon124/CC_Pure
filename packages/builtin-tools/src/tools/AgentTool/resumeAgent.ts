@@ -33,6 +33,7 @@ import { FORK_AGENT, isForkSubagentEnabled } from '@claude-code-best/builtin-too
 import type { AgentDefinition } from '@claude-code-best/builtin-tools/tools/AgentTool/loadAgentsDir.js'
 import { isBuiltInAgent } from '@claude-code-best/builtin-tools/tools/AgentTool/loadAgentsDir.js'
 import { runAgent } from '@claude-code-best/builtin-tools/tools/AgentTool/runAgent.js'
+import { filterParentToolsForFork } from 'src/utils/agentToolFilter.js'
 
 export type ResumeAgentResult = {
   agentId: string
@@ -160,7 +161,7 @@ export async function resumeAgentBackground({
     mode: selectedAgent.permissionMode ?? 'acceptEdits',
   }
   const workerTools = isResumedFork
-    ? toolUseContext.options.tools
+    ? filterParentToolsForFork(toolUseContext.options.tools)
     : assembleToolPool(workerPermissionContext, appState.mcp.tools)
 
   const runAgentParams: Parameters<typeof runAgent>[0] = {

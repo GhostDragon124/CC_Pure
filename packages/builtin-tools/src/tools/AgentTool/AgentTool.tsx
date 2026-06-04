@@ -56,6 +56,7 @@ import { logForDebugging } from 'src/utils/debug.js'
 import { isEnvTruthy } from 'src/utils/envUtils.js'
 import { AbortError, errorMessage, toError } from 'src/utils/errors.js'
 import type { CacheSafeParams } from 'src/utils/forkedAgent.js'
+import { filterParentToolsForFork } from 'src/utils/agentToolFilter.js'
 import { lazySchema } from 'src/utils/lazySchema.js'
 import {
   createUserMessage,
@@ -898,7 +899,7 @@ export const AgentTool = buildTool({
         : enhancedSystemPrompt && !worktreeInfo && !cwd
           ? { systemPrompt: asSystemPrompt(enhancedSystemPrompt) }
           : undefined,
-      availableTools: isForkPath ? toolUseContext.options.tools : workerTools,
+      availableTools: isForkPath ? filterParentToolsForFork(toolUseContext.options.tools) : workerTools,
       // Pass parent conversation when the fork-subagent path needs full
       // context. useExactTools inherits thinkingConfig (runAgent.ts:624).
       forkContextMessages: isForkPath ? toolUseContext.messages : undefined,
