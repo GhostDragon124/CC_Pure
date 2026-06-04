@@ -35,3 +35,4 @@ dist-split-test/
 # Local analytics data (never upload)
 *.jsonl
 .claude/
+ccp-*.tgz
