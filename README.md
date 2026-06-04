@@ -77,6 +77,7 @@ CC Pure 基于 CCB v2.6.6 反编译源码，做了以下核心变更：
 
 | 版本 | 日期 | 合并数 | 说明 |
 |------|------|:------:|------|
+| v2.3.0 | 2026-06-04 | 7 commits | **RCS/Web 全量迁移 + SSH Remote**：vanilla JS → React（29 组件 + shadcn/ui），SSH stub 替换为 2029 行完整实现 |
 | v2.2.2 | 2026-06-04 | 16 文件 | **Autonomy 全量合并**：f2e9af49 PR #386 源码 + 11 测试文件，3699 pass |
 | v2.2.1 | 2026-06-04 | 2 | OpenAI fixes backfill：c82f5994 (stop_reason/usage/max_tokens) + 901628b4 (MCP 工具可见性) |
 | v2.2.0 | 2026-06-04 | 2 | Batch 1a 安全加固 + ad09f38f 斜杠补全 |
@@ -85,14 +86,14 @@ CC Pure 基于 CCB v2.6.6 反编译源码，做了以下核心变更：
 | v1.8.0 | 2026-06-04 | 23 | P2 完成 |
 | ... | 2026-06 | 10 | P0/P1 + 基础设施同步 |
 
-> **累计**：180 个候选 commit 全量审查 → ✅ 52 MERGE / 🟡 34 已存在 / ❌ 94 SKIP。
+> **累计**：187 个候选 commit 全量审查 → ✅ 59 MERGE / 🟡 34 已存在 / ❌ 94 SKIP。
 > 详见本地文档 `~/文档/User_manual/CC_Pure_代码分析/CC_Pure_update_record/`。
 
 ### 移除 / 降级的组件
 
 | 组件 | 状态 | 说明 |
 |------|:---:|------|
-| Sentry 错误追踪 | 🟡 休眠 | 代码保留（`src/utils/sentry.ts`），设 `SENTRY_DSN` 即激活，支持自托管 Docker 或 sentry.io Cloud |
+| Sentry 错误追踪 | ❌ 移除 | 数据上报第三方，CCP 无此集成 |
 | Pipe IPC / LAN Pipes | ❌ 禁用 | 多机编排，个人使用不需要 |
 | UDS_INBOX | ❌ 禁用 | 进程间通信管道，Node.js 环境卡死 |
 | Anthropic 遥测上报 | ❌ 阻断 | `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1` 启动层拦截 |
@@ -122,8 +123,8 @@ tail -f ~/.claude/local_analytics.jsonl
 | **Agent 协议** | ACP | ✅ | 外部 Agent 协议，含 bridge / permissions / session / acp-link manager |
 | **浏览器** | Chrome Use | ✅ | Claude in Chrome 集成，通过浏览器扩展执行操作 |
 | | Computer Use | ✅ | GUI 自动化（截图/点击/输入），`packages/@ant/computer-use-mcp/` |
-| **远程控制** | BRIDGE_MODE | ✅ | Remote Control 私有部署，自托管绕过 claude.ai 订阅（`CLAUDE_BRIDGE_BASE_URL`），RCS 服务已实测可用（127.0.0.1:3000） |
-| | SSH_REMOTE | ❌ | SSH 远程连接 — 反编译残留 stub，需合上游 `SSHSessionManagerImpl` 实现 |
+| **远程控制** | BRIDGE_MODE | ✅ | Remote Control 私有部署（React Web UI + shadcn/ui 组件库），WebSocket + SSE 实时推送 |
+| | SSH_REMOTE | ✅ | SSH 远程连接（2029行完整实现），本地 REPL + 远端工具执行，SSHSessionManager + SSHProbe + SSHDeploy |
 | **自主代理** | PROACTIVE | ✅ | 主动自主代理模式，SleepTool 控制 tick 节奏 |
 | | DAEMON | ✅ | 守护进程 + 后台 worker |
 | | COORDINATOR_MODE | ✅ | 多 worker 编排 |
