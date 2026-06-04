@@ -121,13 +121,12 @@ async function main(): Promise<void> {
     return;
   }
 
-  // CC_Pure: ACP feature not included — commented out
-  // if (feature('ACP') && process.argv[2] === '--acp') {
-  //   profileCheckpoint('cli_acp_path');
-  //   const { runAcpAgent } = await import('../services/acp/entry.js');
-  //   await runAcpAgent();
-  //   return;
-  // }
+  if (feature('ACP') && process.argv[2] === '--acp') {
+    profileCheckpoint('cli_acp_path');
+    const { runAcpAgent } = await import('../services/acp/entry.js');
+    await runAcpAgent();
+    return;
+  }
 
   if (args[0] === 'weixin') {
     profileCheckpoint('cli_weixin_path');
