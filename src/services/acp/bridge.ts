@@ -830,7 +830,6 @@ export async function forwardSessionUpdates(
               clientCapabilities,
               cwd,
               parentToolUseId,
-              streamingActive,
             },
           )
           for (const notification of notifications) {
