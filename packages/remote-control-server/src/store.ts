@@ -17,6 +17,7 @@ export interface EnvironmentRecord {
   maxSessions: number;
   workerType: string;
   bridgeId: string | null;
+  capabilities: Record<string, unknown> | null;
   status: string;
   username: string | null;
   lastPollAt: Date | null;
@@ -47,6 +48,16 @@ export interface WorkItemRecord {
   updatedAt: Date;
 }
 
+export interface SessionWorkerRecord {
+  sessionId: string;
+  workerStatus: string | null;
+  externalMetadata: Record<string, unknown> | null;
+  requiresActionDetails: Record<string, unknown> | null;
+  lastHeartbeatAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // ---------- Stores (in-memory Maps) ----------
 
 const users = new Map<string, UserRecord>();
@@ -54,6 +65,7 @@ const tokenToUser = new Map<string, { username: string; createdAt: Date }>();
 const environments = new Map<string, EnvironmentRecord>();
 const sessions = new Map<string, SessionRecord>();
 const workItems = new Map<string, WorkItemRecord>();
+const sessionWorkers = new Map<string, SessionWorkerRecord>();
 
 // UUID → session ownership: sessionId → Set of UUIDs
 const sessionOwners = new Map<string, Set<string>>();
@@ -86,6 +98,22 @@ export function storeDeleteToken(token: string): boolean {
 
 // ---------- Environment ----------
 
+/** Find an active or offline environment by machineName (optionally filtered by workerType).
+ *  Includes "offline" so ACP agents can be reused on reconnect. */
+export function storeFindEnvironmentByMachineName(
+  machineName: string,
+  workerType?: string,
+): EnvironmentRecord | undefined {
+  for (const rec of environments.values()) {
+    if (rec.machineName === machineName && (rec.status === "active" || rec.status === "offline")) {
+      if (!workerType || rec.workerType === workerType) {
+        return rec;
+      }
+    }
+  }
+  return undefined;
+}
+
 export function storeCreateEnvironment(req: {
   secret: string;
   machineName?: string;
@@ -96,7 +124,25 @@ export function storeCreateEnvironment(req: {
   workerType?: string;
   bridgeId?: string;
   username?: string;
+  capabilities?: Record<string, unknown>;
 }): EnvironmentRecord {
+  // ACP: reuse existing active record by machineName
+  if (req.workerType === "acp" && req.machineName) {
+    const existing = storeFindEnvironmentByMachineName(req.machineName, "acp");
+    if (existing) {
+      Object.assign(existing, {
+        status: "active",
+        lastPollAt: new Date(),
+        updatedAt: new Date(),
+        maxSessions: req.maxSessions ?? existing.maxSessions,
+        bridgeId: req.bridgeId ?? existing.bridgeId,
+        capabilities: req.capabilities ?? existing.capabilities,
+        username: req.username ?? existing.username,
+      });
+      return existing;
+    }
+  }
+
   const id = `env_${uuid().replace(/-/g, "")}`;
   const now = new Date();
   const record: EnvironmentRecord = {
@@ -109,6 +155,7 @@ export function storeCreateEnvironment(req: {
     maxSessions: req.maxSessions ?? 1,
     workerType: req.workerType ?? "claude_code",
     bridgeId: req.bridgeId ?? null,
+    capabilities: req.capabilities ?? null,
     status: "active",
     username: req.username ?? null,
     lastPollAt: now,
@@ -123,7 +170,7 @@ export function storeGetEnvironment(id: string): EnvironmentRecord | undefined {
   return environments.get(id);
 }
 
-export function storeUpdateEnvironment(id: string, patch: Partial<Pick<EnvironmentRecord, "status" | "lastPollAt" | "updatedAt">>): boolean {
+export function storeUpdateEnvironment(id: string, patch: Partial<Pick<EnvironmentRecord, "status" | "lastPollAt" | "updatedAt" | "capabilities" | "machineName" | "maxSessions" | "bridgeId">>): boolean {
   const rec = environments.get(id);
   if (!rec) return false;
   Object.assign(rec, patch, { updatedAt: new Date() });
@@ -190,7 +237,57 @@ export function storeListSessionsByEnvironment(envId: string): SessionRecord[] {
 }
 
 export function storeDeleteSession(id: string): boolean {
+  sessionWorkers.delete(id);
   return sessions.delete(id);
+}
+
+// ---------- Session Worker ----------
+
+export function storeGetSessionWorker(sessionId: string): SessionWorkerRecord | undefined {
+  return sessionWorkers.get(sessionId);
+}
+
+export function storeUpsertSessionWorker(sessionId: string, patch: {
+  workerStatus?: string | null;
+  externalMetadata?: Record<string, unknown> | null;
+  requiresActionDetails?: Record<string, unknown> | null;
+  lastHeartbeatAt?: Date | null;
+}): SessionWorkerRecord {
+  const now = new Date();
+  const existing = sessionWorkers.get(sessionId);
+  const record: SessionWorkerRecord = existing ?? {
+    sessionId,
+    workerStatus: null,
+    externalMetadata: null,
+    requiresActionDetails: null,
+    lastHeartbeatAt: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  if (patch.workerStatus !== undefined) {
+    record.workerStatus = patch.workerStatus;
+  }
+  if (patch.externalMetadata !== undefined) {
+    if (patch.externalMetadata === null) {
+      record.externalMetadata = null;
+    } else {
+      record.externalMetadata = {
+        ...(record.externalMetadata ?? {}),
+        ...patch.externalMetadata,
+      };
+    }
+  }
+  if (patch.requiresActionDetails !== undefined) {
+    record.requiresActionDetails = patch.requiresActionDetails;
+  }
+  if (patch.lastHeartbeatAt !== undefined) {
+    record.lastHeartbeatAt = patch.lastHeartbeatAt;
+  }
+  record.updatedAt = now;
+
+  sessionWorkers.set(sessionId, record);
+  return record;
 }
 
 // ---------- Work Items ----------
@@ -211,14 +308,38 @@ export function storeIsSessionOwner(sessionId: string, uuid: string): boolean {
   return owners ? owners.has(uuid) : false;
 }
 
+export function storeGetSessionOwners(sessionId: string): Set<string> | undefined {
+  return sessionOwners.get(sessionId);
+}
+
 export function storeListSessionsByOwnerUuid(uuid: string): SessionRecord[] {
   const result: SessionRecord[] = [];
+  const resultIds = new Set<string>();
+
+  // Collect sessions already owned by this UUID
   for (const [sessionId, owners] of sessionOwners) {
     if (owners.has(uuid)) {
       const session = sessions.get(sessionId);
-      if (session) result.push(session);
+      if (session) {
+        result.push(session);
+        resultIds.add(sessionId);
+      }
     }
   }
+
+  // Auto-bind orphaned sessions (no owner — typically ACP agent sessions created via REST registration)
+  for (const [sessionId, session] of sessions) {
+    if (resultIds.has(sessionId)) continue;
+    const owners = sessionOwners.get(sessionId);
+    // No owners map entry at all, or empty owners set
+    const isOrphaned = !owners || owners.size === 0;
+    if (isOrphaned) {
+      storeBindSession(sessionId, uuid);
+      result.push(session);
+      resultIds.add(sessionId);
+    }
+  }
+
   return result;
 }
 
@@ -264,6 +385,43 @@ export function storeUpdateWorkItem(id: string, patch: Partial<Pick<WorkItemReco
   return true;
 }
 
+// ---------- ACP Agent (reuses EnvironmentRecord with workerType="acp") ----------
+
+/** List all ACP agents (environments with workerType="acp") */
+export function storeListAcpAgents(): EnvironmentRecord[] {
+  return [...environments.values()].filter((e) => e.workerType === "acp");
+}
+
+/** List ACP agents by channel group (stored in bridgeId field) */
+export function storeListAcpAgentsByChannelGroup(channelGroupId: string): EnvironmentRecord[] {
+  return [...environments.values()].filter(
+    (e) => e.workerType === "acp" && e.bridgeId === channelGroupId,
+  );
+}
+
+/** List online ACP agents */
+export function storeListOnlineAcpAgents(): EnvironmentRecord[] {
+  return [...environments.values()].filter(
+    (e) => e.workerType === "acp" && e.status === "active",
+  );
+}
+
+/** Mark an ACP agent as offline */
+export function storeMarkAcpAgentOffline(id: string): boolean {
+  const rec = environments.get(id);
+  if (!rec || rec.workerType !== "acp") return false;
+  Object.assign(rec, { status: "offline", updatedAt: new Date() });
+  return true;
+}
+
+/** Mark an ACP agent as online (on reconnect) */
+export function storeMarkAcpAgentOnline(id: string): boolean {
+  const rec = environments.get(id);
+  if (!rec || rec.workerType !== "acp") return false;
+  Object.assign(rec, { status: "active", lastPollAt: new Date(), updatedAt: new Date() });
+  return true;
+}
+
 // ---------- Reset (for tests) ----------
 
 export function storeReset() {
@@ -272,5 +430,6 @@ export function storeReset() {
   environments.clear();
   sessions.clear();
   workItems.clear();
+  sessionWorkers.clear();
   sessionOwners.clear();
 }

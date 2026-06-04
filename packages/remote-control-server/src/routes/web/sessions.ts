@@ -1,9 +1,17 @@
 import { Hono } from "hono";
 import { uuidAuth } from "../../auth/middleware";
-import { getSession, createSession } from "../../services/session";
-import { storeListSessionsByOwnerUuid, storeIsSessionOwner, storeBindSession } from "../../store";
+import { getAutomationStateSnapshot } from "../../services/automationState";
+import {
+  createSession,
+  getSession,
+  isSessionClosedStatus,
+  listWebSessionSummariesByOwnerUuid,
+  listWebSessionsByOwnerUuid,
+  resolveOwnedWebSessionId,
+  toWebSessionResponse,
+} from "../../services/session";
+import { storeBindSession, storeGetSessionWorker } from "../../store";
 import { createWorkItem } from "../../services/work-dispatch";
-import { listSessionSummariesByOwnerUuid } from "../../services/session";
 import { createSSEStream } from "../../transport/sse-writer";
 import { getEventBus } from "../../transport/event-bus";
 
@@ -11,7 +19,7 @@ const app = new Hono();
 
 /** POST /web/sessions — Create a session from web UI */
 app.post("/sessions", uuidAuth, async (c) => {
-  const uuid = c.get("uuid");
+  const uuid = c.get("uuid")!;
   const body = await c.req.json();
   const session = createSession({
     environment_id: body.environment_id || null,
@@ -37,37 +45,43 @@ app.post("/sessions", uuidAuth, async (c) => {
 
 /** GET /web/sessions — List sessions owned by the requesting UUID */
 app.get("/sessions", uuidAuth, async (c) => {
-  const uuid = c.get("uuid");
-  const sessions = storeListSessionsByOwnerUuid(uuid);
+  const uuid = c.get("uuid")!;
+  const sessions = listWebSessionsByOwnerUuid(uuid);
   return c.json(sessions, 200);
 });
 
 /** GET /web/sessions/all — List sessions owned by the requesting UUID (unowned sessions excluded) */
 app.get("/sessions/all", uuidAuth, async (c) => {
-  const uuid = c.get("uuid");
-  const sessions = listSessionSummariesByOwnerUuid(uuid);
+  const uuid = c.get("uuid")!;
+  const sessions = listWebSessionSummariesByOwnerUuid(uuid);
   return c.json(sessions, 200);
 });
 
 /** GET /web/sessions/:id — Session detail */
 app.get("/sessions/:id", uuidAuth, async (c) => {
-  const uuid = c.get("uuid");
-  const sessionId = c.req.param("id")!;
-  if (!storeIsSessionOwner(sessionId, uuid)) {
+  const uuid = c.get("uuid")!;
+  const sessionId = resolveOwnedWebSessionId(c.req.param("id")!, uuid);
+  if (!sessionId) {
     return c.json({ error: { type: "forbidden", message: "Not your session" } }, 403);
   }
   const session = getSession(sessionId);
   if (!session) {
     return c.json({ error: { type: "not_found", message: "Session not found" } }, 404);
   }
-  return c.json(session, 200);
+  const worker = storeGetSessionWorker(sessionId);
+  const automationState = getAutomationStateSnapshot(worker?.externalMetadata);
+  const response = toWebSessionResponse(session);
+  return c.json(
+    automationState === undefined ? response : { ...response, automation_state: automationState },
+    200,
+  );
 });
 
 /** GET /web/sessions/:id/history — Historical events for session */
 app.get("/sessions/:id/history", uuidAuth, async (c) => {
-  const uuid = c.get("uuid");
-  const sessionId = c.req.param("id")!;
-  if (!storeIsSessionOwner(sessionId, uuid)) {
+  const uuid = c.get("uuid")!;
+  const sessionId = resolveOwnedWebSessionId(c.req.param("id")!, uuid);
+  if (!sessionId) {
     return c.json({ error: { type: "forbidden", message: "Not your session" } }, 403);
   }
   const session = getSession(sessionId);
@@ -82,18 +96,21 @@ app.get("/sessions/:id/history", uuidAuth, async (c) => {
 
 /** SSE /web/sessions/:id/events — Real-time event stream */
 app.get("/sessions/:id/events", uuidAuth, async (c) => {
-  const uuid = c.get("uuid");
-  const sessionId = c.req.param("id")!;
-  if (!storeIsSessionOwner(sessionId, uuid)) {
+  const uuid = c.get("uuid")!;
+  const sessionId = resolveOwnedWebSessionId(c.req.param("id")!, uuid);
+  if (!sessionId) {
     return c.json({ error: { type: "forbidden", message: "Not your session" } }, 403);
   }
   const session = getSession(sessionId);
   if (!session) {
     return c.json({ error: { type: "not_found", message: "Session not found" } }, 404);
   }
+  if (isSessionClosedStatus(session.status)) {
+    return c.json({ error: { type: "session_closed", message: `Session is ${session.status}` } }, 409);
+  }
 
   const lastEventId = c.req.header("Last-Event-ID");
-  const fromSeqNum = lastEventId ? parseInt(lastEventId) : 0;
+  const fromSeqNum = lastEventId ? parseInt(lastEventId, 10) : 0;
   return createSSEStream(c, sessionId, fromSeqNum);
 });
 

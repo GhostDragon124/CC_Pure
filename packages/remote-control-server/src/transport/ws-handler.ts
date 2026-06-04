@@ -2,6 +2,9 @@ import type { WSContext } from "hono/ws";
 import { getEventBus } from "./event-bus";
 import type { SessionEvent } from "./event-bus";
 import { publishSessionEvent } from "../services/transport";
+import { log, error as logError } from "../logger";
+import { toClientPayload } from "./client-payload";
+import { config } from "../config";
 
 // Per-connection cleanup, keyed by sessionId (only one WS per session)
 interface CleanupEntry {
@@ -9,100 +12,41 @@ interface CleanupEntry {
   keepalive: ReturnType<typeof setInterval>;
   ws: WSContext;
   openTime: number;
+  lastClientActivity: number;
 }
 const cleanupBySession = new Map<string, CleanupEntry>();
 
 // Track all active WS connections for graceful shutdown
 const activeConnections = new Set<WSContext>();
 
-// Bridge sends keep_alive data frames every 120s. Send server-side keep_alive
-// every 60s to ensure the connection stays alive even without user messages.
-const SERVER_KEEPALIVE_INTERVAL_MS = 60_000;
+// Server-side keepalive interval (configurable via RCS_WS_KEEPALIVE_INTERVAL).
+// Sends data frames to keep reverse proxies from closing idle connections.
+const SERVER_KEEPALIVE_INTERVAL_MS = (config.wsKeepaliveInterval || 20) * 1000;
+
+// If no client data received within this threshold, the connection is
+// considered dead. Set to 3x keepalive to tolerate one missed interval.
+const CLIENT_ACTIVITY_TIMEOUT_MS = SERVER_KEEPALIVE_INTERVAL_MS * 3;
 
 /**
  * Convert internal EventBus event -> SDK message for bridge client.
  */
 function toSDKMessage(event: SessionEvent): string {
-  const payload = event.payload as Record<string, unknown> | null;
-
-  let msg: Record<string, unknown>;
-
-  if (event.type === "user" || event.type === "user_message") {
-    msg = {
-      type: "user",
-      uuid: event.id,
-      session_id: event.sessionId,
-      message: {
-        role: "user",
-        content: payload?.content ?? payload?.message ?? "",
-      },
-    };
-  } else if (event.type === "permission_response" || event.type === "control_response") {
-    const approved = !!payload?.approved;
-    const existingResponse = payload?.response as Record<string, unknown> | undefined;
-    if (existingResponse) {
-      msg = { type: "control_response", response: existingResponse };
-    } else {
-      const updatedInput = payload?.updated_input as Record<string, unknown> | undefined;
-      const updatedPermissions = payload?.updated_permissions as Record<string, unknown>[] | undefined;
-      const feedbackMessage = payload?.message as string | undefined;
-      msg = {
-        type: "control_response",
-        response: {
-          subtype: approved ? "success" : "error",
-          request_id: payload?.request_id ?? "",
-          ...(approved
-            ? {
-                response: {
-                  behavior: "allow" as const,
-                  ...(updatedInput ? { updatedInput } : {}),
-                  ...(updatedPermissions ? { updatedPermissions } : {}),
-                },
-              }
-            : {
-                error: "Permission denied by user",
-                response: { behavior: "deny" as const },
-                ...(feedbackMessage ? { message: feedbackMessage } : {}),
-              }),
-        },
-      };
-    }
-  } else if (event.type === "interrupt") {
-    msg = {
-      type: "control_request",
-      request_id: event.id,
-      request: { subtype: "interrupt" },
-    };
-  } else if (event.type === "control_request") {
-    msg = {
-      type: "control_request",
-      request_id: payload?.request_id ?? event.id,
-      request: payload?.request ?? payload,
-    };
-  } else {
-    msg = {
-      type: event.type,
-      uuid: event.id,
-      session_id: event.sessionId,
-      message: payload,
-    };
-  }
-
   // NDJSON format: each message MUST end with \n so the child process's
   // line-based parser can split messages correctly.
-  return JSON.stringify(msg) + "\n";
+  return JSON.stringify(toClientPayload(event)) + "\n";
 }
 
 /** Called from onOpen — subscribes to event bus, forwards outbound events to bridge WS */
 export function handleWebSocketOpen(ws: WSContext, sessionId: string) {
   const openTime = Date.now();
-  console.log(`[RC-DEBUG] [WS] Open session=${sessionId}`);
+  const lastClientActivity = Date.now();
+  log(`[RC-DEBUG] [WS] Open session=${sessionId}`);
   activeConnections.add(ws);
 
   // If there's an existing connection for this session, clean it up first
   const existing = cleanupBySession.get(sessionId);
   if (existing) {
-    console.log(`[WS] Replacing existing connection for session=${sessionId}`);
+    log(`[WS] Replacing existing connection for session=${sessionId}`);
     existing.unsub();
     clearInterval(existing.keepalive);
     activeConnections.delete(existing.ws);
@@ -114,7 +58,7 @@ export function handleWebSocketOpen(ws: WSContext, sessionId: string) {
   // the full conversation history — assistant replies are inbound events.
   const missed = bus.getEventsSince(0);
   if (missed.length > 0) {
-    console.log(`[WS] Replaying ${missed.length} missed event(s)`);
+    log(`[WS] Replaying ${missed.length} missed event(s)`);
     for (const event of missed) {
       if (ws.readyState !== 1) break;
       try {
@@ -130,16 +74,27 @@ export function handleWebSocketOpen(ws: WSContext, sessionId: string) {
     if (event.direction !== "outbound") return;
     try {
       const sdkMsg = toSDKMessage(event);
-      console.log(`[RC-DEBUG] [WS] -> bridge (outbound): type=${event.type} len=${sdkMsg.length} msg=${sdkMsg.slice(0, 300)}`);
+      log(`[RC-DEBUG] [WS] -> bridge (outbound): type=${event.type} len=${sdkMsg.length} msg=${sdkMsg.slice(0, 300)}`);
       ws.send(sdkMsg);
     } catch (err) {
-      console.error("[RC-DEBUG] [WS] send error:", err);
+      logError("[RC-DEBUG] [WS] send error:", err);
     }
   });
 
   const keepalive = setInterval(() => {
     if (ws.readyState !== 1) {
       clearInterval(keepalive);
+      return;
+    }
+    // Check if client is still alive — close if no data received for too long
+    const silenceMs = Date.now() - lastClientActivity;
+    if (silenceMs > CLIENT_ACTIVITY_TIMEOUT_MS) {
+      log(`[WS] Client inactive for ${Math.round(silenceMs / 1000)}s on session=${sessionId}, closing dead connection`);
+      try {
+        ws.close(1000, "client inactive");
+      } catch {
+        clearInterval(keepalive);
+      }
       return;
     }
     try {
@@ -149,19 +104,24 @@ export function handleWebSocketOpen(ws: WSContext, sessionId: string) {
     }
   }, SERVER_KEEPALIVE_INTERVAL_MS);
 
-  cleanupBySession.set(sessionId, { unsub, keepalive, ws, openTime });
+  cleanupBySession.set(sessionId, { unsub, keepalive, ws, openTime, lastClientActivity });
 }
 
 /**
  * Called from onMessage — bridge sends newline-delimited JSON.
  */
 export function handleWebSocketMessage(ws: WSContext, sessionId: string, data: string) {
+  // Track client activity for dead-connection detection
+  const entry = cleanupBySession.get(sessionId);
+  if (entry) {
+    entry.lastClientActivity = Date.now();
+  }
   const lines = data.split("\n").filter((l) => l.trim());
   for (const line of lines) {
     try {
       ingestBridgeMessage(sessionId, JSON.parse(line));
     } catch (err) {
-      console.error("[WS] parse error:", err);
+      logError("[WS] parse error:", err);
     }
   }
 }
@@ -173,7 +133,7 @@ export function handleWebSocketClose(ws: WSContext, sessionId: string, code?: nu
   const entry = cleanupBySession.get(sessionId);
   const duration = entry ? Math.round((Date.now() - entry.openTime) / 1000) : -1;
 
-  console.log(`[WS] Close session=${sessionId} code=${code ?? "none"} reason=${reason || "(none)"} duration=${duration}s`);
+  log(`[WS] Close session=${sessionId} code=${code ?? "none"} reason=${reason || "(none)"} duration=${duration}s`);
 
   if (entry) {
     entry.unsub();
@@ -215,7 +175,7 @@ export function ingestBridgeMessage(sessionId: string, msg: Record<string, unkno
 
   const eventType = deriveEventType(msg);
 
-  console.log(`[RC-DEBUG] [WS] <- bridge (inbound): sessionId=${sessionId} type=${eventType}${msg.uuid ? ` uuid=${msg.uuid}` : ""} msg=${JSON.stringify(msg).slice(0, 300)}`);
+  log(`[RC-DEBUG] [WS] <- bridge (inbound): sessionId=${sessionId} type=${eventType}${msg.uuid ? ` uuid=${msg.uuid}` : ""} msg=${JSON.stringify(msg).slice(0, 300)}`);
 
   let payload: unknown;
 
@@ -234,7 +194,11 @@ export function ingestBridgeMessage(sessionId: string, msg: Record<string, unkno
     }
     payload = { message: msg.message, uuid: msg.uuid, content: text };
   } else if (eventType === "user" || eventType === "system") {
-    payload = { message: msg.message, uuid: msg.uuid };
+    payload = {
+      message: msg.message,
+      uuid: msg.uuid,
+      ...(typeof msg.isSynthetic === "boolean" ? { isSynthetic: msg.isSynthetic } : {}),
+    };
   } else if (eventType === "control_request") {
     payload = { request_id: msg.request_id, request: msg.request };
   } else if (eventType === "control_response") {
@@ -255,7 +219,7 @@ export function closeAllConnections(): void {
   const count = activeConnections.size;
   if (count === 0) return;
 
-  console.log(`[WS] Gracefully closing ${count} active connection(s)...`);
+  log(`[WS] Gracefully closing ${count} active connection(s)...`);
   for (const [sessionId, entry] of cleanupBySession) {
     try {
       entry.unsub();
@@ -269,5 +233,5 @@ export function closeAllConnections(): void {
   }
   cleanupBySession.clear();
   activeConnections.clear();
-  console.log("[WS] All connections closed");
+  log("[WS] All connections closed");
 }

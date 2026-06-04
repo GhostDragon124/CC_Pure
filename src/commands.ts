@@ -71,35 +71,21 @@ import buddyValue from './commands/buddy/index.js'
 import { getWorkflowCommands as getWorkflowCommandsValue } from '@claude-code-best/builtin-tools/tools/WorkflowTool/createWorkflowCommand.js'
 
 const proactive =
-  feature('PROACTIVE') || feature('KAIROS')
-    ? proactiveValue
-    : null
+  feature('PROACTIVE') || feature('KAIROS') ? proactiveValue : null
 const briefCommand =
-  feature('KAIROS') || feature('KAIROS_BRIEF')
-    ? briefCommandValue
-    : null
-const assistantCommand = feature('KAIROS')
-  ? assistantCommandValue
-  : null
-const bridge = feature('BRIDGE_MODE')
-  ? bridgeValue
-  : null
+  feature('KAIROS') || feature('KAIROS_BRIEF') ? briefCommandValue : null
+const assistantCommand = feature('KAIROS') ? assistantCommandValue : null
+const bridge = feature('BRIDGE_MODE') ? bridgeValue : null
 const remoteControlServerCommand =
   feature('DAEMON') && feature('BRIDGE_MODE')
     ? remoteControlServerCommandValue
     : null
-const voiceCommand = feature('VOICE_MODE')
-  ? voiceCommandValue
-  : null
-const coordinatorCmd = feature('COORDINATOR_MODE')
-  ? coordinatorCmdValue
-  : null
+const voiceCommand = feature('VOICE_MODE') ? voiceCommandValue : null
+const coordinatorCmd = feature('COORDINATOR_MODE') ? coordinatorCmdValue : null
 const forceSnip = feature('HISTORY_SNIP')
   ? require('./commands/force-snip.js').default
   : null
-const workflowsCmd = feature('WORKFLOW_SCRIPTS')
-  ? workflowsCmdValue
-  : null
+const workflowsCmd = feature('WORKFLOW_SCRIPTS') ? workflowsCmdValue : null
 const webCmd = feature('CCR_REMOTE_SETUP')
   ? (
       require('./commands/remote-setup/index.js') as typeof import('./commands/remote-setup/index.js')
@@ -111,9 +97,7 @@ const clearSkillIndexCache = feature('EXPERIMENTAL_SKILL_SEARCH')
 const subscribePr = feature('KAIROS_GITHUB_WEBHOOKS')
   ? require('./commands/subscribe-pr.js').default
   : null
-const ultraplan = feature('ULTRAPLAN')
-  ? ultraplanValue
-  : null
+const ultraplan = feature('ULTRAPLAN') ? ultraplanValue : null
 const torch = feature('TORCH') ? require('./commands/torch.js').default : null
 const peersCmd = feature('UDS_INBOX')
   ? (
@@ -125,9 +109,7 @@ const forkCmd = feature('FORK_SUBAGENT')
       require('./commands/fork/index.js') as typeof import('./commands/fork/index.js')
     ).default
   : null
-const buddy = feature('BUDDY')
-  ? buddyValue
-  : null
+const buddy = feature('BUDDY') ? buddyValue : null
 import thinkback from './commands/thinkback/index.js'
 import thinkbackPlay from './commands/thinkback-play/index.js'
 import permissions from './commands/permissions/index.js'
@@ -638,6 +620,7 @@ export const REMOTE_SAFE_COMMANDS: Set<Command> = new Set([
   btw, // Quick note
   feedback, // Send feedback
   plan, // Plan mode toggle
+  proactive, // Toggle proactive mode
   keybindings, // Keybinding management
   statusline, // Status line toggle
   stickers, // Stickers
@@ -678,9 +661,18 @@ export const BRIDGE_SAFE_COMMANDS: Set<Command> = new Set(
  * BRIDGE_SAFE_COMMANDS; 'local-jsx' commands render Ink UI and stay blocked.
  */
 export function isBridgeSafeCommand(cmd: Command): boolean {
-  if (cmd.type === 'local-jsx') return false
+  if (cmd.type === 'local-jsx') return cmd.bridgeSafe === true
   if (cmd.type === 'prompt') return true
-  return BRIDGE_SAFE_COMMANDS.has(cmd)
+  return cmd.bridgeSafe === true || BRIDGE_SAFE_COMMANDS.has(cmd)
+}
+
+export function getBridgeCommandSafety(
+  cmd: Command,
+  args: string,
+): { ok: true } | { ok: false; reason?: string } {
+  if (!isBridgeSafeCommand(cmd)) return { ok: false }
+  const reason = cmd.getBridgeInvocationError?.(args)
+  return reason ? { ok: false, reason } : { ok: true }
 }
 
 /**

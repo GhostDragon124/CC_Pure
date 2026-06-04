@@ -201,6 +201,7 @@ const getCoordinatorUserContext: (
 /* eslint-enable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
 import useCanUseTool from '../hooks/useCanUseTool.js';
 import type { ToolPermissionContext, Tool } from '../Tool.js';
+import { notifyAutomationStateChanged } from '../utils/sessionState.js';
 import {
   applyPermissionUpdate,
   applyPermissionUpdates,
@@ -336,6 +337,7 @@ import { useScheduledTasks as useScheduledTasksValue } from '../hooks/useSchedul
 const proactiveModule = feature('PROACTIVE') || feature('KAIROS') ? proactiveModuleValue : null;
 const PROACTIVE_NO_OP_SUBSCRIBE = (_cb: () => void) => () => {};
 const PROACTIVE_FALSE = () => false;
+const PROACTIVE_NULL = (): number | null => null;
 const SUGGEST_BG_PR_NOOP = (_p: string, _n: string): boolean => false;
 const useProactive = feature('PROACTIVE') || feature('KAIROS') ? useProactiveValue : null;
 const useScheduledTasks = feature('AGENT_TRIGGERS') ? useScheduledTasksValue : null;
@@ -904,6 +906,10 @@ export function REPL({
   const proactiveActive = React.useSyncExternalStore(
     proactiveModule?.subscribeToProactiveChanges ?? PROACTIVE_NO_OP_SUBSCRIBE,
     proactiveModule?.isProactiveActive ?? PROACTIVE_FALSE,
+  );
+  const proactiveNextTickAt = React.useSyncExternalStore<number | null>(
+    proactiveModule?.subscribeToProactiveChanges ?? PROACTIVE_NO_OP_SUBSCRIBE,
+    proactiveModule?.getNextTickAt ?? PROACTIVE_NULL,
   );
 
   // BriefTool.isEnabled() reads getUserMsgOptIn() from bootstrap state, which
@@ -4837,6 +4843,48 @@ export function REPL({
       onQueueTick: (prompt: string) => enqueue({ mode: 'prompt', value: prompt, isMeta: true }),
     });
   }
+
+  useEffect(() => {
+    if (!proactiveActive) {
+      notifyAutomationStateChanged(null);
+      return;
+    }
+
+    if (isLoading) {
+      return;
+    }
+
+    if (
+      proactiveNextTickAt !== null &&
+      queuedCommands.length === 0 &&
+      !isShowingLocalJSXCommand &&
+      toolPermissionContext.mode !== 'plan' &&
+      initialMessage === null
+    ) {
+      notifyAutomationStateChanged({
+        enabled: true,
+        phase: 'standby',
+        next_tick_at: proactiveNextTickAt,
+        sleep_until: null,
+      });
+      return;
+    }
+
+    notifyAutomationStateChanged({
+      enabled: true,
+      phase: null,
+      next_tick_at: null,
+      sleep_until: null,
+    });
+  }, [
+    initialMessage,
+    isLoading,
+    isShowingLocalJSXCommand,
+    proactiveActive,
+    proactiveNextTickAt,
+    queuedCommands.length,
+    toolPermissionContext.mode,
+  ]);
 
   // Abort the current operation when a 'now' priority message arrives
   // (e.g. from a chat UI client via UDS).

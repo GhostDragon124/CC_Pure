@@ -14,6 +14,7 @@ import type {
 import * as proactiveModuleValue from '../proactive/index.js'
 
 const proactive = {
+  bridgeSafe: true,
   type: 'local-jsx',
   name: 'proactive',
   description: 'Toggle proactive (autonomous) mode',

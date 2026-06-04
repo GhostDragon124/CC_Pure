@@ -39,6 +39,7 @@ import {
   createV2ReplTransport,
 } from './replBridgeTransport.js'
 import { updateSessionIngressAuthToken } from '../utils/sessionIngressAuth.js'
+import { setSessionMetadataChangedListener } from '../utils/sessionState.js'
 import { isEnvTruthy, isInProtectedNamespace } from '../utils/envUtils.js'
 import { validateBridgeId } from './bridgeApi.js'
 import {
@@ -87,6 +88,7 @@ export type ReplBridgeHandle = {
   sessionIngressUrl: string
   writeMessages(messages: Message[]): void
   writeSdkMessages(messages: SDKMessage[]): void
+  markTranscriptReset?(): void
   sendControlRequest(request: SDKControlRequest): void
   sendControlResponse(response: SDKControlResponse): void
   sendControlCancelRequest(requestId: string): void
@@ -452,7 +454,6 @@ export async function initBridgeCore(
   // re-created after a connection loss.
   let currentSessionId: string
 
-
   if (reusedPriorSession && prior) {
     currentSessionId = prior.sessionId
     logForDebugging(
@@ -555,6 +556,17 @@ export async function initBridgeCore(
   // server-driven via secret.use_code_sessions, with CLAUDE_BRIDGE_USE_CCR_V2
   // as an ant-dev override.
   let transport: ReplBridgeTransport | null = null
+  // Mirror external metadata updates from the active REPL into whichever
+  // transport currently owns the remote-control session. v1 ignores the call;
+  // v2 forwards it to CCR /worker external_metadata so standby/sleeping and
+  // other session metadata survive on web/mobile.
+  setSessionMetadataChangedListener(
+    metadata => {
+      if (pollController.signal.aborted) return
+      transport?.reportMetadata(metadata)
+    },
+    { replayCurrent: true },
+  )
   // Bumped on every onWorkReceived. Captured in createV2ReplTransport's .then()
   // closure to detect stale resolutions: if two calls race while transport is
   // null, both registerWorker() (bumping server epoch), and whichever resolves
@@ -632,9 +644,9 @@ export async function initBridgeCore(
     environmentRecreations++
     rcLog(
       `doReconnect: attempt=${environmentRecreations}/${MAX_ENVIRONMENT_RECREATIONS}` +
-      ` envId=${environmentId}` +
-      ` sessionId=${currentSessionId}` +
-      ` workId=${currentWorkId}`,
+        ` envId=${environmentId}` +
+        ` sessionId=${currentSessionId}` +
+        ` workId=${currentWorkId}`,
     )
     // Invalidate any in-flight v2 handshake — the environment is being
     // recreated, so a stale transport arriving post-reconnect would be
@@ -846,7 +858,6 @@ export async function initBridgeCore(
     // UUIDs are scoped per-session on the server, so re-flushing is safe.
     previouslyFlushedUUIDs?.clear()
 
-
     // Reset the counter so independent reconnections hours apart don't
     // exhaust the limit — it guards against rapid consecutive failures,
     // not lifetime total.
@@ -907,8 +918,8 @@ export async function initBridgeCore(
   function handleTransportPermanentClose(closeCode: number | undefined): void {
     rcLog(
       `handleTransportPermanentClose: code=${closeCode}` +
-      ` transport=${transport ? 'exists' : 'null'}` +
-      ` pollAborted=${pollController.signal.aborted}`,
+        ` transport=${transport ? 'exists' : 'null'}` +
+        ` pollAborted=${pollController.signal.aborted}`,
     )
     logForDebugging(
       `[bridge:repl] Transport permanently closed: code=${closeCode}`,
@@ -1359,10 +1370,10 @@ export async function initBridgeCore(
             const parsed = JSON.parse(data)
             rcLog(
               `ingress: type=${parsed.type}` +
-              `${parsed.type === 'control_request' ? ` subtype=${(parsed.request as Record<string, unknown>)?.subtype} request_id=${parsed.request_id}` : ''}` +
-              `${parsed.type === 'control_response' ? ` subtype=${(parsed.response as Record<string, unknown>)?.subtype} request_id=${(parsed.response as Record<string, unknown>)?.request_id}` : ''}` +
-              `${parsed.type === 'user' ? ` uuid=${parsed.uuid}` : ''}` +
-              `${parsed.type === 'keep_alive' ? '' : ` len=${data.length}`}`,
+                `${parsed.type === 'control_request' ? ` subtype=${(parsed.request as Record<string, unknown>)?.subtype} request_id=${parsed.request_id}` : ''}` +
+                `${parsed.type === 'control_response' ? ` subtype=${(parsed.response as Record<string, unknown>)?.subtype} request_id=${(parsed.response as Record<string, unknown>)?.request_id}` : ''}` +
+                `${parsed.type === 'user' ? ` uuid=${parsed.uuid}` : ''}` +
+                `${parsed.type === 'keep_alive' ? '' : ` len=${data.length}`}`,
             )
           } catch {
             rcLog(`ingress (non-JSON): ${String(data).slice(0, 200)}`)
@@ -1389,9 +1400,9 @@ export async function initBridgeCore(
           if (transport !== newTransport) return
           rcLog(
             `transport onClose: code=${closeCode}` +
-            ` connected=${newTransport.isConnectedStatus()}` +
-            ` state=${newTransport.getStateLabel()}` +
-            ` seq=${newTransport.getLastSequenceNum()}`,
+              ` connected=${newTransport.isConnectedStatus()}` +
+              ` state=${newTransport.getStateLabel()}` +
+              ` seq=${newTransport.getLastSequenceNum()}`,
           )
           handleTransportPermanentClose(closeCode)
         })
@@ -1820,7 +1831,10 @@ export async function initBridgeCore(
       for (const msg of filtered) {
         if (msg.uuid) recentPostedUUIDs.add(msg.uuid as string)
       }
-      const events: TransportMessage[] = filtered.map(m => ({ ...m, session_id: currentSessionId })) as TransportMessage[]
+      const events: TransportMessage[] = filtered.map(m => ({
+        ...m,
+        session_id: currentSessionId,
+      })) as TransportMessage[]
       void transport.writeBatch(events as StdoutMessage[])
     },
     sendControlRequest(request: SDKControlRequest) {
@@ -1830,7 +1844,10 @@ export async function initBridgeCore(
         )
         return
       }
-      const event: TransportMessage = { ...request, session_id: currentSessionId } as TransportMessage
+      const event: TransportMessage = {
+        ...request,
+        session_id: currentSessionId,
+      } as TransportMessage
       void transport.write(event as StdoutMessage)
       logForDebugging(
         `[bridge:repl] Sent control_request request_id=${request.request_id}`,
@@ -1843,7 +1860,10 @@ export async function initBridgeCore(
         )
         return
       }
-      const event: TransportMessage = { ...response, session_id: currentSessionId } as TransportMessage
+      const event: TransportMessage = {
+        ...response,
+        session_id: currentSessionId,
+      } as TransportMessage
       void transport.write(event as StdoutMessage)
       logForDebugging('[bridge:repl] Sent control_response')
     },
@@ -1871,6 +1891,7 @@ export async function initBridgeCore(
         )
         return
       }
+      transport.reportState('idle')
       const resultMsg = {
         ...makeResultMessage(currentSessionId),
         session_id: currentSessionId,

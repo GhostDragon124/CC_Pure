@@ -80,17 +80,13 @@ ARGUMENTS
 
 ## Authentication
 
-By default, a random token is auto-generated on startup. Connect to the
-WebSocket endpoint without putting the token in the URL:
+By default, a random token is auto-generated on startup. Pass it as a query parameter:
 
 ```
-ws://localhost:9315/ws
+ws://localhost:9315/ws?token=<your-token>
 ```
 
-Set `ACP_AUTH_TOKEN` env var to use a fixed token, or use `--no-auth` to
-disable (not recommended). Clients that cannot send an `Authorization` header
-must send the token in a WebSocket subprotocol named
-`rcs.auth.<base64url-token>`.
+Set `ACP_AUTH_TOKEN` env var to use a fixed token, or use `--no-auth` to disable (not recommended).
 
 ## RCS Upstream
 
@@ -103,22 +99,6 @@ acp-link can register to a Remote Control Server (RCS) for remote access. Set th
 | `ACP_RCS_GROUP` | Channel group ID to lock the agent into (letters, digits, `-`, `_` only) |
 
 You can also use `--group <id>` on the CLI. The CLI flag takes priority over the env var.
-
-## Manager UI
-
-通过 `--manager` flag 启动独立的管理服务（不启动代理）：
-
-```bash
-# 启动 Manager（默认端口 9315）
-acp-link --manager
-
-# 指定端口
-acp-link --manager --port 3210
-```
-
-在浏览器打开 `http://localhost:<port>` 即可访问管理界面，创建、停止、删除多个 acp-link 子进程实例并实时查看日志。
-
-通过 Manager UI 创建的子进程会自动跳过 Manager UI。
 
 ## License
 

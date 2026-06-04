@@ -136,8 +136,8 @@ tail -f ~/.claude/local_analytics.jsonl
 | | VERIFICATION_AGENT | ✅ | 任务完成后自动验证 |
 | **工具系统** | TOKEN_BUDGET | ✅ | Token 预算管理与控制 |
 | | PROMPT_CACHE_BREAK_DETECTION | ✅ | Prompt cache 破裂检测 |
-| **输入输出** | VOICE_MODE | ✅ | Push-to-Talk 语音输入 |
-| | KAIROS_BRIEF | ✅ | 定时摘要汇报 |
+| **输入/摘要** | VOICE_MODE | 🟡 | 代码完整（`src/voice/` + `voiceStreamSTT.ts`），需 Anthropic OAuth 凭证 + GrowthBook kill-switch 放行，CCP 暂无可用方式登录 |
+| | KAIROS_BRIEF | 🟡 | 代码完整，依赖 KAIROS（`isBriefEntitled = feature('KAIROS') || feature('KAIROS_BRIEF')`），KAIROS 本身不可用故绑定休眠 |
 | **定时任务** | KAIROS | 🟡 | 代码完整，运行时需 GrowthBook + OAuth 后端（CCP 暂无） |
 | **可观测性** | Langfuse | 🟡 | 自托管 LLM 追踪（`src/services/langfuse/`），设 `LANGFUSE_PUBLIC_KEY` + `SECRET_KEY` 即激活，支持 Docker 自部署 |
 | **远程配置** | GrowthBook | 🟡 | 1256 行完整客户端，远程不可用时自动降级到本地静态默认值 |

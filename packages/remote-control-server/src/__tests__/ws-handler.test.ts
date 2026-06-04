@@ -69,6 +69,19 @@ describe("ws-handler", () => {
       expect((events[0] as any).direction).toBe("inbound");
     });
 
+    test("preserves synthetic flag on inbound user messages", () => {
+      const bus = getEventBus("s1");
+      const events: unknown[] = [];
+      bus.subscribe((e) => events.push(e));
+      ingestBridgeMessage("s1", {
+        message: { role: "user", content: "scheduled job: refresh analytics cache" },
+        uuid: "u_synth",
+        isSynthetic: true,
+      });
+      expect(events).toHaveLength(1);
+      expect((events[0] as any).payload.isSynthetic).toBe(true);
+    });
+
     test("derives type from message.role for assistant messages", () => {
       const bus = getEventBus("s1");
       const events: unknown[] = [];
@@ -161,6 +174,24 @@ describe("ws-handler", () => {
       // First message should be the outbound user event
       const msg = JSON.parse(sent[0]);
       expect(msg.type).toBe("user");
+    });
+
+    test("replays synthetic user metadata back to the bridge", () => {
+      const bus = getEventBus("s3");
+      bus.publish({
+        id: "e1",
+        sessionId: "s3",
+        type: "user",
+        payload: { content: "scheduled job: refresh analytics cache", isSynthetic: true },
+        direction: "outbound",
+      });
+
+      const ws = createMockWs();
+      handleWebSocketOpen(ws, "s3");
+
+      const msg = JSON.parse(ws.getSentData()[0]);
+      expect(msg.type).toBe("user");
+      expect(msg.isSynthetic).toBe(true);
     });
 
     test("replaces existing connection for same session", () => {
@@ -334,6 +365,26 @@ describe("ws-handler", () => {
       const lastMsg = JSON.parse(sent[sent.length - 1]);
       expect(lastMsg.type).toBe("user");
       expect(lastMsg.message.content).toBe("hello world");
+    });
+
+    test("preserves payload uuid for outbound user events", () => {
+      const bus = getEventBus("um2");
+      const ws = createMockWs();
+      handleWebSocketOpen(ws, "um2");
+
+      bus.publish({
+        id: "internal-event-id",
+        sessionId: "um2",
+        type: "user",
+        payload: { uuid: "web-message-uuid", content: "hello from web" },
+        direction: "outbound",
+      });
+
+      const sent = ws.getSentData();
+      const lastMsg = JSON.parse(sent[sent.length - 1]);
+      expect(lastMsg.type).toBe("user");
+      expect(lastMsg.uuid).toBe("web-message-uuid");
+      expect(lastMsg.message.content).toBe("hello from web");
     });
 
     test("converts generic event type", () => {

@@ -9,8 +9,6 @@ export const command = buildCommand({
       "The agent command is spawned as a subprocess and communicates via stdin/stdout.\n\n" +
       "Use -- to pass arguments to the agent:\n" +
       "  acp-link /path/to/agent -- --verbose --model gpt-4\n\n" +
-      "Use --manager to start the Manager Web UI instead:\n" +
-      "  acp-link --manager\n\n" +
       "For remote access, set ACP_AUTH_TOKEN environment variable or let it auto-generate.",
   },
   parameters: {
@@ -19,33 +17,28 @@ export const command = buildCommand({
         kind: "parsed",
         parse: numberParser,
         brief: "Port to listen on",
-        optional: true,
+        default: "9315",
       },
       host: {
         kind: "parsed",
         parse: String,
         brief: "Host to bind to (use 0.0.0.0 for remote access)",
-        optional: true,
+        default: "localhost",
       },
       debug: {
         kind: "boolean",
         brief: "Enable debug logging to file",
-        optional: true,
+        default: false,
       },
       "no-auth": {
         kind: "boolean",
         brief: "DANGEROUS: Disable authentication (not recommended)",
-        optional: true,
+        default: false,
       },
       https: {
         kind: "boolean",
         brief: "Enable HTTPS with auto-generated self-signed certificate",
-        optional: true,
-      },
-      manager: {
-        kind: "boolean",
-        brief: "Start Manager Web UI (no proxy)",
-        optional: true,
+        default: false,
       },
       group: {
         kind: "parsed",
@@ -65,36 +58,21 @@ export const command = buildCommand({
         brief: "Agent command and arguments (use -- before agent flags)",
         parse: String,
         placeholder: "command",
-        optional: true,
       },
-      minimum: 0,
+      minimum: 1,
     },
   },
   func: async function (
     this: LocalContext,
-    flags: { port?: number; host?: string; debug?: boolean; "no-auth"?: boolean; https?: boolean; manager?: boolean; group?: string },
+    flags: { port: number; host: string; debug: boolean; "no-auth": boolean; https: boolean; group: string | undefined },
     ...args: readonly string[]
   ) {
-    const port = flags.port ?? 9315;
-    const host = flags.host ?? "localhost";
-    const debug = flags.debug ?? false;
-    const noAuth = flags["no-auth"] ?? false;
-    const https = flags.https ?? false;
-    const manager = flags.manager ?? false;
+    const port = flags.port;
+    const host = flags.host;
+    const debug = flags.debug;
+    const noAuth = flags["no-auth"];
+    const https = flags.https;
     const group = flags.group;
-
-    // Manager mode: start web UI only, no proxy
-    if (manager) {
-      const { startManager } = await import("../manager/index.js");
-      await startManager(port);
-      return;
-    }
-
-    // Proxy mode: agent command is required
-    if (args.length === 0) {
-      console.error("Error: agent command is required (or use --manager)");
-      process.exit(1);
-    }
     const [command, ...agentArgs] = args;
     const cwd = process.cwd();
 

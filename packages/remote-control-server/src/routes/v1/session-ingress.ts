@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { createBunWebSocket } from "hono/bun";
+import { upgradeWebSocket, websocket } from "../../transport/ws-shared";
 import { validateApiKey } from "../../auth/api-key";
 import { verifyWorkerJwt } from "../../auth/jwt";
 import {
@@ -8,9 +8,7 @@ import {
   handleWebSocketClose,
   ingestBridgeMessage,
 } from "../../transport/ws-handler";
-import { getSession } from "../../services/session";
-
-const { upgradeWebSocket, websocket } = createBunWebSocket();
+import { getSession, resolveExistingSessionId } from "../../services/session";
 
 const app = new Hono();
 
@@ -43,7 +41,8 @@ function authenticateRequest(c: any, label: string, expectedSessionId?: string):
 
 /** POST /v2/session_ingress/session/:sessionId/events — HTTP POST (HybridTransport writes) */
 app.post("/session/:sessionId/events", async (c) => {
-  const sessionId = c.req.param("sessionId")!;
+  const requestedSessionId = c.req.param("sessionId")!;
+  const sessionId = resolveExistingSessionId(requestedSessionId) ?? requestedSessionId;
 
   if (!authenticateRequest(c, `POST session/${sessionId}`, sessionId)) {
     return c.json({ error: { type: "unauthorized", message: "Invalid auth" } }, 401);
@@ -71,7 +70,8 @@ app.post("/session/:sessionId/events", async (c) => {
 app.get(
   "/ws/:sessionId",
   upgradeWebSocket(async (c) => {
-    const sessionId = c.req.param("sessionId")!;
+    const requestedSessionId = c.req.param("sessionId")!;
+    const sessionId = resolveExistingSessionId(requestedSessionId) ?? requestedSessionId;
 
     if (!authenticateRequest(c, `WS ${sessionId}`, sessionId)) {
       return {

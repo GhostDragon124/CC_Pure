@@ -13,6 +13,7 @@ src/utils/vendor/
 # AI tool runtime directories
 .agents/
 .codex/
+.claude/ (feat(remote-control): 优化 Web 展示、状态同步与桥接控制流程 (#288))
 .omx/
 
 # Binary / screenshot files (root only)
@@ -36,3 +37,12 @@ dist-split-test/
 *.jsonl
 .claude/
 ccp-*.tgz
+.omc
+.codex/*
+!.codex/agents/
+!.codex/agents/**
+!.codex/skills/
+!.codex/skills/**
+.codex/skills/.system/**
+!.codex/prompts/
+!.codex/prompts/**

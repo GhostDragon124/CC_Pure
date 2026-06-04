@@ -19,6 +19,7 @@ export interface RegisterEnvironmentRequest {
   max_sessions?: number;
   worker_type?: string;
   bridge_id?: string;
+  capabilities?: Record<string, unknown>;
 }
 
 export interface RegisterEnvironmentResponse {
@@ -70,6 +71,14 @@ export interface SessionResponse {
   username: string | null;
   created_at: number;
   updated_at: number;
+  automation_state?: AutomationStateResponse;
+}
+
+export interface AutomationStateResponse {
+  enabled: boolean;
+  phase: "standby" | "sleeping" | null;
+  next_tick_at: number | null;
+  sleep_until: number | null;
 }
 
 // --- v2 Code Sessions ---
@@ -97,6 +106,9 @@ export interface EnvironmentResponse {
   status: string;
   username: string | null;
   last_poll_at: number | null;
+  worker_type?: string;
+  channel_group_id?: string | null;
+  capabilities?: Record<string, unknown> | null;
 }
 
 export interface SessionSummaryResponse {
