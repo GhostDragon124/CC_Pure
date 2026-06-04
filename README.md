@@ -122,8 +122,8 @@ tail -f ~/.claude/local_analytics.jsonl
 | **Agent 协议** | ACP | ✅ | 外部 Agent 协议，含 bridge / permissions / session / acp-link manager |
 | **浏览器** | Chrome Use | ✅ | Claude in Chrome 集成，通过浏览器扩展执行操作 |
 | | Computer Use | ✅ | GUI 自动化（截图/点击/输入），`packages/@ant/computer-use-mcp/` |
-| **远程控制** | BRIDGE_MODE | ✅ | Remote Control 私有部署，WebSocket 远程控制 + 会话管理 |
-| | SSH_REMOTE | ✅ | SSH 远程连接，本地 REPL + 远端工具执行 |
+| **远程控制** | BRIDGE_MODE | ✅ | Remote Control 私有部署，自托管绕过 claude.ai 订阅（`CLAUDE_BRIDGE_BASE_URL`），RCS 服务已实测可用（127.0.0.1:3000） |
+| | SSH_REMOTE | ❌ | SSH 远程连接 — 反编译残留 stub，需合上游 `SSHSessionManagerImpl` 实现 |
 | **自主代理** | PROACTIVE | ✅ | 主动自主代理模式，SleepTool 控制 tick 节奏 |
 | | DAEMON | ✅ | 守护进程 + 后台 worker |
 | | COORDINATOR_MODE | ✅ | 多 worker 编排 |
