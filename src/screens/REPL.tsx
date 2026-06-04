@@ -14,18 +14,27 @@ import { dirname, join } from 'path';
 import { tmpdir } from 'os';
 import figures from 'figures';
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- / n N Esc [ v are bare letters in transcript modal context, same class as g/G/j/k in ScrollKeybindingHandler
-import { useInput } from '@anthropic/ink'
-import { useSearchInput } from '../hooks/useSearchInput.js'
-import { useTerminalSize } from '../hooks/useTerminalSize.js'
-import { useSearchHighlight } from '@anthropic/ink'
-import type { JumpHandle } from '../components/VirtualMessageList.js'
-import { renderMessagesToPlainText } from '../utils/exportRenderer.js'
-import { openFileInExternalEditor } from '../utils/editor.js'
-import { writeFile } from 'fs/promises'
-import { type TabStatusKind, Box, Text, useStdin, useTheme, useTerminalFocus, useTerminalTitle, useTabStatus } from '@anthropic/ink'
-import { CostThresholdDialog } from '../components/CostThresholdDialog.js'
-import { IdleReturnDialog } from '../components/IdleReturnDialog.js'
-import * as React from 'react'
+import { useInput } from '@anthropic/ink';
+import { useSearchInput } from '../hooks/useSearchInput.js';
+import { useTerminalSize } from '../hooks/useTerminalSize.js';
+import { useSearchHighlight } from '@anthropic/ink';
+import type { JumpHandle } from '../components/VirtualMessageList.js';
+import { renderMessagesToPlainText } from '../utils/exportRenderer.js';
+import { openFileInExternalEditor } from '../utils/editor.js';
+import { writeFile } from 'fs/promises';
+import {
+  type TabStatusKind,
+  Box,
+  Text,
+  useStdin,
+  useTheme,
+  useTerminalFocus,
+  useTerminalTitle,
+  useTabStatus,
+} from '@anthropic/ink';
+import { CostThresholdDialog } from '../components/CostThresholdDialog.js';
+import { IdleReturnDialog } from '../components/IdleReturnDialog.js';
+import * as React from 'react';
 import {
   useEffect,
   useMemo,
@@ -35,14 +44,11 @@ import {
   useDeferredValue,
   useLayoutEffect,
   type RefObject,
-} from 'react'
-import { useNotifications } from '../context/notifications.js'
-import { sendNotification } from '../services/notifier.js'
-import {
-  startPreventSleep,
-  stopPreventSleep,
-} from '../services/preventSleep.js'
-import { useTerminalNotification, hasCursorUpViewportYankBug } from '@anthropic/ink'
+} from 'react';
+import { useNotifications } from '../context/notifications.js';
+import { sendNotification } from '../services/notifier.js';
+import { startPreventSleep, stopPreventSleep } from '../services/preventSleep.js';
+import { useTerminalNotification, hasCursorUpViewportYankBug } from '@anthropic/ink';
 import {
   createFileStateCacheWithSizeLimit,
   mergeFileStateCaches,
@@ -331,8 +337,7 @@ const proactiveModule = feature('PROACTIVE') || feature('KAIROS') ? proactiveMod
 const PROACTIVE_NO_OP_SUBSCRIBE = (_cb: () => void) => () => {};
 const PROACTIVE_FALSE = () => false;
 const SUGGEST_BG_PR_NOOP = (_p: string, _n: string): boolean => false;
-const useProactive =
-  feature('PROACTIVE') || feature('KAIROS') ? useProactiveValue : null;
+const useProactive = feature('PROACTIVE') || feature('KAIROS') ? useProactiveValue : null;
 const useScheduledTasks = feature('AGENT_TRIGGERS') ? useScheduledTasksValue : null;
 import { isAgentSwarmsEnabled } from '../utils/agentSwarmsEnabled.js';
 import { useTaskListWatcher } from '../hooks/useTaskListWatcher.js';
@@ -449,21 +454,13 @@ import { UltraplanChoiceDialog } from '../components/ultraplan/UltraplanChoiceDi
 import { UltraplanLaunchDialog } from '../components/ultraplan/UltraplanLaunchDialog.js';
 import { launchUltraplan } from '../commands/ultraplan.js';
 // Session manager removed - using AppState now
-import type { RemoteSessionConfig } from '../remote/RemoteSessionManager.js'
-import { REMOTE_SAFE_COMMANDS } from '../commands.js'
-import type { RemoteMessageContent } from '../utils/teleport/api.js'
-import {
-  FullscreenLayout,
-  useUnseenDivider,
-  computeUnseenDivider,
-} from '../components/FullscreenLayout.js'
-import {
-  isFullscreenEnvEnabled,
-  maybeGetTmuxMouseHint,
-  isMouseTrackingEnabled,
-} from '../utils/fullscreen.js'
-import { AlternateScreen } from '@anthropic/ink'
-import { ScrollKeybindingHandler } from '../components/ScrollKeybindingHandler.js'
+import type { RemoteSessionConfig } from '../remote/RemoteSessionManager.js';
+import { REMOTE_SAFE_COMMANDS } from '../commands.js';
+import type { RemoteMessageContent } from '../utils/teleport/api.js';
+import { FullscreenLayout, useUnseenDivider, computeUnseenDivider } from '../components/FullscreenLayout.js';
+import { isFullscreenEnvEnabled, maybeGetTmuxMouseHint, isMouseTrackingEnabled } from '../utils/fullscreen.js';
+import { AlternateScreen } from '@anthropic/ink';
+import { ScrollKeybindingHandler } from '../components/ScrollKeybindingHandler.js';
 import {
   useMessageActions,
   MessageActionsKeybindings,
@@ -471,13 +468,10 @@ import {
   type MessageActionsState,
   type MessageActionsNav,
   type MessageActionCaps,
-} from '../components/messageActions.js'
-import { setClipboard } from '@anthropic/ink'
-import type { ScrollBoxHandle } from '@anthropic/ink'
-import {
-  createAttachmentMessage,
-  getQueuedCommandAttachments,
-} from '../utils/attachments.js'
+} from '../components/messageActions.js';
+import { setClipboard } from '@anthropic/ink';
+import type { ScrollBoxHandle } from '@anthropic/ink';
+import { createAttachmentMessage, getQueuedCommandAttachments } from '../utils/attachments.js';
 
 // Stable empty array for hooks that accept MCPServerConnection[] — avoids
 // creating a new [] literal on every render in remote mode, which would
@@ -625,6 +619,7 @@ function TranscriptSearchBar({
   const [indexStatus, setIndexStatus] = React.useState<'building' | { ms: number } | null>('building');
   React.useEffect(() => {
     let alive = true;
+    let hideTimeout: ReturnType<typeof setTimeout> | undefined;
     const warm = jumpRef.current?.warmSearchIndex;
     if (!warm) {
       setIndexStatus(null); // VML not mounted yet — rare, skip indicator
@@ -638,14 +633,14 @@ function TranscriptSearchBar({
         setIndexStatus(null);
       } else {
         setIndexStatus({ ms });
-        setTimeout(() => alive && setIndexStatus(null), 2000);
+        hideTimeout = setTimeout(() => alive && setIndexStatus(null), 2000);
       }
     });
     return () => {
       alive = false;
+      if (hideTimeout) clearTimeout(hideTimeout);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // mount-only: bar opens once per /
+  }, [jumpRef]); // mount-only per stable search bar ref
   // Gate the query effect on warm completion. setHighlight stays instant
   // (screen-space overlay, no indexing). setSearchQuery (the scan) waits.
   const warmDone = indexStatus !== 'building';
@@ -653,8 +648,7 @@ function TranscriptSearchBar({
     if (!warmDone) return;
     jumpRef.current?.setSearchQuery(query);
     setHighlight(query);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, warmDone]);
+  }, [jumpRef, query, setHighlight, warmDone]);
   const off = cursorOffset;
   const cursorChar = off < query.length ? query[off] : ' ';
   return (
@@ -1950,7 +1944,8 @@ export function REPL({
     const content = lastAssistant.message?.content;
     const contentArray = Array.isArray(content) ? content : [];
     const inProgressToolUses = contentArray.filter(
-      (b): b is ContentBlock & { type: 'tool_use'; id: string } => b.type === 'tool_use' && inProgressToolUseIDs.has((b as { id: string }).id),
+      (b): b is ContentBlock & { type: 'tool_use'; id: string } =>
+        b.type === 'tool_use' && inProgressToolUseIDs.has((b as { id: string }).id),
     );
     return (
       inProgressToolUses.length > 0 &&
@@ -3051,18 +3046,19 @@ export function REPL({
               setMessages(old => {
                 const postBoundary = getMessagesAfterCompactBoundary(old, {
                   includeSnipped: true,
-                })
+                });
                 // Hard cap: keep at most 500 messages in fullscreen scrollback
                 // to prevent unbounded memory growth in multi-day sessions.
                 // normalizeMessages/applyGrouping are O(n), and Ink fiber
                 // trees cost ~250KB RSS per message. Without this cap,
                 // scrollback after several compactions can reach thousands
                 // of messages (observed: 13k+, 1GB+ heap).
-                const MAX_FULLSCREEN_SCROLLBACK = 500
-                const kept = postBoundary.length > MAX_FULLSCREEN_SCROLLBACK
-                  ? postBoundary.slice(-MAX_FULLSCREEN_SCROLLBACK)
-                  : postBoundary
-                return [...kept, newMessage]
+                const MAX_FULLSCREEN_SCROLLBACK = 500;
+                const kept =
+                  postBoundary.length > MAX_FULLSCREEN_SCROLLBACK
+                    ? postBoundary.slice(-MAX_FULLSCREEN_SCROLLBACK)
+                    : postBoundary;
+                return [...kept, newMessage];
               });
             } else {
               setMessages(() => [newMessage]);
@@ -3074,7 +3070,10 @@ export function REPL({
             if (feature('PROACTIVE') || feature('KAIROS')) {
               proactiveModule?.setContextBlocked(false);
             }
-          } else if (newMessage.type === 'progress' && isEphemeralToolProgress(((newMessage as unknown as { data?: { type?: string } }).data?.type))) {
+          } else if (
+            newMessage.type === 'progress' &&
+            isEphemeralToolProgress((newMessage as unknown as { data?: { type?: string } }).data?.type)
+          ) {
             // Replace the previous ephemeral progress tick for the same tool
             // call instead of appending. Sleep/Bash emit a tick per second and
             // only the last one is rendered; appending blows up the messages
@@ -3092,13 +3091,10 @@ export function REPL({
               // so interleaved non-ephemeral messages caused duplicate progress
               // entries to accumulate (observed 13k+ entries in sleep-heavy sessions).
               for (let i = oldMessages.length - 1; i >= 0; i--) {
-                const m = oldMessages[i]!
-                if (m.type !== 'progress') break
-                const mData = m.data as Record<string, unknown> | undefined
-                if (
-                  m.parentToolUseID === newMessage.parentToolUseID &&
-                  mData?.type === newData.type
-                ) {
+                const m = oldMessages[i]!;
+                if (m.type !== 'progress') break;
+                const mData = m.data as Record<string, unknown> | undefined;
+                if (m.parentToolUseID === newMessage.parentToolUseID && mData?.type === newData.type) {
                   const copy = oldMessages.slice();
                   copy[i] = newMessage;
                   return copy;
@@ -3184,7 +3180,10 @@ export function REPL({
       // title silently fell through to the "Claude Code" default.
       if (!titleDisabled && !sessionTitle && !agentTitle && !haikuTitleAttemptedRef.current) {
         const firstUserMessage = newMessages.find(m => m.type === 'user' && !m.isMeta);
-        const text = firstUserMessage?.type === 'user' ? getContentText(firstUserMessage.message!.content as string | ContentBlockParam[]) : null;
+        const text =
+          firstUserMessage?.type === 'user'
+            ? getContentText(firstUserMessage.message!.content as string | ContentBlockParam[])
+            : null;
         // Skip synthetic breadcrumbs — slash-command output, prompt-skill
         // expansions (/commit → <command-message>), local-command headers
         // (/help → <command-name>), and bash-mode (!cmd → <bash-input>).
@@ -3340,9 +3339,16 @@ export function REPL({
 
       if (feature('BUDDY') && typeof (globalThis as Record<string, unknown>).fireCompanionObserver === 'function') {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const _fireCompanionObserver = (globalThis as Record<string, any>).fireCompanionObserver as (msgs: unknown, cb: (r: unknown) => void) => void;
+        const _fireCompanionObserver = (globalThis as Record<string, any>).fireCompanionObserver as (
+          msgs: unknown,
+          cb: (r: unknown) => void,
+        ) => void;
         void _fireCompanionObserver(messagesRef.current, reaction =>
-          setAppState(prev => (prev.companionReaction === (reaction as typeof prev.companionReaction) ? prev : { ...prev, companionReaction: reaction as typeof prev.companionReaction })),
+          setAppState(prev =>
+            prev.companionReaction === (reaction as typeof prev.companionReaction)
+              ? prev
+              : { ...prev, companionReaction: reaction as typeof prev.companionReaction },
+          ),
         );
       }
 
@@ -3686,13 +3692,15 @@ export function REPL({
           ...prev,
           initialMessage: null,
           toolPermissionContext: updatedToolPermissionContext,
-          ...(shouldStorePlanForVerification ? {
-            pendingPlanVerification: {
-              plan: initialMsg.message.planContent as string,
-              verificationStarted: false,
-              verificationCompleted: false,
-            },
-          } : {}),
+          ...(shouldStorePlanForVerification
+            ? {
+                pendingPlanVerification: {
+                  plan: initialMsg.message.planContent as string,
+                  verificationStarted: false,
+                  verificationCompleted: false,
+                },
+              }
+            : {}),
         };
       });
 
@@ -4838,16 +4846,19 @@ export function REPL({
     }
   }, [queuedCommands]);
 
+  const onInitRef = useRef(onInit);
+  onInitRef.current = onInit;
+  const diagnosticTrackerRef = useRef(diagnosticTracker);
+  diagnosticTrackerRef.current = diagnosticTracker;
+
   // Initial load
   useEffect(() => {
-    void onInit();
+    void onInitRef.current();
 
     // Cleanup on unmount
     return () => {
-      void diagnosticTracker.shutdown();
+      void diagnosticTrackerRef.current.shutdown();
     };
-    // TODO: fix this
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Listen for suspend/resume events
@@ -4880,16 +4891,11 @@ export function REPL({
     if (!isLoading) return null;
 
     // Find stop hook progress messages
-    const progressMsgs = messages.filter(
-      (m): m is ProgressMessage<HookProgress> => {
-        if (m.type !== 'progress') return false;
-        const data = m.data as Record<string, unknown>;
-        return (
-          data.type === 'hook_progress' &&
-          (data.hookEvent === 'Stop' || data.hookEvent === 'SubagentStop')
-        );
-      },
-    );
+    const progressMsgs = messages.filter((m): m is ProgressMessage<HookProgress> => {
+      if (m.type !== 'progress') return false;
+      const data = m.data as Record<string, unknown>;
+      return data.type === 'hook_progress' && (data.hookEvent === 'Stop' || data.hookEvent === 'SubagentStop');
+    });
     if (progressMsgs.length === 0) return null;
 
     // Get the most recent stop hook execution
