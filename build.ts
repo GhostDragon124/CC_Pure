@@ -94,5 +94,16 @@ if (!noSplitResult.success) {
   console.error('No-split build failed:')
   for (const log of noSplitResult.logs) console.error(log)
 } else {
-  console.log(`No-split bundle: ${noSplitResult.outputs.length} file → ${noSplitDir}/`)
+  console.log(
+    `No-split bundle: ${noSplitResult.outputs.length} file → ${noSplitDir}/`,
+  )
+
+  // Copy vendor binaries to no-split output so ripgrep and audio-capture work
+  const noSplitVendorAudio = join(noSplitDir, 'vendor', 'audio-capture')
+  await cp('vendor/audio-capture', noSplitVendorAudio, { recursive: true })
+  console.log(`Copied vendor/audio-capture/ → ${noSplitVendorAudio}/`)
+
+  const noSplitVendorRg = join(noSplitDir, 'vendor', 'ripgrep')
+  await cp('src/utils/vendor/ripgrep', noSplitVendorRg, { recursive: true })
+  console.log(`Copied src/utils/vendor/ripgrep/ → ${noSplitVendorRg}/`)
 }
