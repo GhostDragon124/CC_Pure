@@ -1,6 +1,5 @@
 import figures from 'figures'
 import { homedir } from 'os'
-import * as React from 'react'
 import { Box, Text } from '@anthropic/ink'
 import type { Step } from '../../projectOnboardingState.js'
 import {
@@ -115,3 +114,4 @@ export function createGuestPassesFeed(): FeedConfig {
     footer: '/passes',
   }
 }
+

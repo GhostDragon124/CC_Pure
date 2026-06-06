@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { Box, Text } from '@anthropic/ink'
 import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js'
@@ -59,3 +58,4 @@ export function SandboxPromptFooterHint(): ReactNode {
     </Box>
   )
 }
+

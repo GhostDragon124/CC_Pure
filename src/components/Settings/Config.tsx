@@ -23,13 +23,10 @@ import {
 } from '../../utils/config.js'
 import chalk from 'chalk'
 import {
-  permissionModeTitle,
   permissionModeFromString,
   toExternalPermissionMode,
   isExternalPermissionMode,
-  EXTERNAL_PERMISSION_MODES,
   PERMISSION_MODES,
-  type ExternalPermissionMode,
   type PermissionMode,
 } from '../../utils/permissions/PermissionMode.js'
 import {

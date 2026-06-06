@@ -71,7 +71,7 @@ export function registerToolResult(state: CachedMCState, toolId: string): void {
 }
 
 export function registerToolMessage(
-  state: CachedMCState,
+  _state: CachedMCState,
   groupIds: string[],
 ): void {
   for (const id of groupIds) {
@@ -98,8 +98,7 @@ export function getToolResultsToDelete(state: CachedMCState): string[] {
  * Returns null if toolIds is empty.
  */
 export function createCacheEditsBlock(
-  state: CachedMCState,
-  toolIds: string[],
+  _state: CachedMCState,  toolIds: string[],
 ): CacheEditsBlock | null {
   if (toolIds.length === 0) return null
   return {

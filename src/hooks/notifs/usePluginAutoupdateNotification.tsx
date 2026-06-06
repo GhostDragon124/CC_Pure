@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { getIsRemoteMode } from '../../bootstrap/state.js'
 import { useNotifications } from '../../context/notifications.js'
@@ -65,3 +64,4 @@ export function usePluginAutoupdateNotification(): void {
     )
   }, [updatedPlugins, addNotification])
 }
+

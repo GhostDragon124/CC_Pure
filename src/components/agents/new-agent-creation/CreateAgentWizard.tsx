@@ -1,5 +1,4 @@
-import React, { type ReactNode } from 'react'
-import { isAutoMemoryEnabled } from '../../../memdir/paths.js'
+import { type ReactNode } from 'react'import { isAutoMemoryEnabled } from '../../../memdir/paths.js'
 import type { Tools } from '../../../Tool.js'
 import type { AgentDefinition } from '@claude-code-best/builtin-tools/tools/AgentTool/loadAgentsDir.js'
 import { WizardProvider } from '../../wizard/index.js'

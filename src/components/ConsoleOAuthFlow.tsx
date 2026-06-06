@@ -1,3 +1,4 @@
+
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -16,7 +17,6 @@ import { getSettings_DEPRECATED, updateSettingsForSource } from '../utils/settin
 import { Select } from './CustomSelect/select.js'
 import { Spinner } from './Spinner.js'
 import TextInput from './TextInput.js'
-import { fi } from 'zod/v4/locales'
 
 type Props = {
   onDone(): void
@@ -636,7 +636,7 @@ function OAuthStatusMessage({
           [activeField, baseUrl, apiKey, haikuModel, sonnetModel, opusModel],
         )
 
-        const switchTo = useCallback(
+        const _switchTo = useCallback(
           (target: Field) => {
             setOAuthStatus(buildState(activeField, inputValue, target))
             setInputValue(displayValues[target] ?? '')
@@ -1413,3 +1413,4 @@ function OAuthStatusMessage({
       return null
   }
 }
+

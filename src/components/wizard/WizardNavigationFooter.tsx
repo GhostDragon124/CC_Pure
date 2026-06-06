@@ -1,5 +1,4 @@
-import React, { type ReactNode } from 'react'
-import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js'
+import { type ReactNode } from 'react'import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { Box, Text } from '@anthropic/ink'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
 import { Byline, KeyboardShortcutHint } from '@anthropic/ink'

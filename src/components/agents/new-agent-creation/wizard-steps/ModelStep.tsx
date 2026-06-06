@@ -1,5 +1,4 @@
-import React, { type ReactNode } from 'react'
-import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js'
+import { type ReactNode } from 'react'import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js'
 import { Byline, KeyboardShortcutHint } from '@anthropic/ink'
 import { useWizard } from '../../../wizard/index.js'
 import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout.js'

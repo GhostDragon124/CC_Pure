@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { Text } from '@anthropic/ink'
 import { isClaudeAISubscriber } from '../utils/auth.js'
 import {
@@ -64,3 +63,4 @@ export function useChromeExtensionNotification(): void {
     return null
   })
 }
+

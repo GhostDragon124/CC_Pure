@@ -40,14 +40,7 @@ import {
   getSwarmSocketName,
   TMUX_COMMAND,
 } from '../../utils/swarm/constants.js'
-import {
-  addHiddenPaneId,
-  removeHiddenPaneId,
-  removeMemberFromTeam,
-  setMemberMode,
-  setMultipleMemberModes,
-} from '../../utils/swarm/teamHelpers.js'
-import {
+import { removeMemberFromTeam, setMemberMode, setMultipleMemberModes } from '../../utils/swarm/teamHelpers.js'import {
   listTasks,
   type Task,
   unassignTeammateTasks,

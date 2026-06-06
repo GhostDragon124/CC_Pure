@@ -73,7 +73,6 @@ import {
   incrementOverageCreditUpsellSeenCount,
   createOverageCreditFeed,
 } from './OverageCreditUpsell.js'
-import { plural } from '../../utils/stringUtils.js'
 import { useAppState } from '../../state/AppState.js'
 import { getEffortSuffix } from '../../utils/effort.js'
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
@@ -498,4 +497,5 @@ export function LogoV2(): React.ReactNode {
     </>
   )
 }
+
 

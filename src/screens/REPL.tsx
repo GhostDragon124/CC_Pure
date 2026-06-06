@@ -790,8 +790,8 @@ export function REPL({
   pendingHookMessages,
   initialFileHistorySnapshots,
   initialContentReplacements,
-  initialAgentName,
-  initialAgentColor,
+  initialAgentName: _initialAgentName,
+  initialAgentColor: _initialAgentColor,
   mcpClients: initialMcpClients,
   dynamicMcpConfig: initialDynamicMcpConfig,
   autoConnectIdeFlag,
@@ -2784,7 +2784,7 @@ export function REPL({
   const getToolUseContext = useCallback(
     (
       messages: MessageType[],
-      newMessages: MessageType[],
+      _newMessages: MessageType[],
       abortController: AbortController,
       mainLoopModel: string,
     ): ProcessUserInputContext => {
@@ -3155,8 +3155,7 @@ export function REPL({
   const onQueryImpl = useCallback(
     async (
       messagesIncludingNewMessages: MessageType[],
-      newMessages: MessageType[],
-      abortController: AbortController,
+      _newMessages: MessageType[],      abortController: AbortController,
       shouldQuery: boolean,
       additionalAllowedTools: string[],
       mainLoopModelParam: string,

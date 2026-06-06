@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { memo, type ReactNode } from 'react'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { Box, Text, stringWidth } from '@anthropic/ink'
@@ -249,3 +248,4 @@ export function PromptInputFooterSuggestions({
 }
 
 export default memo(PromptInputFooterSuggestions)
+

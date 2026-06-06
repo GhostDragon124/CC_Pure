@@ -40,7 +40,7 @@ const ALLOW_BYPASS = !IS_ROOT || !!process.env.IS_SANDBOX
 export function createAcpCanUseTool(
   conn: AgentSideConnection,
   sessionId: string,
-  getCurrentMode: () => string,
+  _getCurrentMode: () => string,
   clientCapabilities?: ClientCapabilities,
   cwd?: string,
   onModeChange?: (modeId: string) => void,

@@ -11,7 +11,6 @@ import {
   logEvent,
   logEventAsync,
 } from '../services/analytics/index.js'
-import { isInBundledMode } from '../utils/bundledMode.js'
 import { logForDebugging } from '../utils/debug.js'
 import { rcLog } from './rcDebugLog.js'
 import { logForDiagnosticsNoPII } from '../utils/diagLogs.js'

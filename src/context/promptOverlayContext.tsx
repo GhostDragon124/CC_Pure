@@ -18,7 +18,7 @@
  * Split into data/setter context pairs so writers never re-render on
  * their own writes — the setter contexts are stable.
  */
-import React, {
+import {
   createContext,
   type ReactNode,
   useContext,

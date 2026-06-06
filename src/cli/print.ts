@@ -112,7 +112,6 @@ import type {
   ModelInfo,
   SDKMessage,
   SDKUserMessage,
-  SDKUserMessageReplay,
   PermissionResult,
   McpServerConfigForProcessTransport,
   McpServerStatus,
@@ -750,7 +749,7 @@ export async function runHeadless(
     const result = await handleRewindFiles(
       options.rewindFiles as UUID,
       currentAppState,
-      setAppState,
+      setAppState: _setAppState,
       false,
     )
     if (!result.canRewind) {
@@ -867,8 +866,7 @@ export async function runHeadless(
     canUseTool,
     sdkMcpConfigs,
     getAppState,
-    setAppState,
-    agents,
+    setAppState: _setAppState,    agents,
     options,
     turnInterruptionState,
   )) {

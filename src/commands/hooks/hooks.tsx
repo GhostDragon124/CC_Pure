@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { HooksConfigMenu } from '../../components/hooks/HooksConfigMenu.js'
 import { logEvent } from '../../services/analytics/index.js'
 import { getTools } from '../../tools.js'
@@ -11,3 +10,4 @@ export const call: LocalJSXCommandCall = async (onDone, context) => {
   const toolNames = getTools(permissionContext).map(tool => tool.name)
   return <HooksConfigMenu toolNames={toolNames} onExit={onDone} />
 }
+

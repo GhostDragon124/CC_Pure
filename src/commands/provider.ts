@@ -34,7 +34,7 @@ function getMergedEnv(): Record<string, string> {
   return merged
 }
 
-const call: LocalCommandCall = async (args, context) => {
+const call: LocalCommandCall = async (args, _context) => {
   const arg = args.trim().toLowerCase()
 
   // No argument: show current provider

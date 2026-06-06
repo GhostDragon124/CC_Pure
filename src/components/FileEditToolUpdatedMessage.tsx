@@ -17,7 +17,7 @@ type Props = {
 }
 
 export function FileEditToolUpdatedMessage({
-  filePath,
+  filePath: _filePath,
   structuredPatch,
   firstLine,
   fileContent,

@@ -1,5 +1,4 @@
 import type { ContentBlockParam } from '@anthropic-ai/sdk/resources/messages.js'
-import React from 'react'
 import type {
   LocalJSXCommandCall,
   LocalJSXCommandOnDone,
@@ -87,3 +86,4 @@ export const call: LocalJSXCommandCall = async (onDone, context, args) => {
   await launchAndDone(args, context, onDone, gate.billingNote)
   return null
 }
+

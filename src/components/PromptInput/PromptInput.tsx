@@ -103,7 +103,6 @@ import {
 } from '@claude-code-best/builtin-tools/tools/AgentTool/agentColorManager.js'
 import type { AgentDefinition } from '@claude-code-best/builtin-tools/tools/AgentTool/loadAgentsDir.js'
 import type { Message } from '../../types/message.js'
-import type { PermissionMode } from '../../types/permissions.js'
 import type {
   BaseTextInputProps,
   PromptInputMode,
@@ -675,8 +674,7 @@ function PromptInput({
 
   const tasksSelected = footerItemSelected === 'tasks'
   const tmuxSelected = footerItemSelected === 'tmux'
-  const bagelSelected = footerItemSelected === 'bagel'
-  const teamsSelected = footerItemSelected === 'teams'
+  const _bagelSelected = footerItemSelected === 'bagel'  const teamsSelected = footerItemSelected === 'teams'
   const bridgeSelected = footerItemSelected === 'bridge'
 
   function selectFooterItem(item: FooterItem | null): void {
@@ -3173,3 +3171,4 @@ function buildBorderText(
 }
 
 export default React.memo(PromptInput)
+

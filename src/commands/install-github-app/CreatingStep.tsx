@@ -1,4 +1,3 @@
-import React from 'react'
 import { Box, Text } from '@anthropic/ink'
 import type { Workflow } from './types.js'
 
@@ -76,3 +75,4 @@ export function CreatingStep({
     </>
   )
 }
+
