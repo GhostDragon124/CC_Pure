@@ -30,9 +30,13 @@ mock.module('src/utils/config.ts', () => ({
   enableConfigs: mock(() => {}),
 }))
 
+const mockSwitchSession = mock(() => {})
+
 mock.module('../../../bootstrap/state.js', () => ({
   setOriginalCwd: mock(() => {}),
   addSlowOperation: mock(() => {}),
+  switchSession: mockSwitchSession,
+  getSessionProjectDir: mock(() => null),
 }))
 
 const mockGetDefaultAppState = mock(() => ({
@@ -87,9 +91,9 @@ const mockResolveSessionFilePath = mock(async () => ({
   projectPath: '/tmp',
   fileSize: 100,
 }))
-mockModulePreservingExports('../../../utils/sessionStoragePortable.js', {
+mock.module('../../../utils/sessionStoragePortable.js', () => ({
   resolveSessionFilePath: mockResolveSessionFilePath,
-})
+}))
 
 const mockGetMainLoopModel = mock(() => 'claude-sonnet-4-6')
 
@@ -754,7 +758,6 @@ describe('AcpAgent', () => {
       )
       expect(commit.input).toEqual({ hint: '[message]' })
     })
-  })
   })
 
   describe('sessionId alignment with global state', () => {
