@@ -18,7 +18,6 @@ const acknowledgedBuildWarnings = [
   'src/utils/swarm/backends/registry.ts',
   'src/utils/toolSearch.ts',
   'src/utils/hooks.ts',
-  'src/services/skillLearning/sessionObserver.ts',
   'src/utils/settings/changeDetector.ts',
 ]
 

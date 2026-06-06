@@ -15,9 +15,9 @@ import { join } from 'node:path'
 import { parseFrontmatter } from '../../utils/frontmatterParser.js'
 
 /**
- * Per-session memoization to avoid re-emitting the same skill discovery /
- * gap signal twice. Each Set is bounded to keep long-running sessions from
- * monotonically accumulating skill names and signal keys forever (which
+ * Per-session memoization to avoid re-emitting the same skill discovery
+ * signal twice. Each Set is bounded to keep long-running sessions from
+ * monotonically accumulating skill names forever (which
  * was the original session-scoped-but-unbounded design).
  *
  * FIFO eviction by insertion order — once the cap is hit, the oldest
@@ -28,7 +28,6 @@ import { parseFrontmatter } from '../../utils/frontmatterParser.js'
 const SESSION_TRACKING_MAX = 1000
 const SESSION_TRACKING_TRIM_TO = 750
 const discoveredThisSession = new Set<string>()
-const recordedGapSignals = new Set<string>()
 
 function addBoundedSessionEntry(set: Set<string>, value: string): void {
   set.add(value)
@@ -201,49 +200,14 @@ async function markAutoLoadedSkill(
 }
 
 async function maybeRecordSkillGap(
-  queryText: string,
-  results: SearchResult[],
-  context: ToolUseContext,
-  trigger: DiscoverySignal['trigger'],
+  _queryText: string,
+  _results: SearchResult[],
+  _context: ToolUseContext,
+  _trigger: DiscoverySignal['trigger'],
 ): Promise<SkillDiscoveryGap | undefined> {
-  if (trigger !== 'user_input') return undefined
-  if (!queryText.trim()) return undefined
-
-  const gapSignalKey = `${trigger}:${queryText.trim().toLowerCase()}`
-  if (recordedGapSignals.has(gapSignalKey)) return undefined
-  addBoundedSessionEntry(recordedGapSignals, gapSignalKey)
-
-  try {
-    const [{ isSkillLearningEnabled }, { recordSkillGap }] = await Promise.all([
-      import('../skillLearning/featureCheck.js'),
-      import('../skillLearning/skillGapStore.js'),
-    ])
-    if (!isSkillLearningEnabled()) return undefined
-    const gap = await recordSkillGap({
-      prompt: queryText,
-      cwd:
-        ((context as Record<string, unknown>).cwd as string) ?? process.cwd(),
-      sessionId:
-        ((context as Record<string, unknown>).sessionId as string) ??
-        'unknown-session',
-      recommendations: results,
-    })
-    const status = gap.status
-    if (status !== 'pending' && status !== 'draft' && status !== 'active') {
-      return undefined
-    }
-    return {
-      key: gap.key,
-      status,
-      draftName: gap.draft?.name,
-      draftPath: gap.draft?.skillPath,
-      activeName: gap.active?.name,
-      activePath: gap.active?.skillPath,
-    }
-  } catch (error) {
-    logForDebugging(`[skill-search] skill gap learning error: ${error}`)
-    return undefined
-  }
+  // skillLearning subsystem has been removed. This function is preserved
+  // as a stable signature so callers don't need to be null-checked.
+  return undefined
 }
 
 export async function startSkillDiscoveryPrefetch(
