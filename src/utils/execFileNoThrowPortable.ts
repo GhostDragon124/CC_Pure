@@ -1,4 +1,8 @@
-import { type Options as ExecaOptions, execaSync } from 'execa'
+import {
+  type Options as ExecaOptions,
+  type ExecaSyncMethod,
+  execaSync,
+} from 'execa'
 import { getCwd } from '../utils/cwd.js'
 import { slowLogging } from './slowOperations.js'
 
@@ -11,6 +15,11 @@ type ExecSyncOptions = {
   input?: string
   stdio?: ExecaOptions['stdio']
 }
+
+type ShellCommandExecaSync = (
+  command: string,
+  options: ExecaOptions,
+) => ReturnType<ExecaSyncMethod>
 
 /**
  * @deprecated Use `execa` directly with `{ shell: true, reject: false }` for non-blocking execution.
@@ -72,7 +81,8 @@ export function execSyncWithDefaults_DEPRECATED(
     // DEPRECATED: caller is responsible for sanitizing shell metacharacters
     // in the command argument. This function uses shell: true which can lead
     // to command injection if command contains untrusted input.
-    const result = (execaSync as any)(command, {
+    const runShellCommand = execaSync as unknown as ShellCommandExecaSync
+    const result = runShellCommand(command, {
       env: process.env,
       maxBuffer: 1_000_000,
       timeout: finalTimeout,
@@ -85,7 +95,15 @@ export function execSyncWithDefaults_DEPRECATED(
     if (!result.stdout) {
       return null
     }
-    return result.stdout.trim() || null
+    const stdout =
+      typeof result.stdout === 'string'
+        ? result.stdout
+        : result.stdout instanceof Uint8Array
+          ? new TextDecoder().decode(result.stdout)
+          : Array.isArray(result.stdout)
+            ? result.stdout.join('')
+            : String(result.stdout)
+    return stdout.trim() || null
   } catch {
     return null
   }

@@ -1,5 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import type { BetaToolUnion } from '@anthropic-ai/sdk/resources/beta/messages.js'
+import type { ChatCompletionCreateParamsNonStreaming } from 'openai/resources/chat/completions'
 import {
   getLastApiCompletionTimestamp,
   getSessionId,
@@ -210,7 +211,7 @@ async function sideQueryViaOpenAICompatible(
 
   const start = Date.now()
 
-  const requestParams: Record<string, unknown> = {
+  const requestParams: ChatCompletionCreateParamsNonStreaming = {
     model: openaiModel,
     messages: openaiMessages,
     max_tokens,
@@ -218,10 +219,13 @@ async function sideQueryViaOpenAICompatible(
   if (temperature !== undefined) requestParams.temperature = temperature
   if (openaiTools && openaiTools.length > 0) {
     requestParams.tools = openaiTools
-    if (openaiToolChoice) requestParams.tool_choice = openaiToolChoice
+    if (openaiToolChoice) {
+      requestParams.tool_choice =
+        openaiToolChoice as ChatCompletionCreateParamsNonStreaming['tool_choice']
+    }
   }
 
-  const response = await client.chat.completions.create(requestParams as any, {
+  const response = await client.chat.completions.create(requestParams, {
     signal,
   })
 

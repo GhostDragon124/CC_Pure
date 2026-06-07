@@ -909,12 +909,12 @@ async function callInner(
         resolvedFilePath,
         parsedRange ?? undefined,
       )
-      if (!extractResult.success) {
-        throw new Error((extractResult as any).error.message)
+      if (extractResult.success === false) {
+        throw new Error(extractResult.error.message)
       }
       logEvent('tengu_pdf_page_extraction', {
         success: true,
-        pageCount: (extractResult as any).data.file.count,
+        pageCount: extractResult.data.file.count,
         fileSize: extractResult.data.file.originalSize,
         hasPageRange: true,
       })
@@ -981,7 +981,9 @@ async function callInner(
       } else {
         logEvent('tengu_pdf_page_extraction', {
           success: false,
-          available: (extractResult as any).error.reason !== 'unavailable',
+          available:
+            extractResult.success === false &&
+            extractResult.error.reason !== 'unavailable',
           fileSize: stats.size,
         })
       }
@@ -996,8 +998,8 @@ async function callInner(
     }
 
     const readResult = await readPDF(resolvedFilePath)
-    if (!readResult.success) {
-      throw new Error((readResult as any).error.message)
+    if (readResult.success === false) {
+      throw new Error(readResult.error.message)
     }
     const pdfData = readResult.data
     logFileOperation({
@@ -1167,14 +1169,27 @@ export async function readImageWithTokenBudget(
       // Fallback: heavily compressed version from the SAME buffer
       try {
         const sharpModule = await import('sharp')
+        type SharpFactory = (
+          input: Buffer,
+        ) => {
+          resize(
+            width: number,
+            height: number,
+            options: {
+              fit: 'inside'
+              withoutEnlargement: boolean
+            },
+          ): {
+            jpeg(options: { quality: number }): {
+              toBuffer(): Promise<Buffer>
+            }
+          }
+        }
         const sharp =
-          (
-            sharpModule as unknown as {
-              default?: typeof sharpModule
-            } & typeof sharpModule
-          ).default || sharpModule
+          ((sharpModule as unknown as { default?: unknown }).default ??
+            sharpModule) as SharpFactory
 
-        const fallbackBuffer = await (sharp as any)(imageBuffer)
+        const fallbackBuffer = await sharp(imageBuffer)
           .resize(400, 400, {
             fit: 'inside',
             withoutEnlargement: true,

@@ -5,6 +5,7 @@
 // teleportToRemote's CreateSession events array.
 
 import type {
+  ContentBlock,
   ToolResultBlockParam,
   ToolUseBlock,
 } from '@anthropic-ai/sdk/resources'
@@ -22,6 +23,27 @@ const POLL_INTERVAL_MS = 3000
 // pollRemoteSessionEvents doesn't retry. A 30min poll makes ~600 calls;
 // at any nonzero 5xx rate one blip would kill the run.
 const MAX_CONSECUTIVE_FAILURES = 5
+
+function getSDKMessageContent(message: SDKMessage): unknown {
+  const sdkMessage = message.message
+  if (typeof sdkMessage !== 'object' || sdkMessage === null) return undefined
+  return (sdkMessage as { content?: unknown }).content
+}
+
+function isToolUseBlock(block: ContentBlock): block is ToolUseBlock {
+  return block.type === 'tool_use'
+}
+
+function isToolResultBlock(block: unknown): block is ToolResultBlockParam {
+  return (
+    typeof block === 'object' &&
+    block !== null &&
+    'type' in block &&
+    block.type === 'tool_result' &&
+    'tool_use_id' in block &&
+    typeof block.tool_use_id === 'string'
+  )
+}
 
 export type PollFailReason =
   | 'terminated'
@@ -101,18 +123,19 @@ export class ExitPlanModeScanner {
   ingest(newEvents: SDKMessage[]): ScanResult {
     for (const m of newEvents) {
       if (m.type === 'assistant') {
-        for (const block of (m as any).message.content) {
-          if (block.type !== 'tool_use') continue
-          const tu = block as ToolUseBlock
-          if (tu.name === EXIT_PLAN_MODE_V2_TOOL_NAME) {
-            this.exitPlanCalls.push(tu.id)
+        const content = getSDKMessageContent(m)
+        if (!Array.isArray(content)) continue
+        for (const block of content as ContentBlock[]) {
+          if (!isToolUseBlock(block)) continue
+          if (block.name === EXIT_PLAN_MODE_V2_TOOL_NAME) {
+            this.exitPlanCalls.push(block.id)
           }
         }
       } else if (m.type === 'user') {
-        const content = (m as any).message.content
+        const content = getSDKMessageContent(m)
         if (!Array.isArray(content)) continue
         for (const block of content) {
-          if (block.type === 'tool_result') {
+          if (isToolResultBlock(block)) {
             this.results.set(block.tool_use_id, block)
           }
         }
