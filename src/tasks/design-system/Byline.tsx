@@ -5,6 +5,6 @@
 
 import React from 'react'
 
-export function Byline(): React.ReactNode {
+export function Byline({ children: _children }: { children?: React.ReactNode }): React.ReactNode {
   return null
 }

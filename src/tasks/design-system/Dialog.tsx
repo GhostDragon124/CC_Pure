@@ -5,6 +5,14 @@
 
 import React from 'react'
 
-export function Dialog({ children }: { children?: React.ReactNode }): React.ReactNode {
+type DialogProps = {
+  children?: React.ReactNode
+  title?: string
+  subtitle?: React.ReactNode
+  onCancel?: () => void
+  inputGuide?: () => React.ReactNode
+}
+
+export function Dialog({ children, title: _title, subtitle: _subtitle, onCancel: _onCancel, inputGuide: _inputGuide }: DialogProps): React.ReactNode {
   return <>{children}</>
 }

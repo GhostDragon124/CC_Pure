@@ -5,6 +5,6 @@
 
 import React from 'react'
 
-export function KeyboardShortcutHint(): React.ReactNode {
+export function KeyboardShortcutHint({ shortcut: _shortcut, action: _action }: { shortcut?: string; action?: string }): React.ReactNode {
   return null
 }

@@ -24,10 +24,10 @@ export function BashModeProgress({
       />
       {progress ? (
         <ShellProgressMessage
-          fullOutput={progress.fullOutput}
-          output={progress.output}
-          elapsedTimeSeconds={progress.elapsedTimeSeconds}
-          totalLines={progress.totalLines}
+          fullOutput={progress.fullOutput as string}
+          output={progress.output as string}
+          elapsedTimeSeconds={progress.elapsedTimeSeconds as number}
+          totalLines={progress.totalLines as number}
           verbose={verbose}
         />
       ) : (

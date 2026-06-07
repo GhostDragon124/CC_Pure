@@ -2,6 +2,15 @@ interface CollapseStats {
   totalMessages: number
   collapsedMessages: number
   emptySpawnWarningEmitted: boolean
+  health: {
+    totalSpawns: number
+    totalErrors: number
+    lastError?: string
+    emptySpawnWarningEmitted: boolean
+    totalEmptySpawns: number
+  }
+  collapsedSpans: number
+  stagedSpans: number
 }
 
 export function getStats(): CollapseStats {
@@ -9,6 +18,14 @@ export function getStats(): CollapseStats {
     totalMessages: 0,
     collapsedMessages: 0,
     emptySpawnWarningEmitted: false,
+    health: {
+      totalSpawns: 0,
+      totalErrors: 0,
+      emptySpawnWarningEmitted: false,
+      totalEmptySpawns: 0,
+    },
+    collapsedSpans: 0,
+    stagedSpans: 0,
   }
 }
 
