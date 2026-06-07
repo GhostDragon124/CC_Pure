@@ -31,7 +31,6 @@ import { TEAM_CREATE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/Tea
 import { TEAM_DELETE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TeamDeleteTool/constants.js'
 import { EXECUTE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/ExecuteTool/constants.js'
 import { TOOL_SEARCH_TOOL_NAME } from '../tools/ToolSearchTool/prompt.js'
-import { SYNTHETIC_OUTPUT_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/SyntheticOutputTool/SyntheticOutputTool.js'
 import { ENTER_WORKTREE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/EnterWorktreeTool/constants.js'
 import { EXIT_WORKTREE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/ExitWorktreeTool/constants.js'
 import { WORKFLOW_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/WorkflowTool/constants.js'

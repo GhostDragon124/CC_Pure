@@ -183,7 +183,7 @@ export const WebSearchTool = buildTool({
           const progressCounter = Date.now()
           onProgress({
             toolUseID: `search-progress-${progressCounter}`,
-            data: progress,
+            data: progress as any,
           })
         }
       },

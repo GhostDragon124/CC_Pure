@@ -103,7 +103,7 @@ export function UserTextMessage({
       const { UserGitHubWebhookMessage } =
         require('./UserGitHubWebhookMessage.js') as typeof import('./UserGitHubWebhookMessage.js')
       /* eslint-enable @typescript-eslint/no-require-imports */
-      return <UserGitHubWebhookMessage addMargin={addMargin} param={param} />
+      return React.createElement(UserGitHubWebhookMessage as any, { addMargin, param })
     }
   }
 
@@ -157,7 +157,7 @@ export function UserTextMessage({
       const { UserForkBoilerplateMessage } =
         require('./UserForkBoilerplateMessage.js') as typeof import('./UserForkBoilerplateMessage.js')
       /* eslint-enable @typescript-eslint/no-require-imports */
-      return <UserForkBoilerplateMessage addMargin={addMargin} param={param} />
+      return React.createElement(UserForkBoilerplateMessage as any, { addMargin, param })
     }
   }
 
@@ -170,7 +170,7 @@ export function UserTextMessage({
       const { UserCrossSessionMessage } =
         require('./UserCrossSessionMessage.js') as typeof import('./UserCrossSessionMessage.js')
       /* eslint-enable @typescript-eslint/no-require-imports */
-      return <UserCrossSessionMessage addMargin={addMargin} param={param} />
+      return React.createElement(UserCrossSessionMessage as any, { addMargin, param })
     }
   }
 

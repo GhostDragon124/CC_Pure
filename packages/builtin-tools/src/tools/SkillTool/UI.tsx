@@ -89,7 +89,7 @@ export function renderToolUseProgressMessage(
   const displayedMessages = verbose ? progressMessages : progressMessages.slice(-MAX_PROGRESS_MESSAGES_TO_SHOW);
 
   const hiddenCount = progressMessages.length - displayedMessages.length;
-  const { inProgressToolUseIDs } = buildSubagentLookups(progressMessages.map(pm => pm.data));
+  const { inProgressToolUseIDs } = buildSubagentLookups(progressMessages.map(pm => pm.data as any));
 
   return (
     <MessageResponse>
@@ -98,7 +98,7 @@ export function renderToolUseProgressMessage(
           {displayedMessages.map(progressMessage => (
             <Box key={progressMessage.uuid} height={1} overflow="hidden">
               <MessageComponent
-                message={progressMessage.data.message}
+                message={progressMessage.data.message as any}
                 lookups={EMPTY_LOOKUPS}
                 addMargin={false}
                 tools={tools}

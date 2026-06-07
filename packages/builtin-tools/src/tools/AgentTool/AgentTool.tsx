@@ -1460,7 +1460,7 @@ export const AgentTool = buildTool({
               ) {
                 onProgress({
                   toolUseID: message.toolUseID as string,
-                  data: message.data,
+                  data: message.data as any,
                 })
               }
 

@@ -36,3 +36,20 @@ export function isContextCollapseEnabled(): boolean {
 export function subscribe(callback: () => void): () => void {
   return () => {}
 }
+
+/** @stub */
+export function initContextCollapse(): void {}
+
+/** @stub */
+export function resetContextCollapse(): void {}
+
+/** @stub */
+export function applyCollapsesIfNeeded(): void {}
+
+/** @stub */
+export function isWithheldPromptTooLong(): boolean {
+  return false
+}
+
+/** @stub */
+export function recoverFromOverflow(): void {}

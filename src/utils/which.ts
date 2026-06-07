@@ -34,7 +34,7 @@ function whichNodeSync(command: string): string | null {
     try {
       // Security: use execaSync with array args to prevent shell injection
       const result = execaSync('where.exe', [command], {
-        encoding: 'utf-8' as const,
+        encoding: 'utf8',
         stdio: ['ignore', 'pipe', 'ignore'],
         reject: false,
       })
@@ -48,7 +48,7 @@ function whichNodeSync(command: string): string | null {
   try {
     // Security: use execaSync with array args to prevent shell injection
     const result = execaSync('which', [command], {
-      encoding: 'utf-8' as const,
+      encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'ignore'],
       reject: false,
     })

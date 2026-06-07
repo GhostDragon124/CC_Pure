@@ -36,11 +36,11 @@ app.post("/sessions/:id/events", uuidAuth, async (c) => {
   const requestedSessionId = c.req.param("id")!;
   const ownership = checkOwnership(c, requestedSessionId);
   if (ownership.error) {
-    const message = "reason" in ownership ? ownership.reason : "Not your session";
+    const message = "reason" in ownership ? (ownership as any).reason : "Not your session";
     const status = "reason" in ownership ? 409 : 403;
     return c.json("reason" in ownership ? closedSessionResponse(message) : { error: { type: "forbidden", message } }, status);
   }
-  const { sessionId } = ownership;
+  const { sessionId } = ownership as any;
 
   const body = await c.req.json();
   const eventType = body.type || "user";
@@ -55,11 +55,11 @@ app.post("/sessions/:id/control", uuidAuth, async (c) => {
   const requestedSessionId = c.req.param("id")!;
   const ownership = checkOwnership(c, requestedSessionId);
   if (ownership.error) {
-    const message = "reason" in ownership ? ownership.reason : "Not your session";
+    const message = "reason" in ownership ? (ownership as any).reason : "Not your session";
     const status = "reason" in ownership ? 409 : 403;
     return c.json("reason" in ownership ? closedSessionResponse(message) : { error: { type: "forbidden", message } }, status);
   }
-  const { sessionId } = ownership;
+  const { sessionId } = ownership as any;
 
   const body = await c.req.json();
   const event = publishSessionEvent(sessionId, body.type || "control_request", body, "outbound");
@@ -71,11 +71,11 @@ app.post("/sessions/:id/interrupt", uuidAuth, async (c) => {
   const requestedSessionId = c.req.param("id")!;
   const ownership = checkOwnership(c, requestedSessionId);
   if (ownership.error) {
-    const message = "reason" in ownership ? ownership.reason : "Not your session";
+    const message = "reason" in ownership ? (ownership as any).reason : "Not your session";
     const status = "reason" in ownership ? 409 : 403;
     return c.json("reason" in ownership ? closedSessionResponse(message) : { error: { type: "forbidden", message } }, status);
   }
-  const { sessionId } = ownership;
+  const { sessionId } = ownership as any;
 
   publishSessionEvent(sessionId, "interrupt", { action: "interrupt" }, "outbound");
   updateSessionStatus(sessionId, "idle");

@@ -305,7 +305,7 @@ export async function* queryModelOpenAI(
       maxTokens,
       temperatureOverride: options.temperatureOverride,
     })
-    const stream = await client.chat.completions.create(requestBody, {
+    const stream = await (client.chat.completions.create as any)(requestBody, {
       signal,
     })
 
@@ -452,7 +452,7 @@ export async function* queryModelOpenAI(
     yield createAssistantAPIErrorMessage({
       content: `API Error: ${errorMessage}`,
       apiError: 'api_error',
-      error: error instanceof Error ? error : new Error(String(error)),
+      error: (error instanceof Error ? error : new Error(String(error))) as any,
     })
   }
 }

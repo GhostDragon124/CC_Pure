@@ -103,7 +103,7 @@ function permissionComponentForTool(
     case WorkflowTool:
       return WorkflowPermissionRequest ?? FallbackPermissionRequest
     case MonitorTool:
-      return MonitorPermissionRequest ?? FallbackPermissionRequest
+      return (MonitorPermissionRequest ?? FallbackPermissionRequest) as any
     case GlobTool:
     case GrepTool:
     case FileReadTool:
