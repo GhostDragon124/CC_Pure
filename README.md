@@ -78,6 +78,7 @@ CC Pure 基于 CCB v2.6.11 反编译源码，做了以下核心变更：
 | 版本 | 日期 | 合并数 | 说明 |
 |------|------|:------:|------|
 | v2.6.11 | 2026-06-06 | 6 commits | **版本同步 2.6.5→2.6.11**：Vite 构建优化 (RSS 966MB→35MB)、ACP subagent 层级透传、cacheWarningEnabled 配置、ACP loadSession/sessionId 对齐。合 6 个功能 commit，跳 1 个（edit tool 旧逻辑删除 — CCP fork 点） |
+| v2.6.11-ccp | 2026-06-08 | — | **🎉 正式版**：Anthropic-core as any 94→1、反编译残留全量清零 (tsc 270→20)、CodeQL 安全审计完成 (175→0)、上游 commit 逐条审查 187→59 MERGE、完整类型安全文档体系 |
 | v2.6.5 | 2026-06-05 | 8 commits | **类型修复**：反编译残留全量清零（270→22，248 个修复。剩余 22 为社区代码） + 上游安全 cherry-pick x8 |
 | v2.3.0 | 2026-06-04 | 7 commits | **RCS/Web 全量迁移 + SSH Remote**：vanilla JS → React（29 组件 + shadcn/ui），SSH stub 替换为 2029 行完整实现 |
 | v2.2.2 | 2026-06-04 | 16 文件 | **Autonomy 全量合并**：f2e9af49 PR #386 源码 + 11 测试文件，3699 pass |
@@ -89,7 +90,7 @@ CC Pure 基于 CCB v2.6.11 反编译源码，做了以下核心变更：
 | ... | 2026-06 | 10 | P0/P1 + 基础设施同步 |
 
 > **累计**：187 个候选 commit 全量审查 → ✅ 59 MERGE / 🟡 34 已存在 / ❌ 94 SKIP。
-> 详见本地文档 `~/文档/User_manual/CC_Pure_代码分析/CC_Pure_update_record/`。
+> 详见 [`docs/upstream-sync.md`](docs/upstream-sync.md) — 958 行完整合并历史与审查清单。
 
 ### 移除 / 降级的组件
 
@@ -151,11 +152,12 @@ tail -f ~/.claude/local_analytics.jsonl
 
 | 指标 | CCB 基线 | CC Pure 当前 | 提升 |
 |------|:--------:|:----------:|:----:|
-| tsc 错误 | 62 | **22** (全部社区代码) | 反编译残留清零 |
+| tsc 错误 | 62 | **20** (全部社区代码) | 反编译残留清零 |
 | 测试通过 | 3007 | **3919** | +912 |
 | 构建 | 不稳定 | **稳定（splitting: true）** | ✅ |
 | 遥测外连 | 有 | **0** | ✅ |
 | CodeQL open | 175+ | **0** | ✅ |
+| as any (核心) | 94 | **1** (社区代码) | ✅ |
 
 ### 安全审计（Phase 0-4，已完成）
 
