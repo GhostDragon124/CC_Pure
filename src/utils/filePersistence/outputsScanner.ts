@@ -8,10 +8,16 @@
  */
 
 import * as fs from 'fs/promises'
+import type { Dirent } from 'fs'
 import * as path from 'path'
 import { logForDebugging } from '../debug.js'
 import type { EnvironmentKind } from '../teleport/environments.js'
 import type { TurnStartTime } from './types.js'
+
+type RecursiveDirent = Dirent & {
+  parentPath?: string
+  path?: string
+}
 
 /** Shared debug logger for file persistence modules */
 export function logDebug(message: string): void {
@@ -63,13 +69,14 @@ export async function findModifiedFiles(
   turnStartTime: TurnStartTime,
   outputsDir: string,
 ): Promise<string[]> {
+  const turnStartMs = turnStartTime.turnStartTime
   // Use recursive flag to get all entries in one call
-  let entries: Awaited<ReturnType<typeof fs.readdir>> | any[]
+  let entries: RecursiveDirent[]
   try {
     entries = await fs.readdir(outputsDir, {
       withFileTypes: true,
       recursive: true,
-    }) as any[]
+    })
   } catch {
     // Directory doesn't exist or is not accessible
     return []
@@ -113,7 +120,7 @@ export async function findModifiedFiles(
   // Filter to files modified since turn start
   const modifiedFiles: string[] = []
   for (const result of statResults) {
-    if (result && result.mtimeMs >= (turnStartTime as any as number)) {
+    if (result && result.mtimeMs >= turnStartMs) {
       modifiedFiles.push(result.filePath)
     }
   }

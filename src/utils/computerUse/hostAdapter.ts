@@ -36,7 +36,11 @@ class DebugLogger implements Logger {
 function checkAccessibilityJXA(): boolean {
   try {
     const result = Bun.spawnSync({
-      cmd: ['osascript', '-e', 'tell application "System Events" to get name of every process whose background only is false'],
+      cmd: [
+        'osascript',
+        '-e',
+        'tell application "System Events" to get name of every process whose background only is false',
+      ],
       stdout: 'pipe',
       stderr: 'pipe',
     })
@@ -80,7 +84,7 @@ export function getComputerUseHostAdapter(): ComputerUseHostAdapter {
     ensureOsPermissions: async () => {
       if (process.platform !== 'darwin') return { granted: true }
       const cu = requireComputerUseSwift()
-      const tcc = (cu as any).tcc
+      const tcc = cu.tcc
       // Native Swift .node module provides tcc.checkAccessibility/checkScreenRecording.
       // When absent (decompiled/reverse-engineered build), fall back to JXA probes.
       if (tcc) {

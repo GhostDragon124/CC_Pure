@@ -40,6 +40,7 @@ import { CLI_CU_CAPABILITIES, CLI_HOST_BUNDLE_ID } from './common.js'
 import { validateHwnd } from './win32/shared.js'
 import { loadPlatform } from './platforms/index.js'
 import type { Platform } from './platforms/index.js'
+import type { WindowAction } from './platforms/types.js'
 
 // ---------------------------------------------------------------------------
 // Helpers for HWND-bound mode
@@ -60,6 +61,19 @@ function getBoundHwndStr(): string | null {
 /** Check if we're in HWND-bound mode (Windows only) */
 function isBound(): boolean {
   return getBoundHwndStr() !== null
+}
+
+function isWindowAction(action: string): action is WindowAction {
+  return (
+    action === 'minimize' ||
+    action === 'maximize' ||
+    action === 'restore' ||
+    action === 'close' ||
+    action === 'focus' ||
+    action === 'move_offscreen' ||
+    action === 'move_resize' ||
+    action === 'get_rect'
+  )
 }
 
 /**
@@ -207,7 +221,7 @@ export function createCrossPlatformExecutor(opts: {
     `[computer-use] cross-platform executor for ${process.platform}`,
   )
 
-  return {
+  const executor: ComputerExecutor = {
     capabilities: {
       ...CLI_CU_CAPABILITIES,
       hostBundleId: CLI_HOST_BUNDLE_ID,
@@ -491,12 +505,12 @@ $i = New-Object MUp+INPUT; $i.type=0; $i.mi.dwFlags=0x0004; [MUp]::SendInput(1, 
         await sleep(16)
       }
       // mouseDown
-      await (this as any).mouseDown()
+      await executor.mouseDown()
       await sleep(50)
       await platform.input.moveMouse(to.x, to.y)
       await sleep(16)
       // mouseUp
-      await (this as any).mouseUp()
+      await executor.mouseUp()
     },
 
     async scroll(x: number, y: number, dx: number, dy: number): Promise<void> {
@@ -553,7 +567,8 @@ $i = New-Object MUp+INPUT; $i.type=0; $i.mi.dwFlags=0x0004; [MUp]::SendInput(1, 
     // ── Window management (Windows only) ──────────────────────────────
     async manageWindow(action: string, opts?): Promise<boolean> {
       if (!platform.windowManagement) return false
-      const result = platform.windowManagement.manageWindow(action as any, opts)
+      if (!isWindowAction(action)) return false
+      const result = platform.windowManagement.manageWindow(action, opts)
       // Invalidate NC offset cache on window state change
       _ncOffset = null
       _ncOffsetHwnd = null
@@ -1138,6 +1153,7 @@ $i = New-Object MUp+INPUT; $i.type=0; $i.mi.dwFlags=0x0004; [MUp]::SendInput(1, 
       }
     },
   }
+  return executor
 }
 
 /**

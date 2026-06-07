@@ -16,6 +16,19 @@ const RENDERED_AS_SENTINEL = new Set([
 
 const searchTextCache = new WeakMap<RenderableMessage, string>()
 
+function isTextContentBlock(
+  block: unknown,
+): block is { type: 'text'; text: string } {
+  return (
+    typeof block === 'object' &&
+    block !== null &&
+    'type' in block &&
+    block.type === 'text' &&
+    'text' in block &&
+    typeof block.text === 'string'
+  )
+}
+
 /** Flatten a RenderableMessage to lowercased searchable text. WeakMap-
  *  cached — messages are append-only and immutable so a hit is always
  *  valid. Lowercased at cache time: the only caller immediately
@@ -38,7 +51,7 @@ function computeSearchText(msg: RenderableMessage): string {
         raw = RENDERED_AS_SENTINEL.has(c) ? '' : c
       } else {
         const parts: string[] = []
-        for (const b of (c ?? [])) {
+        for (const b of c ?? []) {
           if (b.type === 'text') {
             if (!RENDERED_AS_SENTINEL.has(b.text)) parts.push(b.text)
           } else if (b.type === 'tool_result') {
@@ -84,7 +97,9 @@ function computeSearchText(msg: RenderableMessage): string {
       // (AttachmentMessage.tsx <Ansi>{m.content}</Ansi>). Visible but
       // unsearchable without this — [ dump finds it, / doesn't.
       if (msg.attachment!.type === 'relevant_memories') {
-        raw = (msg.attachment!.memories ?? []).map((m: { content: string }) => m.content).join('\n')
+        raw = (msg.attachment!.memories ?? [])
+          .map((m: { content: string }) => m.content)
+          .join('\n')
       } else if (
         // Mid-turn prompts — queued while an agent is running. Render via
         // UserTextMessage (AttachmentMessage.tsx:~348). stickyPromptText
@@ -97,7 +112,11 @@ function computeSearchText(msg: RenderableMessage): string {
         raw =
           typeof p === 'string'
             ? p
-            : (p as any[]).flatMap(b => (b.type === 'text' ? [b.text] : [])).join('\n')
+            : Array.isArray(p)
+              ? p
+                  .flatMap(b => (isTextContentBlock(b) ? [b.text] : []))
+                  .join('\n')
+              : ''
       }
       break
     }

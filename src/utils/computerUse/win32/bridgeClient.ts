@@ -23,6 +23,10 @@ interface BridgeResponse {
   error?: string
 }
 
+type FlushableWritable = Writable & {
+  flush?: () => void
+}
+
 let bridgeProc: ReturnType<typeof Bun.spawn> | null = null
 let requestId = 0
 const pendingRequests = new Map<
@@ -131,10 +135,10 @@ export async function call<T = unknown>(
     try {
       const stdin = bridgeProc!.stdin
       if (stdin) {
-        const writable = stdin as unknown as Writable
+        const writable = stdin as unknown as FlushableWritable
         writable.write(JSON.stringify(req) + '\n')
-        if (typeof (writable as any).flush === 'function') {
-          (writable as any).flush()
+        if (typeof writable.flush === 'function') {
+          writable.flush()
         }
       }
     } catch (err) {

@@ -25,6 +25,14 @@ const measures = new Map<
   { name: string; startTime: number; duration: number }
 >()
 
+declare global {
+  var __performanceShimInstalled: boolean | undefined
+}
+
+type PerformanceWithUndiciResourceTiming = Performance & {
+  markResourceTiming(...args: unknown[]): void
+}
+
 function now(): number {
   return original.now()
 }
@@ -124,7 +132,10 @@ function clearMeasures(name?: string): void {
 // Plain object shim — must NOT inherit from Performance.prototype because
 // native getters (onresourcetimingbufferfull, timeOrigin, toJSON) check
 // that `this` is an actual JSC Performance instance and throw otherwise.
-const shim = {
+const originalWithResourceTiming =
+  original as PerformanceWithUndiciResourceTiming
+
+const shim: PerformanceWithUndiciResourceTiming = {
   now,
   mark,
   measure: measure as typeof performance.measure,
@@ -137,21 +148,21 @@ const shim = {
     (() => {}) as typeof performance.setResourceTimingBufferSize,
   // Node.js v22 undici internal calls this after every fetch — must exist to
   // avoid TypeError: markResourceTiming is not a function
-  markResourceTiming: (() => {}) as any,
+  markResourceTiming: () => {},
   // Delegate read-only properties to the original
   get timeOrigin() {
     return original.timeOrigin
   },
   get onresourcetimingbufferfull() {
-    return (original as any).onresourcetimingbufferfull
+    return originalWithResourceTiming.onresourcetimingbufferfull
   },
-  set onresourcetimingbufferfull(_v: any) {
+  set onresourcetimingbufferfull(_v: Performance['onresourcetimingbufferfull']) {
     // no-op — prevent accumulation
   },
   toJSON() {
     return original.toJSON()
   },
-} as unknown as typeof performance
+} as unknown as PerformanceWithUndiciResourceTiming
 
 /**
  * Install the shim onto globalThis.performance. Safe to call multiple times.
@@ -159,8 +170,8 @@ const shim = {
  * native Performance reference.
  */
 export function installPerformanceShim(): void {
-  if ((globalThis as any).__performanceShimInstalled) return
-  ;(globalThis as any).__performanceShimInstalled = true
+  if (globalThis.__performanceShimInstalled) return
+  globalThis.__performanceShimInstalled = true
   globalThis.performance = shim
 }
 
