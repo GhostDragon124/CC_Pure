@@ -7,6 +7,7 @@ import type {
 } from '../services/mcp/types.js'
 import { getConnectedIdeClient } from '../utils/ide.js'
 import { lazySchema } from '../utils/lazySchema.js'
+import type { AnyObjectSchema } from '@modelcontextprotocol/sdk/server/zod-compat.js'
 export type IDEAtMentioned = {
   filePath: string
   lineStart?: number
@@ -15,7 +16,7 @@ export type IDEAtMentioned = {
 
 const NOTIFICATION_METHOD = 'at_mentioned'
 
-const AtMentionedSchema = lazySchema(() =>
+const AtMentionedSchema: () => AnyObjectSchema = lazySchema(() =>
   z.object({
     method: z.literal(NOTIFICATION_METHOD),
     params: z.object({
@@ -47,7 +48,7 @@ export function useIdeAtMentioned(
     // If we found a connected IDE client, register our handler
     if (ideClient) {
       ideClient.client.setNotificationHandler(
-        AtMentionedSchema() as any,
+        AtMentionedSchema(),
         notification => {
           if (ideClientRef.current !== ideClient) {
             return

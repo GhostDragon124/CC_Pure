@@ -1234,13 +1234,14 @@ async function* queryModel(
     cachedMCEnabled = featureEnabled && modelSupported
     const config = getCachedMCConfig()
     logForDebugging(
-      `Cached MC gate: enabled=${featureEnabled} modelSupported=${modelSupported} model=${options.model} supportedModels=${jsonStringify((config as any).supportedModels)}`,
+      `Cached MC gate: enabled=${featureEnabled} modelSupported=${modelSupported} model=${options.model} supportedModels=${jsonStringify((config as Record<string, unknown>).supportedModels ?? [])}`,
     )
   }
 
   const useGlobalCacheFeature = shouldUseGlobalCacheScope()
   const willDefer = (t: Tool) =>
-    useSearchExtraTools && (deferredToolNames.has(t.name) || shouldDeferLspTool(t))
+    useSearchExtraTools &&
+    (deferredToolNames.has(t.name) || shouldDeferLspTool(t))
   // MCP tools are per-user → dynamic tool section → can't globally cache.
   // Only gate when an MCP tool will actually render (not defer_loading).
   const needsToolBasedCacheMarker =
@@ -1607,8 +1608,8 @@ async function* queryModel(
     cachedMCEnabled &&
       getAPIProvider() === 'firstParty' &&
       options.querySource === 'repl_main_thread',
-    consumedCacheEdits as any,
-    consumedPinnedEdits as any,
+    consumedCacheEdits as unknown as CachedMCEditsBlock | null,
+    consumedPinnedEdits as unknown as CachedMCPinnedEdits[],
     options.skipCacheWrite,
   )
   const frozenSystem = cloneDeep(system)
@@ -1644,9 +1645,7 @@ async function* queryModel(
     // For Bedrock, include both model-based betas and dynamically-added tool search header
     const bedrockBetas =
       getAPIProvider() === 'bedrock'
-        ? [
-            ...getBedrockExtraBodyParamsBetas(retryContext.model),
-          ]
+        ? [...getBedrockExtraBodyParamsBetas(retryContext.model)]
         : []
     const extraBodyParams = getExtraBodyParams(bedrockBetas)
 
@@ -3313,7 +3312,10 @@ export function addCacheBreakpoints(
           }
           insertBlockAfterToolResults(msg.content, dedupedNewEdits)
           // Pin so this block is re-sent at the same position in future calls
-          pinCacheEdits(i, newCacheEdits as any)
+          pinCacheEdits(
+            i,
+            newCacheEdits as unknown as import('../compact/cachedMicrocompact.js').CacheEditsBlock,
+          )
 
           logForDebugging(
             `Added cache_edits block with ${dedupedNewEdits.edits.length} deletion(s) to message[${i}]: ${dedupedNewEdits.edits.map(e => e.cache_reference).join(', ')}`,

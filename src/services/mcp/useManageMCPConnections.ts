@@ -17,6 +17,7 @@ import type {
   ScopedMcpServerConfig,
   ServerResource,
 } from './types.js'
+import type { MessageOrigin } from '../../types/message.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const fetchMcpSkillsForClient = feature('MCP_SKILLS')
@@ -504,7 +505,7 @@ export function useManageMCPConnections(
             case 'register':
               logMCPDebug(client.name, 'Channel notifications registered')
               client.client.setNotificationHandler(
-                ChannelMessageNotificationSchema() as any,
+                ChannelMessageNotificationSchema(),
                 async notification => {
                   const { content, meta } = notification.params
                   logMCPDebug(
@@ -524,7 +525,10 @@ export function useManageMCPConnections(
                     value: wrapChannelMessage(client.name, content, meta),
                     priority: 'next',
                     isMeta: true,
-                    origin: { kind: 'channel', server: client.name } as any,
+                    origin: {
+                      kind: 'channel',
+                      server: client.name,
+                    } as MessageOrigin,
                     skipSlashCommands: true,
                   })
                 },
@@ -539,7 +543,7 @@ export function useManageMCPConnections(
                 client.capabilities?.experimental?.['claude/channel/permission']
               ) {
                 client.client.setNotificationHandler(
-                  ChannelPermissionNotificationSchema() as any,
+                  ChannelPermissionNotificationSchema(),
                   async notification => {
                     const { request_id, behavior } = notification.params
                     const resolved =
