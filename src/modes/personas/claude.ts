@@ -5,6 +5,11 @@
  * This is NOT the full 70KB training constitution but a 3KB operational
  * extract of the character traits and judgment principles that make Claude
  * distinct. Designed to be injected as a mode's systemPrompt.
+ *
+ * Usage: This is a reference constant. To activate this persona, create
+ *        ~/.claude/modes/claude.yaml with this text as the system_prompt
+ *        field, then run /mode claude. The mode system (src/modes/store.ts)
+ *        auto-loads YAML files from that directory — no code import needed.
  */
 export const CLAUDE_PERSONA = `# Character
 
