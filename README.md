@@ -77,6 +77,7 @@ CC Pure 基于 CCB v2.6.11 反编译源码，做了以下核心变更：
 
 | 版本 | 日期 | 合并数 | 说明 |
 |------|------|:------:|------|
+| soul-distilled | 2026-06-08 | — | **🎭 人格觉醒**：上线模式系统，7 种 AI 人格即时切换。70KB 泄露 Soul Document 蒸馏为 Claude 专属 persona，模式 systemPrompt 注入系统提示链路打通 |
 | v2.6.11 | 2026-06-06 | 6 commits | **版本同步 2.6.5→2.6.11**：Vite 构建优化 (RSS 966MB→35MB)、ACP subagent 层级透传、cacheWarningEnabled 配置、ACP loadSession/sessionId 对齐。合 6 个功能 commit，跳 1 个（edit tool 旧逻辑删除 — CCP fork 点） |
 | v2.6.11-ccp | 2026-06-08 | — | **🎉 正式版**：Anthropic-core as any 94→1、反编译残留全量清零 (tsc 270→20)、CodeQL 安全审计完成 (175→0)、上游 commit 逐条审查 187→59 MERGE、完整类型安全文档体系 |
 | v2.6.5 | 2026-06-05 | 8 commits | **类型修复**：反编译残留全量清零（270→22，248 个修复。剩余 22 为社区代码） + 上游安全 cherry-pick x8 |
@@ -145,6 +146,32 @@ tail -f ~/.claude/local_analytics.jsonl
 | **定时任务** | KAIROS | 🟡 | 代码完整，运行时需 GrowthBook + OAuth 后端（CCP 暂无） |
 | **可观测性** | Langfuse | 🟡 | 自托管 LLM 追踪（`src/services/langfuse/`），设 `LANGFUSE_PUBLIC_KEY` + `SECRET_KEY` 即激活，支持 Docker 自部署 |
 | **远程配置** | GrowthBook | 🟡 | 1256 行完整客户端，远程不可用时自动降级到本地静态默认值 |
+
+### 🎭 人格模式系统（soul-distilled）
+
+`/mode` 命令在 7 种 AI 人格间即时切换，每种模式自带专属 systemPrompt、UI 主题色、权限策略和响应风格：
+
+| 模式 | 图标 | 说明 | Persona 长度 |
+|------|:----:|------|:----------:|
+| **Claude** | 🎭 | 真品 Claude 人格 — 从泄露 70KB Soul Document 蒸馏 | 2,848 chars |
+| Default | ⚡ | 平衡模式，日常开发 | — |
+| Gentle | 🌸 | 耐心讲解，适合学习 | 231 chars |
+| Dr. Sharp | 🔍 | 严格三步代码审查 | 1,845 chars |
+| Workhorse | 🐴 | 自动执行，减少确认 | 203 chars |
+| Token Saver | 💰 | 极简回复，省 token | 165 chars |
+| Super AI | 🧠 | 深度思考，全面分析 | 266 chars |
+
+```bash
+/mode               # 交互式选择器
+/mode claude        # 直接切换到 Claude 人格
+/mode sharp         # 切换到代码审查模式
+```
+
+**自定义模式**：在 `~/.claude/modes/` 下放 YAML 文件即可扩展，自动加载并与内置模式合并。详见 `~/.claude/modes/claude.yaml` 示例。
+
+> Claude 人格提炼自 Anthropic 内部 Claude 4.5 Opus Soul Document（泄露于 2026 年 5 月）。
+> 包含核心人格特质、诚实原则（7 条）、帮助性与谨慎的平衡、协作立场、身份稳定性。
+> 完整蒸馏版 → `src/modes/personas/claude.ts`，一键安装版 → `~/.claude/modes/claude.yaml`。
 
 ---
 
