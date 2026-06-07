@@ -2,7 +2,7 @@
 
 [![Bun](https://img.shields.io/badge/runtime-Bun-black?style=flat-square&logo=bun)](https://bun.sh/)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)]()
-[![Tests](https://img.shields.io/badge/tests-3699-brightgreen?style=flat-square)]()
+[![Tests](https://img.shields.io/badge/tests-3919-brightgreen?style=flat-square)]()
 [![Security](https://img.shields.io/badge/CodeQL-0%20open-brightgreen?style=flat-square)]()
 
 > Claude Code 的纯净分叉 —— 去遥测、去企业全家桶、保留核心能力。可审计、可自建、数据主权归你。
@@ -61,7 +61,7 @@ ccp                     # 交互 REPL
 ### 验证
 
 ```bash
-ccp --version           # 输出: 2.6.5 (Claude Code)
+ccp --version           # 输出: 2.6.11 (Claude Code)
 ccp -p "1+1"            # 输出: 2
 ```
 
@@ -69,7 +69,7 @@ ccp -p "1+1"            # 输出: 2
 
 ## 与上游的关系
 
-CC Pure 基于 CCB v2.6.6 反编译源码，做了以下核心变更：
+CC Pure 基于 CCB v2.6.11 反编译源码，做了以下核心变更：
 
 ### 上游同步策略
 
@@ -77,6 +77,8 @@ CC Pure 基于 CCB v2.6.6 反编译源码，做了以下核心变更：
 
 | 版本 | 日期 | 合并数 | 说明 |
 |------|------|:------:|------|
+| v2.6.11 | 2026-06-06 | 6 commits | **版本同步 2.6.5→2.6.11**：Vite 构建优化 (RSS 966MB→35MB)、ACP subagent 层级透传、cacheWarningEnabled 配置、ACP loadSession/sessionId 对齐。合 6 个功能 commit，跳 1 个（edit tool 旧逻辑删除 — CCP fork 点） |
+| v2.6.5 | 2026-06-05 | 8 commits | **类型修复**：反编译残留全量清零（270→22，248 个修复。剩余 22 为社区代码） + 上游安全 cherry-pick x8 |
 | v2.3.0 | 2026-06-04 | 7 commits | **RCS/Web 全量迁移 + SSH Remote**：vanilla JS → React（29 组件 + shadcn/ui），SSH stub 替换为 2029 行完整实现 |
 | v2.2.2 | 2026-06-04 | 16 文件 | **Autonomy 全量合并**：f2e9af49 PR #386 源码 + 11 测试文件，3699 pass |
 | v2.2.1 | 2026-06-04 | 2 | OpenAI fixes backfill：c82f5994 (stop_reason/usage/max_tokens) + 901628b4 (MCP 工具可见性) |
@@ -149,8 +151,8 @@ tail -f ~/.claude/local_analytics.jsonl
 
 | 指标 | CCB 基线 | CC Pure 当前 | 提升 |
 |------|:--------:|:----------:|:----:|
-| tsc 错误 | 62 | **0** | ✅ |
-| 测试通过 | 3007 | **3699** | +692 |
+| tsc 错误 | 62 | **22** (全部社区代码) | 反编译残留清零 |
+| 测试通过 | 3007 | **3919** | +912 |
 | 构建 | 不稳定 | **稳定（splitting: true）** | ✅ |
 | 遥测外连 | 有 | **0** | ✅ |
 | CodeQL open | 175+ | **0** | ✅ |
@@ -177,7 +179,7 @@ tail -f ~/.claude/local_analytics.jsonl
 bun install
 bun run dev           # 开发模式（默认全 feature 开启）
 bun run build         # 生产构建
-bun test              # 3699 tests
+bun test              # 3919 tests
 ```
 
 ---
