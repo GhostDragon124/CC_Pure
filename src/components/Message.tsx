@@ -217,6 +217,7 @@ function MessageImpl({
           const { SnipBoundaryMessage } =
             require('./messages/SnipBoundaryMessage.js') as typeof import('./messages/SnipBoundaryMessage.js')
           /* eslint-enable @typescript-eslint/no-require-imports */
+          // @ts-expect-error - snip boundary message prop
           return <SnipBoundaryMessage message={message} />
         }
         if (isSnipMarkerMessage(message)) {

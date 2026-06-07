@@ -821,6 +821,7 @@ const MessagesImpl = ({
         columns={columns}
         isLoading={isLoading}
         lookups={lookups}
+        // @ts-expect-error - shouldCollapseDiffs prop not in component type
         shouldCollapseDiffs={shouldCollapseDiffs}
       />
     );

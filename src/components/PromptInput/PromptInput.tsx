@@ -1638,7 +1638,7 @@ function PromptInput({
     if (feature('TRANSCRIPT_CLASSIFIER')) {
       if (isEnteringAutoModeFirstTime) {
         // Store previous mode so we can revert if user declines
-        setPreviousModeBeforeAuto(toolPermissionContext.mode);
+        setPreviousModeBeforeAuto(toolPermissionContext.mode as PermissionName);
 
         // Only update the UI mode label — do NOT call transitionPermissionMode
         // or cyclePermissionMode yet; we haven't confirmed with the user.
@@ -1799,13 +1799,13 @@ function PromptInput({
           ...prev,
           toolPermissionContext: {
             ...prev.toolPermissionContext,
-            mode: previousModeBeforeAuto,
+            mode: previousModeBeforeAuto as any,
             isAutoModeAvailable: false,
           },
         }));
         setToolPermissionContext({
           ...toolPermissionContext,
-          mode: previousModeBeforeAuto,
+          mode: previousModeBeforeAuto as any,
           isAutoModeAvailable: false,
         });
         setPreviousModeBeforeAuto(null);

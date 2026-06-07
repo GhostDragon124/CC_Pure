@@ -446,7 +446,7 @@ async function processUserInputBase(
         effectiveSkipSlash = false
       } else {
         const msg =
-          safety.reason ??
+          (safety as { ok: false; reason?: string }).reason ??
           `/${getCommandName(cmd)} isn't available over Remote Control.`
         return {
           messages: [

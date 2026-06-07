@@ -78,7 +78,7 @@ export function modelSupportsMaxEffort(_model: string): boolean {
 }
 
 export function modelSupportsXhighEffort(_model: string): boolean {
-  const supported3P = get3PModelCapabilityOverride(_model, 'xhigh_effort')
+  const supported3P = get3PModelCapabilityOverride(_model, 'xhigh_effort' as any)
   if (supported3P !== undefined) {
     return supported3P
   }

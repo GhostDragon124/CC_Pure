@@ -20,7 +20,7 @@ function makeCommand(name: string, opts?: Partial<Command>): Command {
     type: 'local',
     handler: () => {},
     ...opts,
-  } as Command
+  } as unknown as Command
 }
 
 function makePromptCommand(name: string, opts?: Partial<Command>): Command {
@@ -31,7 +31,7 @@ function makePromptCommand(name: string, opts?: Partial<Command>): Command {
     handler: () => {},
     source: 'userSettings',
     ...opts,
-  } as Command
+  } as unknown as Command
 }
 
 // ─── isCommandInput ───────────────────────────────────────────────────

@@ -115,7 +115,7 @@ describe('startSearchExtraToolsPrefetch', () => {
       makeMockMessages('schedule a cron job'),
     )
     expect(result).toHaveLength(1)
-    expect(result[0]!.type).toBe('tool_discovery')
+    expect((result[0] as any).type).toBe('tool_discovery' as any)
     expect((result[0] as Record<string, unknown>).trigger).toBe(
       'assistant_turn',
     )
@@ -174,7 +174,7 @@ describe('getTurnZeroSearchExtraToolsPrefetch', () => {
       [],
     )
     expect(result).not.toBeNull()
-    expect(result!.type).toBe('tool_discovery')
+    expect((result as any).type).toBe('tool_discovery' as any)
     expect((result as Record<string, unknown>).trigger).toBe('user_input')
   })
 
@@ -209,7 +209,7 @@ describe('collectSearchExtraToolsPrefetch', () => {
       ] as unknown as import('../../../utils/attachments.js').Attachment[]),
     )
     expect(result).toHaveLength(1)
-    expect(result[0]!.type).toBe('tool_discovery')
+    expect((result[0] as any).type).toBe('tool_discovery' as any)
   })
 
   test('returns empty array on rejected promise', async () => {

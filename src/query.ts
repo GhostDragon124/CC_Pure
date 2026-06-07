@@ -569,7 +569,7 @@ async function* queryLoop(
         toolUseContext,
         querySource,
       )
-      messagesForQuery = collapseResult.messages
+      messagesForQuery = collapseResult.messages as Message[]
     }
 
     const fullSystemPrompt = asSystemPrompt(
@@ -1268,9 +1268,9 @@ async function* queryLoop(
             messagesForQuery,
             querySource,
           )
-          if (drained.committed > 0) {
+          if (Number(drained.committed) > 0) {
             const next: State = {
-              messages: drained.messages,
+              messages: drained.messages as Message[],
               toolUseContext,
               autoCompactTracking: tracking,
               maxOutputTokensRecoveryCount,
@@ -1281,7 +1281,7 @@ async function* queryLoop(
               turnCount,
               transition: {
                 reason: 'collapse_drain_retry',
-                committed: drained.committed,
+                committed: Number(drained.committed),
               },
             }
             state = next

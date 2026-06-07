@@ -415,3 +415,7 @@ export function clearBetasCaches(): void {
   getModelBetas.cache?.clear?.()
   getBedrockExtraBodyParamsBetas.cache?.clear?.()
 }
+
+export function getToolSearchBetaHeader() {
+  return null
+}

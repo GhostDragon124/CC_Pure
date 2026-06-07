@@ -183,7 +183,7 @@ describe('buildOpenAIRequestBody — thinking params', () => {
     const body = buildOpenAIRequestBody({ ...baseParams, enableThinking: true })
     expect(body.thinking).toEqual({ type: 'enabled' })
     expect(body.enable_thinking).toBe(true)
-    expect(body.chat_template_kwargs!.thinking).toBe(true)
+    expect((body.chat_template_kwargs as any).thinking).toBe(true)
   })
 
   test('does NOT include thinking params when disabled', () => {
