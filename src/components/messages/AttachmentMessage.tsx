@@ -143,10 +143,9 @@ export function AttachmentMessage({ attachment, addMargin, verbose, isTranscript
   // tool_discovery rendered here (not in the switch) so the 'tool_discovery'
   // string literal stays inside a feature()-guarded block.
   if (feature('EXPERIMENTAL_SEARCH_EXTRA_TOOLS')) {
-    const a = attachment as any;
-    if (a.type === 'tool_discovery') {
-      if (a.tools.length === 0) return null;
-      const names = a.tools.map((t: any) => t.name).join(', ');
+    if (attachment.type === 'tool_discovery') {
+      if (attachment.tools.length === 0) return null;
+      const names = attachment.tools.map(t => t.name).join(', ');
       return (
         <Line>
           <Text dimColor>Discovered tools: </Text>
@@ -414,7 +413,12 @@ export function AttachmentMessage({ attachment, addMargin, verbose, isTranscript
       // skill_discovery and teammate_mailbox are handled BEFORE the switch in
       // runtime-gated blocks (feature() / isAgentSwarmsEnabled()) that TS can't
       // narrow through — excluded here via type union (compile-time only, no emit).
-      attachment.type satisfies NullRenderingAttachmentType | 'skill_discovery' | 'teammate_mailbox' | 'bagel_console';
+      attachment.type satisfies
+        | NullRenderingAttachmentType
+        | 'skill_discovery'
+        | 'tool_discovery'
+        | 'teammate_mailbox'
+        | 'bagel_console';
       return null;
   }
 }

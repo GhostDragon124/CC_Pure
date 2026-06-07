@@ -93,12 +93,16 @@ export function UltraplanChoiceDialog({
   useInput((input, key) => {
     if (!isScrollable) return;
     const halfPage = Math.max(1, Math.floor(visibleHeight / 2));
+    const wheelKey = key as typeof key & {
+      wheelDown?: boolean;
+      wheelUp?: boolean;
+    };
 
-    if ((key.ctrl && input === 'd') || (key as any).wheelDown) {
-      const step = (key as any).wheelDown ? 3 : halfPage;
+    if ((key.ctrl && input === 'd') || wheelKey.wheelDown) {
+      const step = wheelKey.wheelDown ? 3 : halfPage;
       setScrollOffset(prev => Math.min(prev + step, maxScroll));
-    } else if ((key.ctrl && input === 'u') || (key as any).wheelUp) {
-      const step = (key as any).wheelUp ? 3 : halfPage;
+    } else if ((key.ctrl && input === 'u') || wheelKey.wheelUp) {
+      const step = wheelKey.wheelUp ? 3 : halfPage;
       setScrollOffset(prev => Math.max(prev - step, 0));
     }
   });

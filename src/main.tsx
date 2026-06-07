@@ -22,6 +22,7 @@ import { ensureKeychainPrefetchCompleted, startKeychainPrefetch } from './utils/
 startKeychainPrefetch();
 
 import { feature } from 'bun:bundle';
+import { createRequire } from 'node:module';
 import { Command as CommanderCommand, InvalidArgumentError, Option } from '@commander-js/extra-typings';
 import chalk from 'chalk';
 import { readFileSync } from 'fs';
@@ -30,6 +31,8 @@ import pickBy from 'lodash-es/pickBy.js';
 import uniqBy from 'lodash-es/uniqBy.js';
 import { getOauthConfig } from './constants/oauth.js';
 import { getRemoteSessionUrl } from './constants/product.js';
+
+const require = createRequire(import.meta.url);
 import { getSystemContext, getUserContext } from './context.js';
 import { init, initializeTelemetryAfterTrust } from './entrypoints/init.js';
 import { addToHistory } from './history.js';
@@ -403,9 +406,7 @@ function _isBeingDebugged() {
 
   // Check if inspector is available and active (indicates debugging)
   try {
-    // Dynamic import would be better but is async - use global object instead
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const inspector = (global as any).require('inspector');
+    const inspector = require('node:inspector') as typeof import('node:inspector');
     const hasInspectorUrl = !!inspector.url();
     return hasInspectorUrl || hasInspectArg || hasInspectEnv;
   } catch {

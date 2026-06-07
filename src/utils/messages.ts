@@ -3891,10 +3891,9 @@ Read the team config to discover your teammates' names. Check the task list peri
   // tool_discovery handled here (not in the switch) so the 'tool_discovery'
   // string literal lives inside a feature()-guarded block.
   if (feature('EXPERIMENTAL_SEARCH_EXTRA_TOOLS')) {
-    const a = attachment as any
-    if (a.type === 'tool_discovery') {
-      if (a.tools.length === 0) return []
-      const lines = a.tools.map(
+    if (attachment.type === 'tool_discovery') {
+      if (attachment.tools.length === 0) return []
+      const lines = attachment.tools.map(
         t => `- ${t.name}: ${t.description.slice(0, 100)}`,
       )
       return wrapMessagesInSystemReminder([

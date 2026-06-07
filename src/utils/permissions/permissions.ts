@@ -413,7 +413,7 @@ async function runPermissionRequestHooksForHeadlessAgent(
       input,
       context,
       permissionMode,
-      suggestions as any,
+      suggestions,
       context.abortController.signal,
     )) {
       if (!hookResult.permissionRequestResult) {
@@ -424,12 +424,12 @@ async function runPermissionRequestHooksForHeadlessAgent(
         const finalInput = decision.updatedInput ?? input
         // Persist permission updates if provided
         if (decision.updatedPermissions?.length) {
-          persistPermissionUpdates(decision.updatedPermissions as any)
+          persistPermissionUpdates(decision.updatedPermissions)
           context.setAppState(prev => ({
             ...prev,
             toolPermissionContext: applyPermissionUpdates(
               prev.toolPermissionContext,
-              decision.updatedPermissions as any,
+              decision.updatedPermissions,
             ),
           }))
         }
@@ -479,7 +479,6 @@ export const hasPermissionsToUseTool: CanUseToolFn = async (
   toolUseID,
 ): Promise<PermissionDecision> => {
   const result = await hasPermissionsToUseToolInner(tool, input, context)
-
 
   // Reset consecutive denials on any allowed tool use in auto mode.
   // This ensures that a successful tool use (even one auto-allowed by rules)

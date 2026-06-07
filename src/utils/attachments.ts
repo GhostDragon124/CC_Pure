@@ -470,6 +470,14 @@ export type Attachment =
       displayPath: string
     }
   | {
+      type: 'tool_discovery'
+      tools: ToolDiscoveryResult[]
+      trigger: 'assistant_turn' | 'user_input'
+      queryText: string
+      durationMs: number
+      indexSize: number
+    }
+  | {
       type: 'selected_lines_in_ide'
       ideName: string
       lineStart: number

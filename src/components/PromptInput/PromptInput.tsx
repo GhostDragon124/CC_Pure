@@ -84,6 +84,7 @@ import { logError } from '../../utils/log.js';
 import { isOpus1mMergeEnabled, modelDisplayString } from '../../utils/model/model.js';
 import { setAutoModeActive } from '../../utils/permissions/autoModeState.js';
 import { cyclePermissionMode, getNextPermissionMode } from '../../utils/permissions/getNextPermissionMode.js';
+import type { PermissionMode } from '../../utils/permissions/PermissionMode.js';
 import { transitionPermissionMode } from '../../utils/permissions/permissionSetup.js';
 import { getPlatform } from '../../utils/platform.js';
 import type { ProcessUserInputContext } from '../../utils/processUserInput/processUserInput.js';
@@ -457,7 +458,7 @@ function PromptInput({
   const [showFastModePicker, setShowFastModePicker] = useState(false);
   const [showThinkingToggle, setShowThinkingToggle] = useState(false);
   const [showAutoModeOptIn, setShowAutoModeOptIn] = useState(false);
-  const [previousModeBeforeAuto, setPreviousModeBeforeAuto] = useState<PermissionName | null>(null);
+  const [previousModeBeforeAuto, setPreviousModeBeforeAuto] = useState<PermissionMode | null>(null);
   const autoModeOptInTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Check if cursor is on the first line of input
@@ -1638,7 +1639,7 @@ function PromptInput({
     if (feature('TRANSCRIPT_CLASSIFIER')) {
       if (isEnteringAutoModeFirstTime) {
         // Store previous mode so we can revert if user declines
-        setPreviousModeBeforeAuto(toolPermissionContext.mode as PermissionName);
+        setPreviousModeBeforeAuto(toolPermissionContext.mode);
 
         // Only update the UI mode label — do NOT call transitionPermissionMode
         // or cyclePermissionMode yet; we haven't confirmed with the user.
@@ -1799,13 +1800,13 @@ function PromptInput({
           ...prev,
           toolPermissionContext: {
             ...prev.toolPermissionContext,
-            mode: previousModeBeforeAuto as any,
+            mode: previousModeBeforeAuto,
             isAutoModeAvailable: false,
           },
         }));
         setToolPermissionContext({
           ...toolPermissionContext,
-          mode: previousModeBeforeAuto as any,
+          mode: previousModeBeforeAuto,
           isAutoModeAvailable: false,
         });
         setPreviousModeBeforeAuto(null);

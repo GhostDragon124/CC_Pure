@@ -1,12 +1,8 @@
 import * as React from 'react';
 import { Box, Text } from '@anthropic/ink';
+import type { PermissionRequestProps } from '../PermissionRequest.js';
 
-interface MonitorPermissionRequestProps {
-  onAllow: () => void;
-  onDeny: () => void;
-}
-
-export function MonitorPermissionRequest(_props: MonitorPermissionRequestProps): React.ReactElement {
+export function MonitorPermissionRequest(_props: PermissionRequestProps): React.ReactElement {
   return (
     <Box>
       <Text>Monitor permission request</Text>

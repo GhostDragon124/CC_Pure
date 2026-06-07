@@ -5,8 +5,8 @@ import {
   type HookEvent,
   HOOK_EVENTS,
   type HookInput,
-  type PermissionUpdate,
 } from 'src/entrypoints/agentSdkTypes.js'
+import type { PermissionUpdate } from 'src/utils/permissions/PermissionUpdateSchema.js'
 import type {
   HookJSONOutput,
   AsyncHookJSONOutput,
