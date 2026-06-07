@@ -62,6 +62,7 @@ import { loadMemoryPrompt } from '../memdir/memdir.js'
 import { isUndercover } from '../utils/undercover.js'
 import { getAntModelOverrideConfig } from '../utils/model/antModels.js'
 import { isMcpInstructionsDeltaEnabled } from '../utils/mcpInstructionsDelta.js'
+import { getCurrentMode } from '../modes/store.js'
 
 // Dead code elimination: conditional imports for feature-gated modules
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -403,6 +404,12 @@ Do not use a colon before tool calls — "Let me read the file:" should be "Let 
 These instructions do not apply to code or tool calls.`
 }
 
+function getModePersonaSection(): string | null {
+  const mode = getCurrentMode()
+  if (!mode.systemPrompt) return null
+  return mode.systemPrompt
+}
+
 export async function getSystemPrompt(
   tools: Tools,
   model: string,
@@ -451,6 +458,7 @@ ${CYBER_RISK_INSTRUCTION}`,
   }
 
   const dynamicSections = [
+    systemPromptSection('mode_persona', () => getModePersonaSection()),
     systemPromptSection('session_guidance', () =>
       getSessionSpecificGuidanceSection(enabledTools, skillToolCommands),
     ),
