@@ -10,7 +10,7 @@ import { isEnvTruthy } from '../utils/envUtils.js';
 // Runtime fallback for MACRO.* when not injected by build/dev defines.
 // This happens when running cli.tsx directly (not via `bun run dev` or built dist/).
 if (typeof globalThis.MACRO === 'undefined') {
-  (globalThis as any).MACRO = {
+  globalThis.MACRO = {
     VERSION: process.env.CLAUDE_CODE_VERSION || '2.1.888',
     BUILD_TIME: new Date().toISOString(),
     FEEDBACK_CHANNEL: '',

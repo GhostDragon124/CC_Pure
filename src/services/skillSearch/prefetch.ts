@@ -241,7 +241,7 @@ export async function startSkillDiscoveryPrefetch(
       durationMs: Date.now() - startedAt,
       indexSize: index.length,
       method: 'tfidf',
-    } as any
+    }
 
     logForDebugging(
       `[skill-search] prefetch found ${newResults.length} skills in ${signal.durationMs}ms`,
@@ -306,7 +306,7 @@ export async function getTurnZeroSkillDiscovery(
       durationMs: Date.now() - startedAt,
       indexSize: index.length,
       method: 'tfidf',
-    } as any
+    }
 
     logForDebugging(
       `[skill-search] turn-zero found ${results.length} skills in ${signal.durationMs}ms`,

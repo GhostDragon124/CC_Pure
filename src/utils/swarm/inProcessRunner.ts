@@ -56,7 +56,7 @@ import { TASK_LIST_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TaskL
 import { TASK_UPDATE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TaskUpdateTool/constants.js'
 import { TEAM_CREATE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TeamCreateTool/constants.js'
 import { TEAM_DELETE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TeamDeleteTool/constants.js'
-import type { Message } from '../../types/message.js'
+import type { ContentItem, Message } from '../../types/message.js'
 import type { PermissionDecision } from '../../types/permissions.js'
 import {
   createAssistantAPIErrorMessage,
@@ -1449,13 +1449,16 @@ export async function runInProcessTeammate(
     for (let i = allMessages.length - 1; i >= 0; i--) {
       const m = allMessages[i]!
       if (m.type === 'assistant') {
-        const blocks = (m.message?.content ?? []) as any[]
+        const content = m.message?.content
+        const blocks: ContentItem[] = Array.isArray(content) ? content : []
         for (const b of blocks) {
-          if (b?.type === 'tool_use') completionToolUseCount++
+          if (b.type === 'tool_use') completionToolUseCount++
         }
-        const textBlocks = blocks.filter((b: any) => b?.type === 'text')
+        const textBlocks = blocks.filter(
+          (b): b is Extract<ContentItem, { type: 'text' }> => b.type === 'text',
+        )
         if (textBlocks.length > 0 && lastAssistantContent.length === 0) {
-          lastAssistantContent = textBlocks.map((b: any) => ({
+          lastAssistantContent = textBlocks.map(b => ({
             type: 'text' as const,
             text: b.text,
           }))

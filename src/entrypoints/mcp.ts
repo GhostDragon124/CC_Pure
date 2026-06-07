@@ -142,9 +142,9 @@ export async function startMCPServer(
           (args as never) ?? {},
           toolUseContext,
         )
-        if (validationResult && !validationResult.result) {
+        if (validationResult?.result === false) {
           throw new Error(
-            `Tool ${name} input is invalid: ${(validationResult as any).message}`,
+            `Tool ${name} input is invalid: ${validationResult.message}`,
           )
         }
         const finalResult = await tool.call(

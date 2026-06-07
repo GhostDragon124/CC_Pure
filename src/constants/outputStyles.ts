@@ -185,8 +185,8 @@ export async function getOutputStyleConfig(): Promise<OutputStyleConfig | null> 
   const forcedStyles = Object.values(allStyles).filter(
     (style): style is OutputStyleConfig =>
       style !== null &&
-      (style as any).source === 'plugin' &&
-      (style as any).forceForPlugin === true,
+      style.source === 'plugin' &&
+      style.forceForPlugin === true,
   )
 
   const firstForcedStyle = forcedStyles[0]

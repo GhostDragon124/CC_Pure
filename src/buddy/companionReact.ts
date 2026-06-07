@@ -10,7 +10,7 @@ import { getGlobalConfig } from '../utils/config.js'
 import { getClaudeAIOAuthTokens } from '../utils/auth.js'
 import { getOauthConfig } from '../constants/oauth.js'
 import { getUserAgent } from '../utils/http.js'
-import type { Message } from '../types/message.js'
+import type { ContentItem, Message } from '../types/message.js'
 
 // ─── Rate limiting ──────────────────────────────────
 
@@ -64,6 +64,15 @@ export function triggerCompanionReaction(
 
 // ─── Helpers ────────────────────────────────────────
 
+function getMessageContent(
+  message: Message,
+): string | ContentItem[] | undefined {
+  const content = message.message?.content
+  return typeof content === 'string' || Array.isArray(content)
+    ? content
+    : undefined
+}
+
 function isAddressed(messages: Message[], name: string): boolean {
   const pattern = new RegExp(`\\b${escapeRegex(name)}\\b`, 'i')
   for (
@@ -73,7 +82,7 @@ function isAddressed(messages: Message[], name: string): boolean {
   ) {
     const m = messages[i]
     if (m?.type !== 'user') continue
-    const content = (m as any).message?.content
+    const content = getMessageContent(m)
     if (typeof content === 'string' && pattern.test(content)) return true
   }
   return false
@@ -89,14 +98,17 @@ function buildTranscript(messages: Message[]): string {
     .filter(m => m.type === 'user' || m.type === 'assistant')
     .map(m => {
       const role = m.type === 'user' ? 'user' : 'claude'
-      const content = (m as any).message?.content
+      const content = getMessageContent(m)
       const text =
         typeof content === 'string'
           ? content.slice(0, 300)
           : Array.isArray(content)
             ? content
-                .filter((b: any) => b?.type === 'text')
-                .map((b: any) => b.text)
+                .filter(
+                  (b): b is Extract<ContentItem, { type: 'text' }> =>
+                    b.type === 'text',
+                )
+                .map(b => b.text)
                 .join(' ')
                 .slice(0, 300)
             : ''

@@ -1,4 +1,7 @@
-import type { BetaContentBlock, BetaUsage } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
+import type {
+  BetaContentBlock,
+  BetaUsage,
+} from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
 import { createHash, randomUUID, type UUID } from 'crypto'
 import { mkdir, readFile, writeFile } from 'fs/promises'
 import isPlainObject from 'lodash-es/isPlainObject.js'
@@ -9,6 +12,7 @@ import { calculateUSDCost } from 'src/utils/modelCost.js'
 import type {
   AssistantMessage,
   Message,
+  MessageContent,
   StreamEvent,
   SystemAPIErrorMessage,
   UserMessage,
@@ -252,24 +256,27 @@ function mapAssistantMessage(
     message: {
       ...message.message,
       content: (message.message.content as BetaContentBlock[])
-        .map(_ => {
-          switch (_.type) {
+        .map(block => {
+          switch (block.type) {
             case 'text':
               return {
-                ..._,
-                text: f(_.text) as string,
-                citations: _.citations || [],
+                ...block,
+                text: f(block.text) as string,
+                citations: block.citations || [],
               } // Ensure citations
             case 'tool_use':
               return {
-                ..._,
-                input: mapValuesDeep(_.input as Record<string, unknown>, f),
+                ...block,
+                input: mapValuesDeep(block.input as Record<string, unknown>, f),
               }
             default:
-              return _ // Handle other block types unchanged
+              return block // Handle other block types unchanged
           }
         })
-        .filter(Boolean) as any,
+        .filter(
+          (block): block is NonNullable<typeof block> =>
+            block !== null && block !== undefined,
+        ) as unknown as MessageContent,
     },
     type: 'assistant',
   }

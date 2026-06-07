@@ -12,7 +12,7 @@
 import { describe, test, expect, mock, beforeEach } from 'bun:test'
 
 // --- MACRO 全局注入 (编译时 define 在测试中不可用) ---
-;(globalThis as any).MACRO = {
+globalThis.MACRO = {
   VERSION: '2.1.888',
   BUILD_TIME: '2026-04-22T00:00:00Z',
   FEEDBACK_CHANNEL: '',
@@ -214,7 +214,7 @@ const standardTools: Tools = [
   { name: 'Agent' },
   { name: 'AskUserQuestion' },
   { name: 'TaskCreate' },
-] as any
+] as unknown as Tools
 
 async function getFullPrompt(
   tools: Tools = standardTools,
