@@ -4,7 +4,7 @@
 > 按照 CCP 策略：社区代码问题不自行修复，等待上游 CCB 社区修复后 cherry-pick。
 > 最后更新：2026-06-08
 
-## 1. tsc 错误（实际 21 个）
+## 1. tsc 错误（实际 20 个）
 
 ### bridge.ts — ACP SDK 类型（14 个）
 
@@ -59,11 +59,11 @@
 
 ---
 
-## 2. as any 遗留（49 个）
+## 2. as any 遗留（50 个）
 
-### API Provider 适配器（31 个）
+### API Provider 适配器（32 个）
 
-社区后加的 multi-provider 支持。三个 provider 文件（openai、grok、gemini）均使用 `as any` 绕过流式事件类型的强类型约束。事件来自 `adaptOpenAIStreamToAnthropic()` / `adaptGrokStreamToAnthropic()` 等适配器，返回类型为 `BetaRawMessageStreamEvent`，但社区直接在 switch 中通过 `(event as any)` 访问下游属性。
+社区后加的 multi-provider 支持。四个 provider 文件（openai、grok、gemini、client.ts）均使用 `as any` 绕过流式事件类型的强类型约束。事件来自 `adaptOpenAIStreamToAnthropic()` / `adaptGrokStreamToAnthropic()` 等适配器，返回类型为 `BetaRawMessageStreamEvent`，但社区直接在 switch 中通过 `(event as any)` 访问下游属性。
 
 #### openai/index.ts（14 处）
 
@@ -110,7 +110,15 @@
 | 142 | `(event as any).index` | content_block_delta 块索引 |
 | 143 | `(event as any).delta` | delta 增量 |
 | 163 | `(event as any).index` | content_block_stop 块索引 |
-
+|
+#### client.ts — GoogleAuth 认证（1 处）
+|
+**文件：** `src/services/api/client.ts`
+|
+| 行号 | 表达式 | 说明 |
+|------|--------|------|
+| 297 | `googleAuth as any` | Google Vertex AI 认证，google-auth-library 版本冲突导致 #private 字段不兼容 |
+|
 ### 生成代码 — protobuf 自动生成（7 个）
 
 protobuf 代码生成器输出，`google.protobuf.Any` → TypeScript `any` 映射。文件在 `src/types/generated/` 下。全部为 `.create()` 方法中 `base ?? ({} as any)` 模式——空对象兜底需要用 `as any` 因为泛型约束不允许直接传空对象。

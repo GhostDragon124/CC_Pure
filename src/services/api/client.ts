@@ -291,14 +291,14 @@ export async function getAnthropicClient({
               }),
         })
 
-    const vertexArgs = {
+    const vertexArgs: ConstructorParameters<typeof AnthropicVertex>[0] = {
       ...ARGS,
       region: getVertexRegionForModel(model),
-      googleAuth,
+      googleAuth: googleAuth as any,
       ...(isDebugToStdErr() && { logger: createStderrLogger() }),
     }
     // we have always been lying about the return type - this doesn't support batching or models
-    return new AnthropicVertex(vertexArgs as any) as unknown as Anthropic
+    return new AnthropicVertex(vertexArgs) as unknown as Anthropic
   }
 
   // Determine authentication method based on available tokens
