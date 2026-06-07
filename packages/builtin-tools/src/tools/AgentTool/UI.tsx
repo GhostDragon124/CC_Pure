@@ -22,7 +22,7 @@ import { ToolUseLoader } from 'src/components/ToolUseLoader.js'
 import { Box, Text } from '@anthropic/ink'
 import { getDumpPromptsPath } from 'src/services/api/dumpPrompts.js'
 import { findToolByName, type Tools } from 'src/Tool.js'
-import type { Message, ProgressMessage } from 'src/types/message.js'
+import type { AssistantMessage, Message, ProgressMessage, UserMessage } from 'src/types/message.js'
 import type { AgentToolProgress } from 'src/types/tools.js'
 import { count } from 'src/utils/array.js'
 import {
@@ -69,6 +69,29 @@ function hasProgressMessage(data: Progress): data is AgentToolProgress {
 }
 
 /**
+ * Local type describing the actual runtime shape of a progress message's `message`
+ * field. AgentToolProgress is `Record<string, unknown>` so we need concrete types
+ * for property access without resorting to `as any`.
+ */
+type AgentProgressMessage = {
+  type: 'assistant' | 'user'
+  message: {
+    content: BetaContentBlock[]
+    usage?: BetaUsage
+  }
+  toolUseResult?: ToolResultBlockParam
+}
+
+/**
+ * Local type for AgentToolProgress data when it contains a progress message.
+ */
+type AgentToolProgressData = {
+  message: AgentProgressMessage
+  prompt?: string
+  agentId?: string
+}
+
+/**
  * Check if a progress message is a search/read/REPL operation (tool use or result).
  * Returns { isSearch, isRead, isREPL } if it's a collapsible operation, null otherwise.
  *
@@ -83,7 +106,7 @@ function getSearchOrReadInfo(
   if (!hasProgressMessage(progressMessage.data)) {
     return null
   }
-  const message = progressMessage.data.message
+  const message = progressMessage.data.message as AgentProgressMessage
 
   // Check tool_use (assistant message)
   if (message.type === 'assistant') {
@@ -132,7 +155,7 @@ function processProgressMessages(
     return messages
       .filter(
         (m): m is ProgressMessage<AgentToolProgress> =>
-          hasProgressMessage(m.data) && m.data.message.type !== 'user',
+          hasProgressMessage(m.data) && (m.data as AgentToolProgressData).message.type !== 'user',
       )
       .map(m => ({ type: 'original', message: m }))
   }
@@ -172,8 +195,8 @@ function processProgressMessages(
   const toolUseByID = new Map<string, ToolUseBlockParam>()
   for (const msg of agentMessages) {
     // Track tool_use blocks as we see them
-    if (msg.data.message.type === 'assistant') {
-      for (const c of msg.data.message.message.content) {
+    if ((msg.data as AgentToolProgressData).message.type === 'assistant') {
+      for (const c of (msg.data as AgentToolProgressData).message.message.content) {
         if (c.type === 'tool_use') {
           toolUseByID.set(c.id, c as ToolUseBlockParam)
         }
@@ -192,7 +215,7 @@ function processProgressMessages(
         }
       }
       // Only count tool_result messages (not tool_use) to avoid double counting
-      if (msg.data.message.type === 'user') {
+      if ((msg.data as AgentToolProgressData).message.type === 'user') {
         if (info.isSearch) {
           currentGroup.searchCount++
         } else if (info.isREPL) {
@@ -207,7 +230,7 @@ function processProgressMessages(
       // Skip user tool_result messages — subagent progress messages lack
       // toolUseResult, so UserToolSuccessMessage returns null and the
       // height=1 Box in renderToolUseProgressMessage shows as a blank line.
-      if (msg.data.message.type !== 'user') {
+      if ((msg.data as AgentToolProgressData).message.type !== 'user') {
         result.push({ type: 'original', message: msg })
       }
     }
@@ -280,7 +303,7 @@ function VerboseAgentTranscript({
       .filter((pm): pm is ProgressMessage<AgentToolProgress> =>
         hasProgressMessage(pm.data),
       )
-      .map(pm => pm.data),
+      .map(pm => pm.data as unknown as { message: AssistantMessage | UserMessage }),
   )
 
   // Filter out user tool_result messages that lack toolUseResult.
@@ -292,7 +315,7 @@ function VerboseAgentTranscript({
       if (!hasProgressMessage(pm.data)) {
         return false
       }
-      const msg = pm.data.message
+      const msg = pm.data.message as AgentProgressMessage
       if (msg.type === 'user' && msg.toolUseResult === undefined) {
         return false
       }
@@ -305,7 +328,7 @@ function VerboseAgentTranscript({
       {filteredMessages.map(progressMessage => (
         <MessageResponse key={progressMessage.uuid} height={1}>
           <MessageComponent
-            message={progressMessage.data.message}
+            message={progressMessage.data.message as unknown as AssistantMessage | UserMessage}
             lookups={agentLookups}
             addMargin={false}
             tools={tools}
@@ -555,7 +578,7 @@ export function renderToolUseProgressMessage(
       if (!hasProgressMessage(msg.data)) {
         return false
       }
-      const message = msg.data.message
+      const message = msg.data.message as AgentProgressMessage
       return message.message.content.some(
         (content: BetaContentBlock) => content.type === 'tool_use',
       )
@@ -563,12 +586,12 @@ export function renderToolUseProgressMessage(
 
     const latestAssistant = progressMessages.findLast(
       (msg): msg is ProgressMessage<AgentToolProgress> =>
-        hasProgressMessage(msg.data) && msg.data.message.type === 'assistant',
+        hasProgressMessage(msg.data) && (msg.data as AgentToolProgressData).message.type === 'assistant',
     )
 
     let tokens = null
-    if (latestAssistant?.data.message.type === 'assistant') {
-      const usage = latestAssistant.data.message.message.usage
+    if ((latestAssistant?.data as AgentToolProgressData)?.message.type === 'assistant') {
+      const usage = (latestAssistant.data.message as AgentProgressMessage).message.usage
       tokens =
         (usage.cache_creation_input_tokens ?? 0) +
         (usage.cache_read_input_tokens ?? 0) +
@@ -631,14 +654,14 @@ export function renderToolUseProgressMessage(
     if (!hasProgressMessage(data)) {
       return false
     }
-    return data.message.message.content.some(
+    return (data as AgentToolProgressData).message.message.content.some(
       (content: BetaContentBlock) => content.type === 'tool_use',
     )
   })
 
   const firstData = progressMessages[0]?.data
   const prompt =
-    firstData && hasProgressMessage(firstData) ? firstData.prompt : undefined
+    firstData && hasProgressMessage(firstData) ? (firstData as AgentToolProgressData).prompt : undefined
 
   // After grouping, displayedMessages can be empty when the only progress so
   // far is an assistant tool_use for a search/read op (grouped but not yet
@@ -660,7 +683,7 @@ export function renderToolUseProgressMessage(
       .filter((pm): pm is ProgressMessage<AgentToolProgress> =>
         hasProgressMessage(pm.data),
       )
-      .map(pm => pm.data),
+      .map(pm => pm.data as unknown as { message: AssistantMessage | UserMessage }),
   )
 
   return (
@@ -669,7 +692,7 @@ export function renderToolUseProgressMessage(
         <SubAgentProvider>
           {isTranscriptMode && prompt && (
             <Box marginBottom={1}>
-              <AgentPromptDisplay prompt={prompt} />
+              <AgentPromptDisplay prompt={prompt as string} />
             </Box>
           )}
           {displayedMessages.map(processed => {
@@ -694,7 +717,7 @@ export function renderToolUseProgressMessage(
             return (
               <MessageComponent
                 key={processed.message.uuid}
-                message={processed.message.data.message}
+                message={processed.message.data.message as unknown as AssistantMessage | UserMessage}
                 lookups={subagentLookups}
                 addMargin={false}
                 tools={tools}
@@ -743,14 +766,14 @@ export function renderToolUseRejectedMessage(
   // Get agentId from progress messages if available (agent was running before rejection)
   const firstData = progressMessagesForMessage[0]?.data
   const agentId =
-    firstData && hasProgressMessage(firstData) ? firstData.agentId : undefined
+    firstData && hasProgressMessage(firstData) ? (firstData as AgentToolProgressData).agentId : undefined
 
   return (
     <>
       {process.env.USER_TYPE === 'ant' && agentId && (
         <MessageResponse>
           <Text color="warning">
-            [ANT-ONLY] API calls: {getDisplayPath(getDumpPromptsPath(agentId))}
+            [ANT-ONLY] API calls: {getDisplayPath(getDumpPromptsPath(agentId as string))}
           </Text>
         </MessageResponse>
       )}
@@ -798,7 +821,7 @@ function calculateAgentStats(progressMessages: ProgressMessage<Progress>[]): {
     if (!hasProgressMessage(msg.data)) {
       return false
     }
-    const message = msg.data.message
+    const message = msg.data.message as AgentProgressMessage
     return (
       message.type === 'user' &&
       message.message.content.some((content: BetaContentBlock) => content.type === 'tool_result')
@@ -807,12 +830,12 @@ function calculateAgentStats(progressMessages: ProgressMessage<Progress>[]): {
 
   const latestAssistant = progressMessages.findLast(
     (msg): msg is ProgressMessage<AgentToolProgress> =>
-      hasProgressMessage(msg.data) && msg.data.message.type === 'assistant',
+      hasProgressMessage(msg.data) && (msg.data as AgentToolProgressData).message.type === 'assistant',
   )
 
   let tokens = null
-  if (latestAssistant?.data.message.type === 'assistant') {
-    const usage = latestAssistant.data.message.message.usage
+  if ((latestAssistant?.data as AgentToolProgressData)?.message.type === 'assistant') {
+    const usage = (latestAssistant.data.message as AgentProgressMessage).message.usage
     tokens =
       (usage.cache_creation_input_tokens ?? 0) +
       (usage.cache_read_input_tokens ?? 0) +
@@ -1035,8 +1058,8 @@ export function extractLastToolInfo(
     if (!hasProgressMessage(pm.data)) {
       continue
     }
-    if (pm.data.message.type === 'assistant') {
-      for (const c of pm.data.message.message.content) {
+    if ((pm.data as AgentToolProgressData).message.type === 'assistant') {
+      for (const c of (pm.data as AgentToolProgressData).message.message.content) {
         if (c.type === 'tool_use') {
           toolUseByID.set(c.id, c as ToolUseBlockParam)
         }
@@ -1055,7 +1078,7 @@ export function extractLastToolInfo(
     const info = getSearchOrReadInfo(msg, tools, toolUseByID)
     if (info && (info.isSearch || info.isRead)) {
       // Only count tool_result messages to avoid double counting
-      if (msg.data.message.type === 'user') {
+      if ((msg.data as AgentToolProgressData).message.type === 'user') {
         if (info.isSearch) {
           searchCount++
         } else if (info.isRead) {
@@ -1077,7 +1100,7 @@ export function extractLastToolInfo(
       if (!hasProgressMessage(msg.data)) {
         return false
       }
-      const message = msg.data.message
+      const message = msg.data.message as AgentProgressMessage
       return (
         message.type === 'user' &&
         message.message.content.some((c: BetaContentBlock) => c.type === 'tool_result')
@@ -1085,8 +1108,8 @@ export function extractLastToolInfo(
     },
   )
 
-  if (lastToolResult?.data.message.type === 'user') {
-    const toolResultBlock = lastToolResult.data.message.message.content.find(
+  if ((lastToolResult?.data.message as AgentProgressMessage)?.type === 'user') {
+    const toolResultBlock = (lastToolResult.data.message as AgentProgressMessage).message.content.find(
       (c: BetaContentBlock) => c.type === 'tool_result',
     )
 
