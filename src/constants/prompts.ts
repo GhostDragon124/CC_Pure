@@ -11,8 +11,8 @@ import {
   AGENT_TOOL_NAME,
   VERIFICATION_AGENT_TYPE,
 } from '@claude-code-best/builtin-tools/tools/AgentTool/constants.js'
-import { FILE_WRITE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/FileWriteTool/prompt.js'
 import { FILE_EDIT_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/FileEditTool/constants.js'
+import { FILE_READ_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/FileReadTool/prompt.js'
 import { TODO_WRITE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TodoWriteTool/constants.js'
 import { TASK_CREATE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TaskCreateTool/constants.js'
 import type { Tools } from '../Tool.js'
@@ -24,7 +24,6 @@ import {
 } from '../utils/model/model.js'
 import { getSkillToolCommands } from 'src/commands.js'
 import { SKILL_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/SkillTool/constants.js'
-import { EXECUTE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/ExecuteTool/constants.js'
 import { getOutputStyleConfig } from './outputStyles.js'
 import type {
   MCPServerConnection,
