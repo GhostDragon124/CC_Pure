@@ -233,15 +233,15 @@ export async function mcpGetHandler(name: string): Promise<void> {
     if (server.oauth?.clientId || server.oauth?.callbackPort) {
       const parts: string[] = [];
       if (server.oauth.clientId) {
-        parts.push('client_id configured');
+        parts.push(`client_id ${redactValue('oauth_client_id', server.oauth.clientId)}`);
         const clientConfig = getMcpClientConfig(name, server);
-        if (clientConfig?.clientSecret) parts.push('client_secret configured');
+        if (clientConfig?.clientSecret) {
+          parts.push(`client_secret ${redactValue('client_secret', clientConfig.clientSecret)}`);
+        }
       }
       if (server.oauth.callbackPort) parts.push(`callback_port ${server.oauth.callbackPort}`);
       // biome-ignore lint/suspicious/noConsole:: intentional console output
-      // Security: OAuth status strings are informational (configured/not-configured
-      // state checks), not actual secret values. Real secrets are redacted via
-      // redactValue on the headers/env fields above.
+      // Security: OAuth/account details are represented only as redacted values.
       console.log(`  OAuth: ${parts.join(', ')}`);
     }
   } else if (server.type === 'http') {
@@ -260,15 +260,15 @@ export async function mcpGetHandler(name: string): Promise<void> {
     if (server.oauth?.clientId || server.oauth?.callbackPort) {
       const parts: string[] = [];
       if (server.oauth.clientId) {
-        parts.push('client_id configured');
+        parts.push(`client_id ${redactValue('oauth_client_id', server.oauth.clientId)}`);
         const clientConfig = getMcpClientConfig(name, server);
-        if (clientConfig?.clientSecret) parts.push('client_secret configured');
+        if (clientConfig?.clientSecret) {
+          parts.push(`client_secret ${redactValue('client_secret', clientConfig.clientSecret)}`);
+        }
       }
       if (server.oauth.callbackPort) parts.push(`callback_port ${server.oauth.callbackPort}`);
       // biome-ignore lint/suspicious/noConsole:: intentional console output
-      // Security: OAuth status strings are informational (configured/not-configured
-      // state checks), not actual secret values. Real secrets are redacted via
-      // redactValue on the headers/env fields above.
+      // Security: OAuth/account details are represented only as redacted values.
       console.log(`  OAuth: ${parts.join(', ')}`);
     }
   } else if (server.type === 'stdio') {
