@@ -333,13 +333,13 @@ export class ACPClient {
         ws.onopen = () => {
           // Guard against race condition: check if this WebSocket is still current
           if (this.ws !== ws) {
-            console.log(
+            this._log(
               '[ACPClient] WebSocket opened but already disconnected/replaced, closing stale socket',
             )
             ws.close()
             return
           }
-          console.log(
+          this._log(
             '[ACPClient] WebSocket connected, sending connect command',
           )
           this.send({ type: 'connect' })
@@ -352,14 +352,14 @@ export class ACPClient {
             const response: ProxyResponse = JSON.parse(event.data)
             this.handleResponse(response)
           } catch (error) {
-            console.error('[ACPClient] Failed to parse message:', error)
+            this._error('[ACPClient] Failed to parse message:', error)
           }
         }
 
         ws.onerror = () => {
           // Ignore errors from stale sockets
           if (this.ws !== ws) return
-          console.error('[ACPClient] WebSocket error')
+          this._error('[ACPClient] WebSocket error')
           this.setState('error', 'WebSocket connection error')
           this.connectReject?.(new Error('WebSocket connection error'))
           this.connectResolve = null
@@ -369,7 +369,7 @@ export class ACPClient {
         ws.onclose = event => {
           // Ignore close events from stale sockets (replaced by a new connection)
           if (this.ws !== ws) return
-          console.log('[ACPClient] WebSocket closed', event.code, event.reason)
+          this._log('[ACPClient] WebSocket closed', event.code, event.reason)
 
           // Check if closed due to auth failure (code 4001) or other error during connect
           if (this.connectReject) {
@@ -394,7 +394,7 @@ export class ACPClient {
   }
 
   private handleResponse(response: ProxyResponse): void {
-    console.log('[ACPClient] Received:', response.type)
+    this._log('[ACPClient] Received:', response.type)
 
     switch (response.type) {
       case 'status':
@@ -413,7 +413,7 @@ export class ACPClient {
         break
 
       case 'error':
-        console.error('[ACPClient] Error:', response.payload)
+        this._error('[ACPClient] Error:', response.payload)
         const errorMsg =
           response.payload?.message || JSON.stringify(response.payload)
         this.pendingSessionTarget = null
@@ -440,7 +440,7 @@ export class ACPClient {
           this.connectReject = null
         } else {
           // After connected, notify UI about the error
-          console.error('[ACPClient] Agent error:', errorMsg)
+          this._error('[ACPClient] Agent error:', errorMsg)
           this.onErrorMessage?.(errorMsg)
         }
         break
@@ -452,7 +452,7 @@ export class ACPClient {
         this._promptCapabilities = response.payload.promptCapabilities ?? null
         // Reference: Zed stores model state from NewSessionResponse.models
         this._modelState = response.payload.models ?? null
-        console.log(
+        this._log(
           '[ACPClient] Session created, promptCapabilities:',
           this._promptCapabilities,
           'models:',
@@ -465,7 +465,7 @@ export class ACPClient {
 
       // Session history responses - Reference: Zed's AgentSessionList
       case 'session_list':
-        console.log(
+        this._log(
           '[ACPClient] Session list received:',
           response.payload.sessions.length,
           'sessions',
@@ -482,7 +482,7 @@ export class ACPClient {
         this.pendingSessionTarget = null
         this._promptCapabilities = response.payload.promptCapabilities ?? null
         this._modelState = response.payload.models ?? null
-        console.log('[ACPClient] Session loaded:', response.payload.sessionId)
+        this._log('[ACPClient] Session loaded:', response.payload.sessionId)
         if (this.pendingSessionLoad) {
           clearTimeout(this.pendingSessionLoad.timer)
           this.pendingSessionLoad.resolve(response.payload.sessionId)
@@ -497,7 +497,7 @@ export class ACPClient {
         this.pendingSessionTarget = null
         this._promptCapabilities = response.payload.promptCapabilities ?? null
         this._modelState = response.payload.models ?? null
-        console.log('[ACPClient] Session resumed:', response.payload.sessionId)
+        this._log('[ACPClient] Session resumed:', response.payload.sessionId)
         if (this.pendingSessionResume) {
           clearTimeout(this.pendingSessionResume.timer)
           this.pendingSessionResume.resolve(response.payload.sessionId)
@@ -510,7 +510,7 @@ export class ACPClient {
       case 'session_update':
         // Intercept available_commands_update for internal state
         const updateType = response.payload.update?.sessionUpdate
-        console.log(
+        this._log(
           '[ACPClient] session_update type:',
           updateType,
           'payload:',
@@ -518,7 +518,7 @@ export class ACPClient {
         )
         if (updateType === 'available_commands_update') {
           this._availableCommands = response.payload.update.availableCommands
-          console.log(
+          this._log(
             '[ACPClient] Available commands updated:',
             this._availableCommands.length,
             'commands',
@@ -536,12 +536,12 @@ export class ACPClient {
         break
 
       case 'permission_request':
-        console.log('[ACPClient] Permission request:', response.payload)
+        this._log('[ACPClient] Permission request:', response.payload)
         this.onPermissionRequest?.(response.payload)
         break
 
       case 'model_changed':
-        console.log('[ACPClient] Model changed:', response.payload.modelId)
+        this._log('[ACPClient] Model changed:', response.payload.modelId)
         if (this._modelState) {
           this._modelState = {
             ...this._modelState,
@@ -569,10 +569,10 @@ export class ACPClient {
     callId: string,
     params: BrowserToolParams,
   ): Promise<void> {
-    console.log('[ACPClient] Browser tool call:', callId, params)
+    this._log('[ACPClient] Browser tool call:', callId, params)
 
     if (!this.onBrowserToolCall) {
-      console.error('[ACPClient] No browser tool handler registered')
+      this._error('[ACPClient] No browser tool handler registered')
       this.send({
         type: 'browser_tool_result',
         callId,
@@ -589,7 +589,7 @@ export class ACPClient {
         result,
       })
     } catch (error) {
-      console.error('[ACPClient] Browser tool error:', error)
+      this._error('[ACPClient] Browser tool error:', error)
       this.send({
         type: 'browser_tool_result',
         callId,
@@ -613,7 +613,7 @@ export class ACPClient {
       this.heartbeatTimeout = setTimeout(() => {
         this.missedPongs++
         if (this.missedPongs >= ACPClient.MAX_MISSED_PONGS) {
-          console.warn(
+          this._log(
             `[ACPClient] Server unresponsive (${this.missedPongs} missed pongs), closing connection`,
           )
           this.stopHeartbeat()
@@ -632,6 +632,34 @@ export class ACPClient {
       clearTimeout(this.heartbeatTimeout)
       this.heartbeatTimeout = null
     }
+  }
+
+  /** Sanitize a log argument: JSON.stringify objects, strip CR/LF from strings. */
+  private _sanitize(arg: unknown): string {
+    let result: string
+    if (typeof arg === 'string') result = arg
+    else if (typeof arg === 'number' || typeof arg === 'boolean') result = String(arg)
+    else if (arg === null) result = 'null'
+    else if (arg === undefined) result = 'undefined'
+    else if (arg instanceof Error) result = `Error: ${arg.message}`
+    else {
+      try {
+        const s = JSON.stringify(arg, null, 2)
+        result = s.length > 1000 ? s.slice(0, 1000) + '...' : s
+      } catch {
+        result = String(arg)
+      }
+    }
+    // Prevent log injection: escape CR/LF so output stays on one line
+    return result.replace(/[\r\n]/g, '↵')
+  }
+
+  private _log(...args: unknown[]): void {
+    console.log(...args.map(a => this._sanitize(a)))
+  }
+
+  private _error(...args: unknown[]): void {
+    console.error(...args.map(a => this._sanitize(a)))
   }
 
   private send(message: ProxyMessage): void {

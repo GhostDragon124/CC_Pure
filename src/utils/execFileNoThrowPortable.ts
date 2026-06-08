@@ -83,7 +83,6 @@ export function execSyncWithDefaults_DEPRECATED(
     // to command injection if command contains untrusted input.
     const runShellCommand = execaSync as unknown as ShellCommandExecaSync
     const result = runShellCommand(command, {
-      env: process.env,
       maxBuffer: 1_000_000,
       timeout: finalTimeout,
       cwd: getCwd(),

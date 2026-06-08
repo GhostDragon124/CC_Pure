@@ -815,12 +815,19 @@ export function defersLockAcquire(toolName: string): boolean {
 // request_access helpers
 // ---------------------------------------------------------------------------
 
+/** Max total length for a bundle ID (RFC 1035 label concatenation limit). */
+const MAX_BUNDLE_ID_LENGTH = 255
+
 /** Reverse-DNS-ish: contains at least one dot, no spaces, no slashes. Lets
- * raw bundle IDs pass through resolution. */
-const REVERSE_DNS_RE = /^[A-Za-z0-9][\w.-]*\.[A-Za-z0-9][\w.-]*$/
+ * raw bundle IDs pass through resolution. Non-ambiguous — no backtracking. */
+const REVERSE_DNS_RE = /^[A-Za-z0-9][\w-]*(\.[A-Za-z0-9][\w-]*)+$/
 
 function looksLikeBundleId(s: string): boolean {
-  return REVERSE_DNS_RE.test(s) && !s.includes(' ')
+  return (
+    s.length > 0 &&
+    s.length <= MAX_BUNDLE_ID_LENGTH &&
+    REVERSE_DNS_RE.test(s)
+  )
 }
 
 function resolveRequestedApps(
