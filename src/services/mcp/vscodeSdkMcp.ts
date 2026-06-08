@@ -29,7 +29,7 @@ export const LogEventNotificationSchema: () => AnyObjectSchema = lazySchema(
         eventData: z.object({}).passthrough(),
       }),
     }),
-)
+) as any
 
 // Store the VSCode MCP client reference for sending notifications
 let vscodeMcpClient: ConnectedMCPServer | null = null

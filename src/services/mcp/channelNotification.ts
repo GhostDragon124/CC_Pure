@@ -36,16 +36,17 @@ import {
 } from './channelAllowlist.js'
 
 export const ChannelMessageNotificationSchema: () => AnyObjectSchema =
-  lazySchema(() =>
-    z.object({
-      method: z.literal('notifications/claude/channel'),
-      params: z.object({
-        content: z.string(),
-        // Opaque passthrough — thread_id, user, whatever the channel wants the
-        // model to see. Rendered as attributes on the <channel> tag.
-        meta: z.record(z.string(), z.string()).optional(),
-      }),
-    }),
+  lazySchema(
+    () =>
+      z.object({
+        method: z.literal('notifications/claude/channel'),
+        params: z.object({
+          content: z.string(),
+          // Opaque passthrough — thread_id, user, whatever the channel wants the
+          // model to see. Rendered as attributes on the <channel> tag.
+          meta: z.record(z.string(), z.string()).optional(),
+        }),
+      }) as any,
   )
 
 /**
@@ -64,14 +65,15 @@ export const ChannelMessageNotificationSchema: () => AnyObjectSchema =
 export const CHANNEL_PERMISSION_METHOD =
   'notifications/claude/channel/permission'
 export const ChannelPermissionNotificationSchema: () => AnyObjectSchema =
-  lazySchema(() =>
-    z.object({
-      method: z.literal(CHANNEL_PERMISSION_METHOD),
-      params: z.object({
-        request_id: z.string(),
-        behavior: z.enum(['allow', 'deny']),
-      }),
-    }),
+  lazySchema(
+    () =>
+      z.object({
+        method: z.literal(CHANNEL_PERMISSION_METHOD),
+        params: z.object({
+          request_id: z.string(),
+          behavior: z.enum(['allow', 'deny']),
+        }),
+      }) as any,
   )
 
 /**
@@ -104,22 +106,23 @@ export type ChannelPermissionRequestParams = {
 }
 
 export const ChannelPermissionRequestNotificationSchema: () => AnyObjectSchema =
-  lazySchema(() =>
-    z.object({
-      method: z.literal(CHANNEL_PERMISSION_REQUEST_METHOD),
-      params: z.object({
-        request_id: z.string(),
-        tool_name: z.string(),
-        description: z.string(),
-        input_preview: z.string(),
-        channel_context: z
-          .object({
-            source_server: z.string().optional(),
-            chat_id: z.string().optional(),
-          })
-          .optional(),
-      }),
-    }),
+  lazySchema(
+    () =>
+      z.object({
+        method: z.literal(CHANNEL_PERMISSION_REQUEST_METHOD),
+        params: z.object({
+          request_id: z.string(),
+          tool_name: z.string(),
+          description: z.string(),
+          input_preview: z.string(),
+          channel_context: z
+            .object({
+              source_server: z.string().optional(),
+              chat_id: z.string().optional(),
+            })
+            .optional(),
+        }),
+      }) as any,
   )
 
 /**

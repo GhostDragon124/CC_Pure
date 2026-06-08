@@ -3,10 +3,9 @@ import { logEvent } from 'src/services/analytics/index.js'
 import { z } from 'zod/v4'
 import type { MCPServerConnection } from '../services/mcp/types.js'
 import { getConnectedIdeClient } from '../utils/ide.js'
-import type { AnyObjectSchema } from '@modelcontextprotocol/sdk/server/zod-compat.js'
 import { lazySchema } from '../utils/lazySchema.js'
 
-const LogEventSchema: () => AnyObjectSchema = lazySchema(() =>
+const LogEventSchema = lazySchema(() =>
   z.object({
     method: z.literal('log_event'),
     params: z.object({
@@ -14,7 +13,7 @@ const LogEventSchema: () => AnyObjectSchema = lazySchema(() =>
       eventData: z.object({}).passthrough(),
     }),
   }),
-)
+) as any
 
 export function useIdeLogging(mcpClients: MCPServerConnection[]): void {
   useEffect(() => {
