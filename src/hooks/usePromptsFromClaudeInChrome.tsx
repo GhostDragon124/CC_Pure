@@ -8,24 +8,27 @@ import type { PermissionMode } from '../types/permissions.js';
 import { CLAUDE_IN_CHROME_MCP_SERVER_NAME, isTrackedClaudeInChromeTabId } from '../utils/claudeInChrome/common.js';
 import { lazySchema } from '../utils/lazySchema.js';
 import { enqueuePendingNotification } from '../utils/messageQueueManager.js';
+import { asMCPSchema } from '../utils/zodMCPCompat.js';
 
 // Schema for the prompt notification from Chrome extension (JSON-RPC 2.0 format)
-const ClaudeInChromePromptNotificationSchema = lazySchema(() =>
-  z.object({
-    method: z.literal('notifications/message'),
-    params: z.object({
-      prompt: z.string(),
-      image: z
-        .object({
-          type: z.literal('base64'),
-          media_type: z.enum(['image/jpeg', 'image/png', 'image/gif', 'image/webp']),
-          data: z.string(),
-        })
-        .optional(),
-      tabId: z.number().optional(),
+const ClaudeInChromePromptNotificationSchema = asMCPSchema(
+  lazySchema(() =>
+    z.object({
+      method: z.literal('notifications/message'),
+      params: z.object({
+        prompt: z.string(),
+        image: z
+          .object({
+            type: z.literal('base64'),
+            media_type: z.enum(['image/jpeg', 'image/png', 'image/gif', 'image/webp']),
+            data: z.string(),
+          })
+          .optional(),
+        tabId: z.number().optional(),
+      }),
     }),
-  }),
-) as any;
+  ),
+);
 
 /**
  * A hook that listens for prompt notifications from the Claude for Chrome extension,

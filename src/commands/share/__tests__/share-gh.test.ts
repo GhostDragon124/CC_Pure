@@ -212,7 +212,7 @@ function setExecFileSequence(
   _execFileImpl = (_cmd, _args, _opts, cb) => {
     const b = behaviors[n] ?? behaviors[behaviors.length - 1]
     n++
-    if (b.ok) cb(null, b.stdout, '')
+    if (b.ok === true) cb(null, b.stdout, '')
     else cb(new Error(b.msg), '', b.msg)
   }
 }

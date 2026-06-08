@@ -232,7 +232,7 @@ export const callAutofixPr: LocalJSXCommandCall = async (
     // skipBundle:true matches the teleport call below — autofix needs to push
     // back to GitHub, which a git bundle cannot do.
     const eligibility = await checkRemoteAgentEligibility({ skipBundle: true })
-    if (!eligibility.eligible) {
+    if (eligibility.eligible === false) {
       // Discriminated union: TypeScript narrows `eligibility` here, no cast needed.
       const blockers = eligibility.errors.filter(
         (e: BackgroundRemoteSessionPrecondition) =>
@@ -318,7 +318,6 @@ If no fix was needed, omit <commits-pushed> and <files-changed> and explain in <
     try {
       session = await teleportToRemote({
         initialMessage,
-        source: 'autofix_pr',
         branchName,
         skipBundle: true,
         title: `Autofix PR: ${target}`,

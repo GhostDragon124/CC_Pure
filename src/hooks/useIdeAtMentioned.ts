@@ -7,6 +7,7 @@ import type {
 } from '../services/mcp/types.js'
 import { getConnectedIdeClient } from '../utils/ide.js'
 import { lazySchema } from '../utils/lazySchema.js'
+import { asMCPSchema } from '../utils/zodMCPCompat.js'
 export type IDEAtMentioned = {
   filePath: string
   lineStart?: number
@@ -15,16 +16,18 @@ export type IDEAtMentioned = {
 
 const NOTIFICATION_METHOD = 'at_mentioned'
 
-const AtMentionedSchema = lazySchema(() =>
-  z.object({
-    method: z.literal(NOTIFICATION_METHOD),
-    params: z.object({
-      filePath: z.string(),
-      lineStart: z.number().optional(),
-      lineEnd: z.number().optional(),
+const AtMentionedSchema = asMCPSchema(
+  lazySchema(() =>
+    z.object({
+      method: z.literal(NOTIFICATION_METHOD),
+      params: z.object({
+        filePath: z.string(),
+        lineStart: z.number().optional(),
+        lineEnd: z.number().optional(),
+      }),
     }),
-  }),
-) as any
+  ),
+)
 
 /**
  * A hook that tracks IDE at-mention notifications by directly registering

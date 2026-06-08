@@ -1,7 +1,7 @@
 import { logForDebugging } from 'src/utils/debug.js'
 import { z } from 'zod/v4'
 import { lazySchema } from '../../utils/lazySchema.js'
-import type { AnyObjectSchema } from '@modelcontextprotocol/sdk/server/zod-compat.js'
+import { asMCPSchema } from '../../utils/zodMCPCompat.js'
 import {
   checkStatsigFeatureGate_CACHED_MAY_BE_STALE,
   getFeatureValue_CACHED_MAY_BE_STALE,
@@ -20,8 +20,8 @@ function readAutoModeEnabledState(): AutoModeEnabledState | undefined {
   return v === 'enabled' || v === 'disabled' || v === 'opt-in' ? v : undefined
 }
 
-export const LogEventNotificationSchema: () => AnyObjectSchema = lazySchema(
-  () =>
+export const LogEventNotificationSchema = asMCPSchema(
+  lazySchema(() =>
     z.object({
       method: z.literal('log_event'),
       params: z.object({
@@ -29,7 +29,8 @@ export const LogEventNotificationSchema: () => AnyObjectSchema = lazySchema(
         eventData: z.object({}).passthrough(),
       }),
     }),
-) as any
+  ),
+)
 
 // Store the VSCode MCP client reference for sending notifications
 let vscodeMcpClient: ConnectedMCPServer | null = null

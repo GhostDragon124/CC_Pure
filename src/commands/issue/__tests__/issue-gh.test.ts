@@ -220,7 +220,7 @@ function setupMocks(opts: {
       msg: 'unexpected async call',
     }
     asyncCallCount++
-    if (b.ok) cb(null, b.stdout, '')
+    if (b.ok === true) cb(null, b.stdout, '')
     else cb(new Error(b.msg), '', b.msg)
   }
 }

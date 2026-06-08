@@ -7,6 +7,7 @@ import type {
 } from '../services/mcp/types.js'
 import { getConnectedIdeClient } from '../utils/ide.js'
 import { lazySchema } from '../utils/lazySchema.js'
+import { asMCPSchema } from '../utils/zodMCPCompat.js'
 export type SelectionPoint = {
   line: number
   character: number
@@ -29,28 +30,30 @@ export type IDESelection = {
 }
 
 // Define the selection changed notification schema
-const SelectionChangedSchema = lazySchema(() =>
-  z.object({
-    method: z.literal('selection_changed'),
-    params: z.object({
-      selection: z
-        .object({
-          start: z.object({
-            line: z.number(),
-            character: z.number(),
-          }),
-          end: z.object({
-            line: z.number(),
-            character: z.number(),
-          }),
-        })
-        .nullable()
-        .optional(),
-      text: z.string().optional(),
-      filePath: z.string().optional(),
+const SelectionChangedSchema = asMCPSchema(
+  lazySchema(() =>
+    z.object({
+      method: z.literal('selection_changed'),
+      params: z.object({
+        selection: z
+          .object({
+            start: z.object({
+              line: z.number(),
+              character: z.number(),
+            }),
+            end: z.object({
+              line: z.number(),
+              character: z.number(),
+            }),
+          })
+          .nullable()
+          .optional(),
+        text: z.string().optional(),
+        filePath: z.string().optional(),
+      }),
     }),
-  }),
-) as any
+  ),
+)
 
 /**
  * A hook that tracks IDE text selection information by directly registering

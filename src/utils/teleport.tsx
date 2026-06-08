@@ -859,6 +859,11 @@ export async function teleportToRemote(options: {
    */
   onBundleFail?: (message: string) => void;
   /**
+   * Called with a user-facing message when creating the remote session fails.
+   * Remote-agent callers capture this so the user sees the upstream failure.
+   */
+  onCreateFail?: (message: string) => void;
+  /**
    * When true, disables the git-bundle fallback entirely. Use for flows like
    * autofix where CCR must push to GitHub — a bundle can't do that.
    */
@@ -963,12 +968,16 @@ export async function teleportToRemote(options: {
       );
       const response = await axios.post(url, requestBody, { headers, signal });
       if (response.status !== 200 && response.status !== 201) {
-        logError(new Error(`CreateSession ${response.status}: ${jsonStringify(response.data)}`));
+        const message = `CreateSession ${response.status}: ${jsonStringify(response.data)}`;
+        options.onCreateFail?.(message);
+        logError(new Error(message));
         return null;
       }
       const sessionData = response.data as SessionResource;
       if (!sessionData || typeof sessionData.id !== 'string') {
-        logError(new Error(`No session id in response: ${jsonStringify(response.data)}`));
+        const message = `No session id in response: ${jsonStringify(response.data)}`;
+        options.onCreateFail?.(message);
+        logError(new Error(message));
         return null;
       }
       return {
@@ -1277,18 +1286,18 @@ export async function teleportToRemote(options: {
     const isSuccess = response.status === 200 || response.status === 201;
 
     if (!isSuccess) {
-      logError(
-        new Error(
-          `API request failed with status ${response.status}: ${response.statusText}\n\nResponse data: ${jsonStringify(response.data, null, 2)}`,
-        ),
-      );
+      const message = `API request failed with status ${response.status}: ${response.statusText}\n\nResponse data: ${jsonStringify(response.data, null, 2)}`;
+      options.onCreateFail?.(message);
+      logError(new Error(message));
       return null;
     }
 
     // Parse response as SessionResource
     const sessionData = response.data as SessionResource;
     if (!sessionData || typeof sessionData.id !== 'string') {
-      logError(new Error(`Cannot determine session ID from API response: ${jsonStringify(response.data)}`));
+      const message = `Cannot determine session ID from API response: ${jsonStringify(response.data)}`;
+      options.onCreateFail?.(message);
+      logError(new Error(message));
       return null;
     }
 
@@ -1299,6 +1308,7 @@ export async function teleportToRemote(options: {
     };
   } catch (error) {
     const err = toError(error);
+    options.onCreateFail?.(err.message);
     logError(err);
     return null;
   }
