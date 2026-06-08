@@ -276,20 +276,27 @@ export async function runClaudeInChromeMcpServer(): Promise<void> {
   logForDebugging('[Claude in Chrome] MCP server started')
 }
 
+function formatLoggerMessage(message: string, detail?: LoggerDetail): string {
+  if (detail === undefined) {
+    return format('%s', message)
+  }
+  return format('%s %O', message, detail)
+}
+
 class DebugLogger implements Logger {
   silly(message: string, detail?: LoggerDetail): void {
-    logForDebugging(format(message, detail ?? ''), { level: 'debug' })
+    logForDebugging(formatLoggerMessage(message, detail), { level: 'debug' })
   }
   debug(message: string, detail?: LoggerDetail): void {
-    logForDebugging(format(message, detail ?? ''), { level: 'debug' })
+    logForDebugging(formatLoggerMessage(message, detail), { level: 'debug' })
   }
   info(message: string, detail?: LoggerDetail): void {
-    logForDebugging(format(message, detail ?? ''), { level: 'info' })
+    logForDebugging(formatLoggerMessage(message, detail), { level: 'info' })
   }
   warn(message: string, detail?: LoggerDetail): void {
-    logForDebugging(format(message, detail ?? ''), { level: 'warn' })
+    logForDebugging(formatLoggerMessage(message, detail), { level: 'warn' })
   }
   error(message: string, detail?: LoggerDetail): void {
-    logForDebugging(format(message, detail ?? ''), { level: 'error' })
+    logForDebugging(formatLoggerMessage(message, detail), { level: 'error' })
   }
 }
