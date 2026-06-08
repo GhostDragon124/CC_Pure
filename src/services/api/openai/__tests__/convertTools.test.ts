@@ -142,7 +142,8 @@ describe('anthropicToolsToOpenAI', () => {
       },
     ]
     const result = anthropicToolsToOpenAI(tools as any)
-    const anyOf = ((result[0] as any).function.parameters as any).properties.val.anyOf
+    const anyOf = ((result[0] as any).function.parameters as any).properties.val
+      .anyOf
     expect(anyOf[0]).toEqual({ enum: ['a'] })
     expect(anyOf[1]).toEqual({ enum: ['b'] })
     expect(anyOf[2]).toEqual({ type: 'string' })

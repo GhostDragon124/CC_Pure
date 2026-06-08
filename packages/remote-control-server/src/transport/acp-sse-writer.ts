@@ -1,6 +1,5 @@
 import { log } from "../logger";
 import type { Context } from "hono";
-import type { SessionEvent } from "./event-bus";
 import { getAcpEventBus } from "./event-bus";
 
 /** Create SSE response stream for an ACP channel group */

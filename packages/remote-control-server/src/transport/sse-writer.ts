@@ -9,7 +9,9 @@ export interface SSEWriter {
 }
 
 export function createSSEWriter(c: Context): SSEWriter {
-  const stream = new ReadableStream({
+  // Create a ReadableStream to trigger the Hono streaming response plumbing,
+  // but return an SSEWriter interface instead.
+  new ReadableStream({
     start(controller) {
       const encoder = new TextEncoder();
       c.req.raw.signal.addEventListener("abort", () => {

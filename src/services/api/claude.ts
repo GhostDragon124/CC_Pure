@@ -103,12 +103,11 @@ import {
 } from '../claudeAiLimits.js'
 import { getAPIContextManagement } from '../compact/apiMicrocompact.js'
 import * as autoModeStateModuleValue from '../../utils/permissions/autoModeState.js'
+import { feature } from 'bun:bundle'
 
 const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER')
   ? autoModeStateModuleValue
   : null
-
-import { feature } from 'bun:bundle'
 import type { ClientOptions } from '@anthropic-ai/sdk'
 import {
   APIConnectionTimeoutError,

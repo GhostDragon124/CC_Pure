@@ -4,4 +4,7 @@
 // Installs a prepare-commit-msg git hook for commit attribution tracking.
 // Stub: resolves immediately.
 
-export const installPrepareCommitMsgHook: (worktreePath: string, worktreeHooksDir?: string) => Promise<void> = async () => {}
+export const installPrepareCommitMsgHook: (
+  worktreePath: string,
+  worktreeHooksDir?: string,
+) => Promise<void> = async () => {}

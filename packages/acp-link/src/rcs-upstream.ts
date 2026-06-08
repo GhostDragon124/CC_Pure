@@ -1,5 +1,11 @@
 import { createLogger } from "./logger.js";
 
+/** Strip CR/LF from a log argument to prevent log-injection attacks. */
+function sanitizeLog(arg: unknown): string {
+  const s = typeof arg === "string" ? arg : String(arg);
+  return s.replace(/[\r\n]/g, "↵");
+}
+
 export interface RcsUpstreamConfig {
   rcsUrl: string;     // e.g. "http://localhost:3000"
   apiToken: string;
@@ -158,7 +164,7 @@ export class RcsUpstreamClient {
               console.log(`  🔗 Dashboard: ${webBase}/code/`);
             }
             if (this.agentId) {
-              console.log(`     Agent ID: ${this.agentId}`);
+              console.log(`     Agent ID: ${sanitizeLog(this.agentId)}`);
             }
             console.log();
             resolve();

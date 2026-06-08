@@ -8,9 +8,7 @@ import { isQueuedCommandEditable } from 'src/utils/messageQueueManager.js'
 import * as proactiveModuleValue from '../../proactive/index.js'
 
 const proactiveModule =
-  feature('PROACTIVE') || feature('KAIROS')
-    ? proactiveModuleValue
-    : null
+  feature('PROACTIVE') || feature('KAIROS') ? proactiveModuleValue : null
 
 type Props = {
   input: string

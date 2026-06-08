@@ -44,8 +44,11 @@ export function initContextCollapse(): void {}
 export function resetContextCollapse(): void {}
 
 /** @stub */
-export function applyCollapsesIfNeeded(..._args: unknown[]): { messages: unknown[]; committed: boolean } {
-  return { messages: _args[0] as unknown[] || [], committed: false }
+export function applyCollapsesIfNeeded(..._args: unknown[]): {
+  messages: unknown[]
+  committed: boolean
+} {
+  return { messages: (_args[0] as unknown[]) || [], committed: false }
 }
 
 /** @stub */
@@ -54,6 +57,9 @@ export function isWithheldPromptTooLong(..._args: unknown[]): boolean {
 }
 
 /** @stub */
-export function recoverFromOverflow(..._args: unknown[]): { messages: unknown[]; committed: boolean } {
-  return { messages: _args[0] as unknown[] || [], committed: false }
+export function recoverFromOverflow(..._args: unknown[]): {
+  messages: unknown[]
+  committed: boolean
+} {
+  return { messages: (_args[0] as unknown[]) || [], committed: false }
 }

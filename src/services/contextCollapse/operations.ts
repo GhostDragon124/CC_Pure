@@ -10,4 +10,5 @@ import type { Message } from 'src/types/message.js'
  * Projects messages through context collapse — returns a filtered/compressed
  * view of the message list. Stub implementation: identity (no-op).
  */
-export const projectView: (messages: Message[]) => Message[] = (messages) => messages
+export const projectView: (messages: Message[]) => Message[] = messages =>
+  messages

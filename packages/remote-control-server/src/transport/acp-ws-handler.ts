@@ -87,7 +87,6 @@ function handleRegister(wsId: string, msg: Record<string, unknown>): void {
   const agentName = (msg.agent_name as string) || "unknown";
   const capabilities = msg.capabilities as Record<string, unknown> | undefined;
   const channelGroupId = (msg.channel_group_id as string) || `group_${uuid().replace(/-/g, "").slice(0, 12)}`;
-  const acpLinkVersion = (msg.acp_link_version as string) || null;
   const maxSessions = typeof msg.max_sessions === "number" ? msg.max_sessions : 1;
 
   // Create EnvironmentRecord with workerType="acp"
@@ -294,7 +293,7 @@ export function closeAllAcpConnections(): void {
   if (connections.size === 0) return;
 
   log(`[ACP-WS] Gracefully closing ${connections.size} ACP connection(s)...`);
-  for (const [wsId, entry] of connections) {
+  for (const [, entry] of connections) {
     try {
       if (entry.unsub) entry.unsub();
       if (entry.keepalive) clearInterval(entry.keepalive);

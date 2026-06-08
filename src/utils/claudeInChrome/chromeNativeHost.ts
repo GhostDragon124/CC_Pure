@@ -23,6 +23,7 @@ import { lazySchema } from '../lazySchema.js'
 import { redactForLog } from '../sensitive.js'
 import { jsonParse, jsonStringify } from '../slowOperations.js'
 import { getSecureSocketPath, getSocketDir } from './common.js'
+import { sanitizeLog } from '../sensitive.js'
 
 const VERSION = '1.0.0'
 const MAX_MESSAGE_SIZE = 1024 * 1024 // 1MB - Max message size that can be sent to Chrome
@@ -44,7 +45,7 @@ function log(message: string, ...args: unknown[]): void {
       // Ignore file write errors
     })
   }
-  console.error(`[Claude Chrome Native Host] ${redactedMessage}`, ...args)
+  console.error(`[Claude Chrome Native Host] ${redactedMessage}`, ...args.map(a => sanitizeLog(a)))
 }
 /**
  * Send a message to stdout (Chrome native messaging protocol)

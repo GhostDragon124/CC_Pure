@@ -271,9 +271,7 @@ function extractWrittenPaths(agentMessages: Message[]): string[] {
 // Initialization & Closure-scoped State
 // ============================================================================
 
-type AppendSystemMessageFn = (
-  msg: SystemMessage,
-) => void
+type AppendSystemMessageFn = (msg: SystemMessage) => void
 
 /** The active extractor function, set by initExtractMemories(). */
 let extractor:

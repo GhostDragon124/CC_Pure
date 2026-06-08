@@ -74,14 +74,12 @@ export class RCSTransport implements ChatTransport<UIMessage> {
   private sessionId: string
   private onPermissionRequest?: (event: SessionEvent) => void
   private onSessionStatus?: (status: string) => void
-  private onError?: (error: string) => void
   private unsub: (() => void) | null = null
 
   constructor(options: RCSTransportOptions) {
     this.sessionId = options.sessionId
     this.onPermissionRequest = options.onPermissionRequest
     this.onSessionStatus = options.onSessionStatus
-    this.onError = options.onError
   }
 
   async sendMessages({

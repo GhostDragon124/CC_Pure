@@ -3,4 +3,5 @@
 // Dynamically require'd by src/entrypoints/cli.tsx.
 // Stub: resolves immediately.
 
-export const selfHostedRunnerMain: (args: string[]) => Promise<void> = () => Promise.resolve()
+export const selfHostedRunnerMain: (args: string[]) => Promise<void> = () =>
+  Promise.resolve()

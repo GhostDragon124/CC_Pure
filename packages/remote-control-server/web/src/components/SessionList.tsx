@@ -1,6 +1,6 @@
 import type { Session } from '../types';
 import { StatusBadge } from './Navbar';
-import { esc, formatTime } from '../lib/utils';
+import { formatTime } from '../lib/utils';
 
 interface SessionListProps {
   sessions: Session[];

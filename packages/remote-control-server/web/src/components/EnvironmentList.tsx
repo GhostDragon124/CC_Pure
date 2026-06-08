@@ -1,6 +1,5 @@
-import type { Environment } from '../types';
 import { StatusBadge } from './Navbar';
-import { esc, formatTime } from '../lib/utils';
+import type { Environment } from '../types';
 
 interface EnvironmentListProps {
   environments: Environment[];

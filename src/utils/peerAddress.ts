@@ -20,6 +20,9 @@ export function parseAddress(to: string): {
 }
 
 /** Parse a TCP target into host+port. CC_Pure: not implemented. */
-export function parseTcpTarget(_target: string): { host: string; port: number } {
+export function parseTcpTarget(_target: string): {
+  host: string
+  port: number
+} {
   throw new Error('parseTcpTarget: not available in CC_Pure')
 }

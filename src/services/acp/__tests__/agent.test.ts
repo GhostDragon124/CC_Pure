@@ -67,13 +67,22 @@ mock.module('../../../utils/fileStateCache.js', () => ({
 }))
 
 mock.module('../permissions.js', () => ({
-  createAcpCanUseTool: mock(() => mock(async () => ({ behavior: 'allow', updatedInput: {} }))),
+  createAcpCanUseTool: mock(() =>
+    mock(async () => ({ behavior: 'allow', updatedInput: {} })),
+  ),
 }))
 
 mock.module('../bridge.js', () => ({
-  forwardSessionUpdates: mock(async () => ({ stopReason: 'end_turn' as const })),
+  forwardSessionUpdates: mock(async () => ({
+    stopReason: 'end_turn' as const,
+  })),
   replayHistoryMessages: mock(async () => {}),
-  toolInfoFromToolUse: mock(() => ({ title: 'Test', kind: 'other', content: [], locations: [] })),
+  toolInfoFromToolUse: mock(() => ({
+    title: 'Test',
+    kind: 'other',
+    content: [],
+    locations: [],
+  })),
 }))
 
 mock.module('../utils.js', () => ({
@@ -162,7 +171,9 @@ const { forwardSessionUpdates } = await import('../bridge.js')
 function makeConn() {
   return {
     sessionUpdate: mock(async () => {}),
-    requestPermission: mock(async () => ({ outcome: { outcome: 'cancelled' } })),
+    requestPermission: mock(async () => ({
+      outcome: { outcome: 'cancelled' },
+    })),
   } as any
 }
 
@@ -188,7 +199,9 @@ describe('AcpAgent', () => {
       const agent = new AcpAgent(makeConn())
       const res = await agent.initialize({} as any)
       expect(res.agentCapabilities?.promptCapabilities?.image).toBe(true)
-      expect(res.agentCapabilities?.promptCapabilities?.embeddedContext).toBe(true)
+      expect(res.agentCapabilities?.promptCapabilities?.embeddedContext).toBe(
+        true,
+      )
     })
 
     test('loadSession capability is true', async () => {
@@ -266,7 +279,9 @@ describe('AcpAgent', () => {
 
     test('stores clientCapabilities from initialize', async () => {
       const agent = new AcpAgent(makeConn())
-      await agent.initialize({ clientCapabilities: { _meta: { terminal_output: true } } } as any)
+      await agent.initialize({
+        clientCapabilities: { _meta: { terminal_output: true } },
+      } as any)
       const res = await agent.newSession({ cwd: '/tmp' } as any)
       // Should not throw — clientCapabilities stored internally
       expect(res.sessionId).toBeDefined()
@@ -277,7 +292,7 @@ describe('AcpAgent', () => {
     test('throws when session not found', async () => {
       const agent = new AcpAgent(makeConn())
       await expect(
-        agent.prompt({ sessionId: 'nonexistent', prompt: [] } as any)
+        agent.prompt({ sessionId: 'nonexistent', prompt: [] } as any),
       ).rejects.toThrow('nonexistent')
     })
 
@@ -301,7 +316,9 @@ describe('AcpAgent', () => {
     test('calls forwardSessionUpdates for valid prompt', async () => {
       const agent = new AcpAgent(makeConn())
       const { sessionId } = await agent.newSession({ cwd: '/tmp' } as any)
-      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockResolvedValueOnce({ stopReason: 'end_turn' })
+      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockResolvedValueOnce(
+        { stopReason: 'end_turn' },
+      )
       const res = await agent.prompt({
         sessionId,
         prompt: [{ type: 'text', text: 'hello' }],
@@ -315,7 +332,9 @@ describe('AcpAgent', () => {
       // Cancel when nothing is running is a no-op
       await agent.cancel({ sessionId } as any)
       // The next prompt should work normally
-      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockResolvedValueOnce({ stopReason: 'end_turn' })
+      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockResolvedValueOnce(
+        { stopReason: 'end_turn' },
+      )
       const res = await agent.prompt({
         sessionId,
         prompt: [{ type: 'text', text: 'hello' }],
@@ -328,10 +347,13 @@ describe('AcpAgent', () => {
       const { sessionId } = await agent.newSession({ cwd: '/tmp' } as any)
       // Start a prompt that hangs, then cancel it
       let resolveStream!: () => void
-      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockImplementationOnce(
-        () => new Promise<{ stopReason: string }>((resolve) => {
-          resolveStream = () => resolve({ stopReason: 'cancelled' })
-        }),
+      ;(
+        forwardSessionUpdates as ReturnType<typeof mock>
+      ).mockImplementationOnce(
+        () =>
+          new Promise<{ stopReason: string }>(resolve => {
+            resolveStream = () => resolve({ stopReason: 'cancelled' })
+          }),
       )
       const promptPromise = agent.prompt({
         sessionId,
@@ -345,7 +367,9 @@ describe('AcpAgent', () => {
       expect(res.stopReason).toBe('cancelled')
 
       // Next prompt should work normally
-      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockResolvedValueOnce({ stopReason: 'end_turn' })
+      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockResolvedValueOnce(
+        { stopReason: 'end_turn' },
+      )
       const res2 = await agent.prompt({
         sessionId,
         prompt: [{ type: 'text', text: 'world' }],
@@ -356,7 +380,9 @@ describe('AcpAgent', () => {
     test('returns end_turn on unexpected error', async () => {
       const agent = new AcpAgent(makeConn())
       const { sessionId } = await agent.newSession({ cwd: '/tmp' } as any)
-      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockImplementationOnce(async () => {
+      ;(
+        forwardSessionUpdates as ReturnType<typeof mock>
+      ).mockImplementationOnce(async () => {
         throw new Error('unexpected')
       })
       // Suppress console.error noise from catch block
@@ -379,15 +405,17 @@ describe('AcpAgent', () => {
     test('returns usage from forwardSessionUpdates', async () => {
       const agent = new AcpAgent(makeConn())
       const { sessionId } = await agent.newSession({ cwd: '/tmp' } as any)
-      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockResolvedValueOnce({
-        stopReason: 'end_turn',
-        usage: {
-          inputTokens: 100,
-          outputTokens: 50,
-          cachedReadTokens: 10,
-          cachedWriteTokens: 5,
+      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {
+          stopReason: 'end_turn',
+          usage: {
+            inputTokens: 100,
+            outputTokens: 50,
+            cachedReadTokens: 10,
+            cachedWriteTokens: 5,
+          },
         },
-      })
+      )
       const res = await agent.prompt({
         sessionId,
         prompt: [{ type: 'text', text: 'hello' }],
@@ -402,14 +430,18 @@ describe('AcpAgent', () => {
   describe('cancel', () => {
     test('does not throw for unknown session', async () => {
       const agent = new AcpAgent(makeConn())
-      await expect(agent.cancel({ sessionId: 'ghost' } as any)).resolves.toBeUndefined()
+      await expect(
+        agent.cancel({ sessionId: 'ghost' } as any),
+      ).resolves.toBeUndefined()
     })
   })
 
   describe('closeSession', () => {
     test('throws for unknown session', async () => {
       const agent = new AcpAgent(makeConn())
-      await expect(agent.unstable_closeSession({ sessionId: 'ghost' } as any)).rejects.toThrow('Session not found')
+      await expect(
+        agent.unstable_closeSession({ sessionId: 'ghost' } as any),
+      ).rejects.toThrow('Session not found')
     })
 
     test('removes session after close', async () => {
@@ -425,7 +457,10 @@ describe('AcpAgent', () => {
       const agent = new AcpAgent(makeConn())
       const { sessionId } = await agent.newSession({ cwd: '/tmp' } as any)
       mockSetModel.mockClear()
-      await agent.unstable_setSessionModel({ sessionId, modelId: 'glm-5.1' } as any)
+      await agent.unstable_setSessionModel({
+        sessionId,
+        modelId: 'glm-5.1',
+      } as any)
       expect(mockSetModel).toHaveBeenCalledWith('glm-5.1')
     })
 
@@ -435,7 +470,10 @@ describe('AcpAgent', () => {
       const agent = new AcpAgent(makeConn())
       const { sessionId } = await agent.newSession({ cwd: '/tmp' } as any)
       mockSetModel.mockClear()
-      await agent.unstable_setSessionModel({ sessionId, modelId: 'sonnet[1m]' } as any)
+      await agent.unstable_setSessionModel({
+        sessionId,
+        modelId: 'sonnet[1m]',
+      } as any)
       expect(mockSetModel).toHaveBeenCalledWith('sonnet[1m]')
     })
   })
@@ -452,7 +490,9 @@ describe('AcpAgent', () => {
 
       // Verify applySafe is called after enableConfigs in the source
       const enableIdx = entrySource.indexOf('enableConfigs()')
-      const applyIdx = entrySource.indexOf('applySafeConfigEnvironmentVariables()')
+      const applyIdx = entrySource.indexOf(
+        'applySafeConfigEnvironmentVariables()',
+      )
       expect(enableIdx).toBeGreaterThan(-1)
       expect(applyIdx).toBeGreaterThan(-1)
       expect(enableIdx).toBeLessThan(applyIdx)
@@ -463,15 +503,17 @@ describe('AcpAgent', () => {
     test('returns totalTokens as sum of all token types', async () => {
       const agent = new AcpAgent(makeConn())
       const { sessionId } = await agent.newSession({ cwd: '/tmp' } as any)
-      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockResolvedValueOnce({
-        stopReason: 'end_turn',
-        usage: {
-          inputTokens: 100,
-          outputTokens: 50,
-          cachedReadTokens: 10,
-          cachedWriteTokens: 5,
+      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {
+          stopReason: 'end_turn',
+          usage: {
+            inputTokens: 100,
+            outputTokens: 50,
+            cachedReadTokens: 10,
+            cachedWriteTokens: 5,
+          },
         },
-      })
+      )
       const res = await agent.prompt({
         sessionId,
         prompt: [{ type: 'text', text: 'hello' }],
@@ -483,9 +525,11 @@ describe('AcpAgent', () => {
     test('returns undefined usage when forwardSessionUpdates returns none', async () => {
       const agent = new AcpAgent(makeConn())
       const { sessionId } = await agent.newSession({ cwd: '/tmp' } as any)
-      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockResolvedValueOnce({
-        stopReason: 'end_turn',
-      })
+      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {
+          stopReason: 'end_turn',
+        },
+      )
       const res = await agent.prompt({
         sessionId,
         prompt: [{ type: 'text', text: 'hello' }],
@@ -498,7 +542,9 @@ describe('AcpAgent', () => {
     test('returns cancelled when session was cancelled during prompt', async () => {
       const agent = new AcpAgent(makeConn())
       const { sessionId } = await agent.newSession({ cwd: '/tmp' } as any)
-      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockImplementationOnce(async () => {
+      ;(
+        forwardSessionUpdates as ReturnType<typeof mock>
+      ).mockImplementationOnce(async () => {
         // Simulate cancel happening during forward
         const session = agent.sessions.get(sessionId)
         if (session) session.cancelled = true
@@ -514,7 +560,9 @@ describe('AcpAgent', () => {
     test('returns cancelled on cancel after error', async () => {
       const agent = new AcpAgent(makeConn())
       const { sessionId } = await agent.newSession({ cwd: '/tmp' } as any)
-      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockImplementationOnce(async () => {
+      ;(
+        forwardSessionUpdates as ReturnType<typeof mock>
+      ).mockImplementationOnce(async () => {
         const session = agent.sessions.get(sessionId)
         if (session) session.cancelled = true
         throw new Error('unexpected')
@@ -566,7 +614,9 @@ describe('AcpAgent', () => {
         cwd: '/tmp',
         mcpServers: [],
       } as any)
-      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockResolvedValueOnce({ stopReason: 'end_turn' })
+      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockResolvedValueOnce(
+        { stopReason: 'end_turn' },
+      )
       const res = await agent.prompt({
         sessionId: sid,
         prompt: [{ type: 'text', text: 'hello after restore' }],
@@ -595,7 +645,9 @@ describe('AcpAgent', () => {
         cwd: '/tmp',
         mcpServers: [],
       } as any)
-      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockResolvedValueOnce({ stopReason: 'end_turn' })
+      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockResolvedValueOnce(
+        { stopReason: 'end_turn' },
+      )
       const res = await agent.prompt({
         sessionId: sid,
         prompt: [{ type: 'text', text: 'hello after load' }],
@@ -675,16 +727,27 @@ describe('AcpAgent', () => {
 
       // First prompt hangs
       let resolveFirst!: () => void
-      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockImplementationOnce(
-        () => new Promise<{ stopReason: string }>((resolve) => {
-          resolveFirst = () => resolve({ stopReason: 'end_turn' })
-        }),
+      ;(
+        forwardSessionUpdates as ReturnType<typeof mock>
+      ).mockImplementationOnce(
+        () =>
+          new Promise<{ stopReason: string }>(resolve => {
+            resolveFirst = () => resolve({ stopReason: 'end_turn' })
+          }),
       )
       // Second prompt resolves normally
-      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockResolvedValueOnce({ stopReason: 'end_turn' })
+      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockResolvedValueOnce(
+        { stopReason: 'end_turn' },
+      )
 
-      const p1 = agent.prompt({ sessionId, prompt: [{ type: 'text', text: 'first' }] } as any)
-      const p2 = agent.prompt({ sessionId, prompt: [{ type: 'text', text: 'second' }] } as any)
+      const p1 = agent.prompt({
+        sessionId,
+        prompt: [{ type: 'text', text: 'first' }],
+      } as any)
+      const p2 = agent.prompt({
+        sessionId,
+        prompt: [{ type: 'text', text: 'second' }],
+      } as any)
 
       // Resolve the first prompt to unblock the second
       resolveFirst()
@@ -699,14 +762,23 @@ describe('AcpAgent', () => {
 
       // First prompt hangs
       let resolveFirst!: () => void
-      ;(forwardSessionUpdates as ReturnType<typeof mock>).mockImplementationOnce(
-        () => new Promise<{ stopReason: string }>((resolve) => {
-          resolveFirst = () => resolve({ stopReason: 'end_turn' })
-        }),
+      ;(
+        forwardSessionUpdates as ReturnType<typeof mock>
+      ).mockImplementationOnce(
+        () =>
+          new Promise<{ stopReason: string }>(resolve => {
+            resolveFirst = () => resolve({ stopReason: 'end_turn' })
+          }),
       )
 
-      const p1 = agent.prompt({ sessionId, prompt: [{ type: 'text', text: 'first' }] } as any)
-      const p2 = agent.prompt({ sessionId, prompt: [{ type: 'text', text: 'second' }] } as any)
+      const p1 = agent.prompt({
+        sessionId,
+        prompt: [{ type: 'text', text: 'first' }],
+      } as any)
+      const p2 = agent.prompt({
+        sessionId,
+        prompt: [{ type: 'text', text: 'second' }],
+      } as any)
 
       // Cancel while first is running — both should be cancelled
       await agent.cancel({ sessionId } as any)
@@ -737,7 +809,7 @@ describe('AcpAgent', () => {
       // Only prompt-type, non-hidden, userInvocable commands
       const names = cmds.map((c: any) => c.name)
       expect(names).toContain('commit')
-      expect(names).not.toContain('compact')    // type: 'local'
+      expect(names).not.toContain('compact') // type: 'local'
       expect(names).not.toContain('hidden-skill') // isHidden: true, userInvocable: false
     })
 

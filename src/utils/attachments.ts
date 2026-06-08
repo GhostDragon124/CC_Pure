@@ -71,11 +71,6 @@ import type {
 } from '@anthropic-ai/sdk/resources/messages.mjs'
 import { maybeResizeAndDownsampleImageBlock } from './imageResizer.js'
 import type { PastedContent } from './config.js'
-import {
-  getDefaultSonnetModel,
-  getDefaultHaikuModel,
-  getDefaultOpusModel,
-} from './model/model.js'
 import type { ReadResourceResult } from '@modelcontextprotocol/sdk/types.js'
 import { getSkillToolCommands, getMcpSkillCommands } from '../commands.js'
 import type { Command } from '../types/command.js'
@@ -88,6 +83,7 @@ import * as skillSearchFeatureCheck from '../services/skillSearch/featureCheck.j
 import * as skillSearchPrefetch from '../services/skillSearch/prefetch.js'
 import { BRIEF_TOOL_NAME as BRIEF_TOOL_NAME_VALUE } from '@claude-code-best/builtin-tools/tools/BriefTool/prompt.js'
 import * as autoModeStateModuleValue from './permissions/autoModeState.js'
+import { feature } from 'bun:bundle'
 // Conditional require for DCE. All skill-search string literals that would
 // otherwise leak into external builds live inside these modules. The only
 // surfaces in THIS file are: the maybe() call (gated via spread below) and
@@ -202,7 +198,6 @@ import {
 } from './messages.js'
 import { isHumanTurn } from './messagePredicates.js'
 import { isEnvTruthy, getClaudeConfigHomeDir } from './envUtils.js'
-import { feature } from 'bun:bundle'
 import * as sessionTranscriptModuleValue from '../services/sessionTranscript/sessionTranscript.js'
 /* eslint-disable @typescript-eslint/no-require-imports */
 const BRIEF_TOOL_NAME: string | null =

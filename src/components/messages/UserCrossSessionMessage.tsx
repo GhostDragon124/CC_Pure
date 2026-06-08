@@ -3,8 +3,8 @@
 // Dynamically require'd by UserTextMessage.tsx when UDS_INBOX feature is enabled.
 // Stub: renders null.
 
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
 export function UserCrossSessionMessage(): ReactNode {
-  return null
+  return null;
 }

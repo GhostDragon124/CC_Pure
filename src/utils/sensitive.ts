@@ -77,3 +77,14 @@ export function redactForLog(message: unknown): string {
 
   return redacted
 }
+
+/**
+ * Strip CR/LF from a log argument to prevent log-injection attacks.
+ * CodeQL's js/log-injection query flags console.log/error calls that pass
+ * untrusted data; this sanitizer breaks the injection path by removing
+ * carriage-return and line-feed characters before they reach the log sink.
+ */
+export function sanitizeLog(arg: unknown): string {
+  const s = typeof arg === 'string' ? arg : String(arg)
+  return s.replace(/[\r\n]/g, '↵')
+}

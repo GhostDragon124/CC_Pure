@@ -16,4 +16,5 @@ export const isSnipBoundaryMessage: (message: Message) => boolean = () => false
  * Projects messages through the snip view — returns a filtered/compressed
  * view of the message list. Stub implementation: identity (no-op).
  */
-export const projectSnippedView: (messages: Message[]) => Message[] = (messages) => messages
+export const projectSnippedView: (messages: Message[]) => Message[] =
+  messages => messages

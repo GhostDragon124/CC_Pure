@@ -9,7 +9,7 @@ import type { WSContext } from "hono/ws";
 import type { WebSocket as RawWebSocket } from "ws";
 import { createLogger } from "./logger.js";
 import { getOrCreateCertificate, getLanIPs } from "./cert.js";
-import { RcsUpstreamClient, type RcsUpstreamConfig } from "./rcs-upstream.js";
+import { RcsUpstreamClient } from "./rcs-upstream.js";
 
 export interface ServerConfig {
   port: number;
@@ -85,9 +85,7 @@ interface ClientState {
 // Module-level state (set when server starts)
 let AGENT_COMMAND: string;
 let AGENT_ARGS: string[];
-let AGENT_CWD: string;
-let SERVER_PORT: number;
-let SERVER_HOST: string;
+let AGENT_CWD: string
 let AUTH_TOKEN: string | undefined;
 let DEFAULT_PERMISSION_MODE: string | undefined;
 
@@ -601,9 +599,7 @@ export async function startServer(config: ServerConfig): Promise<void> {
   // Set module-level config
   AGENT_COMMAND = command;
   AGENT_ARGS = args;
-  AGENT_CWD = cwd;
-  SERVER_PORT = port;
-  SERVER_HOST = host;
+  AGENT_CWD = cwd
   AUTH_TOKEN = token;
   DEFAULT_PERMISSION_MODE = config.permissionMode || process.env.ACP_PERMISSION_MODE;
 

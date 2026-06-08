@@ -98,7 +98,8 @@ export function getToolResultsToDelete(state: CachedMCState): string[] {
  * Returns null if toolIds is empty.
  */
 export function createCacheEditsBlock(
-  _state: CachedMCState,  toolIds: string[],
+  _state: CachedMCState,
+  toolIds: string[],
 ): CacheEditsBlock | null {
   if (toolIds.length === 0) return null
   return {

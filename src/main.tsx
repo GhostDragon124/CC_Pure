@@ -65,10 +65,6 @@ import {
   createSyntheticOutputTool,
   isSyntheticOutputToolEnabled,
 } from '@claude-code-best/builtin-tools/tools/SyntheticOutputTool/SyntheticOutputTool.js';
-import {
-  BRIEF_TOOL_NAME as BRIEF_TOOL_NAME_VALUE,
-  LEGACY_BRIEF_TOOL_NAME as LEGACY_BRIEF_TOOL_NAME_VALUE,
-} from '@claude-code-best/builtin-tools/tools/BriefTool/prompt.js';
 import { getTools } from './tools.js';
 import {
   canUserConfigureAdvisor,
@@ -211,7 +207,6 @@ import {
 import { ensureModelStringsInitialized } from './utils/model/modelStrings.js';
 import { PERMISSION_MODES } from './utils/permissions/PermissionMode.js';
 import {
-  checkAndDisableBypassPermissions,
   getAutoModeEnabledStateIfCached,
   initializeToolPermissionContext,
   initialPermissionModeFromCLI,
@@ -342,7 +337,7 @@ import { onChangeAppState } from './state/onChangeAppState.js';
 import { createStore } from './state/store.js';
 import { asSessionId } from './types/ids.js';
 import { filterAllowedSdkBetas } from './utils/betas.js';
-import { isInBundledMode, isRunningWithBun } from './utils/bundledMode.js';
+import { isInBundledMode } from './utils/bundledMode.js';
 import { logForDiagnosticsNoPII } from './utils/diagLogs.js';
 import { filterExistingPaths, getKnownPathsForRepo } from './utils/githubRepoPathMapping.js';
 import { clearPluginCache, loadAllPluginsCacheOnly } from './utils/plugins/pluginLoader.js';
@@ -380,38 +375,6 @@ function logManagedSettings(): void {
     }
   } catch {
     // Silently ignore errors - this is just for analytics
-  }
-}
-
-// Check if running in debug/inspection mode
-function _isBeingDebugged() {
-  const isBun = isRunningWithBun();
-
-  // Check for inspect flags in process arguments (including all variants)
-  const hasInspectArg = process.execArgv.some(arg => {
-    if (isBun) {
-      // Note: Bun has an issue with single-file executables where application arguments
-      // from process.argv leak into process.execArgv (similar to https://github.com/oven-sh/bun/issues/11673)
-      // This breaks use of --debug mode if we omit this branch
-      // We're fine to skip that check, because Bun doesn't support Node.js legacy --debug or --debug-brk flags
-      return /--inspect(-brk)?/.test(arg);
-    } else {
-      // In Node.js, check for both --inspect and legacy --debug flags
-      return /--inspect(-brk)?|--debug(-brk)?/.test(arg);
-    }
-  });
-
-  // Check if NODE_OPTIONS contains inspect flags
-  const hasInspectEnv = process.env.NODE_OPTIONS && /--inspect(-brk)?|--debug(-brk)?/.test(process.env.NODE_OPTIONS);
-
-  // Check if inspector is available and active (indicates debugging)
-  try {
-    const inspector = require('node:inspector') as typeof import('node:inspector');
-    const hasInspectorUrl = !!inspector.url();
-    return hasInspectorUrl || hasInspectArg || hasInspectEnv;
-  } catch {
-    // Ignore error and fall back to argument detection
-    return hasInspectArg || hasInspectEnv;
   }
 }
 

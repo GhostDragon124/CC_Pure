@@ -287,7 +287,9 @@ export async function* queryModelOpenAI(
     // 8. Get client and make streaming request
     const client = getOpenAIClient({
       maxRetries: 0,
-      fetchOverride: options.fetchOverride as unknown as typeof fetch | undefined,
+      fetchOverride: options.fetchOverride as unknown as
+        | typeof fetch
+        | undefined,
       source: options.querySource,
     })
 

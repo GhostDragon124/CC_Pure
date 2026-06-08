@@ -4,8 +4,8 @@
 // Renders the initial directive for a fork child conversation.
 // Stub: renders null.
 
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
 export function UserForkBoilerplateMessage(): ReactNode {
-  return null
+  return null;
 }

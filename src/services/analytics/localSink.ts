@@ -13,7 +13,10 @@ import * as path from 'node:path'
 import * as os from 'node:os'
 
 const LOCAL_ANALYTICS_DIR = path.join(os.homedir(), '.claude')
-const LOCAL_ANALYTICS_FILE = path.join(LOCAL_ANALYTICS_DIR, 'local_analytics.jsonl')
+const LOCAL_ANALYTICS_FILE = path.join(
+  LOCAL_ANALYTICS_DIR,
+  'local_analytics.jsonl',
+)
 
 // Ensure the directory exists on first write
 let dirEnsured = false
@@ -35,11 +38,12 @@ export function writeLocalEvent(
 ): void {
   try {
     ensureDir()
-    const line = JSON.stringify({
-      ts: new Date().toISOString(),
-      event: eventName,
-      ...metadata,
-    }) + '\n'
+    const line =
+      JSON.stringify({
+        ts: new Date().toISOString(),
+        event: eventName,
+        ...metadata,
+      }) + '\n'
     fs.appendFileSync(LOCAL_ANALYTICS_FILE, line, 'utf-8')
   } catch {
     // Silently ignore write failures — analytics must never crash the app

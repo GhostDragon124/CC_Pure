@@ -1,22 +1,15 @@
 // McpManager — imperative API for MCP protocol client
 // Factory function that creates a manager instance with event-based notifications
 
-import type { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import type { ListToolsResult } from '@modelcontextprotocol/sdk/types.js'
-import memoize from 'lodash-es/memoize.js'
-import { buildMcpToolName } from './strings.js'
 import type { CoreTool } from '@claude-code-best/agent-tools'
 import type {
   McpServerConfig,
   ScopedMcpServerConfig,
   MCPServerConnection,
   ConnectedMCPServer,
-  FailedMCPServer,
-  NeedsAuthMCPServer,
 } from './types.js'
 import type { McpClientDependencies } from './interfaces.js'
-import { McpConnectionError, McpAuthError, McpTimeoutError } from './errors.js'
-import { memoizeWithLRU } from './cache.js'
+import { McpConnectionError } from './errors.js'
 import { discoverTools } from './discovery.js'
 import { callMcpTool } from './execution.js'
 
@@ -56,13 +49,6 @@ export interface McpManager {
   ): void
   off(event: string, handler: EventHandler): void
 }
-
-// ============================================================================
-// Default timeout
-// ============================================================================
-
-const MCP_TIMEOUT_MS = 30_000
-const MCP_REQUEST_TIMEOUT_MS = 60_000
 
 // ============================================================================
 // Manager implementation

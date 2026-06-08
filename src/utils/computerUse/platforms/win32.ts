@@ -42,9 +42,7 @@ import {
   psAsync,
   validateHwnd,
   VK_MAP,
-  MODIFIER_KEYS,
 } from '../win32/shared.js'
-import { logForDebugging } from '../../debug.js'
 
 // ---------------------------------------------------------------------------
 // Python Bridge (lazy-loaded, preferred over PowerShell for screenshots)
@@ -139,7 +137,6 @@ public class CuWin32 {
 // ---------------------------------------------------------------------------
 
 let boundHwnd: string | null = null
-let boundPid: number | null = null
 let boundAppType: import('../win32/appDispatcher.js').AppType | null = null
 let boundFilePath: string | null = null
 
@@ -163,7 +160,6 @@ export function bindWindow(hwnd: string, pid?: number): void {
     hideIndicator()
   }
   boundHwnd = hwnd
-  boundPid = pid ?? null
   boundAppType = 'generic'
   boundFilePath = null
 
@@ -204,7 +200,6 @@ export function bindFile(
   appType: import('../win32/appDispatcher.js').AppType,
 ): void {
   boundHwnd = null
-  boundPid = null
   boundAppType = appType
   boundFilePath = filePath
 }
@@ -217,7 +212,6 @@ export function unbindWindow(): void {
   // Clear cached edit-child / InputSite mappings
   getWm().clearEditChildCache()
   boundHwnd = null
-  boundPid = null
   boundAppType = null
   boundFilePath = null
 }
@@ -269,7 +263,12 @@ const input: InputPlatform = {
         button as 'left' | 'right',
       )
       if (!ok) {
-        getWm().sendClick(boundHwnd, Math.round(x), Math.round(y), button as 'left' | 'right')
+        getWm().sendClick(
+          boundHwnd,
+          Math.round(x),
+          Math.round(y),
+          button as 'left' | 'right',
+        )
       }
       return
     }

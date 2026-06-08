@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import { upgradeWebSocket } from "../../transport/ws-shared";
-import { apiKeyAuth } from "../../auth/middleware";
 import { validateApiKey } from "../../auth/api-key";
 import {
   handleAcpWsOpen,

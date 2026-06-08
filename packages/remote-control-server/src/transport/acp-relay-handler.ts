@@ -135,7 +135,7 @@ export function closeAllRelayConnections(): void {
   if (relayConnections.size === 0) return;
 
   log(`[ACP-Relay] Closing ${relayConnections.size} relay connection(s)...`);
-  for (const [relayWsId, entry] of relayConnections) {
+  for (const [, entry] of relayConnections) {
     try {
       if (entry.unsub) entry.unsub();
       if (entry.keepalive) clearInterval(entry.keepalive);

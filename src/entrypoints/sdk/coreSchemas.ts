@@ -355,7 +355,6 @@ export const PermissionModeSchema = lazySchema(() =>
     ),
 )
 
-
 // ============================================================================
 // Hook Types
 // ============================================================================
@@ -1174,7 +1173,10 @@ export const AgentDefinitionSchema = lazySchema(() =>
           "Scope for auto-loading agent memory files. 'user' - ~/.claude/agent-memory/<agentType>/, 'project' - .claude/agent-memory/<agentType>/, 'local' - .claude/agent-memory-local/<agentType>/",
         ),
       effort: z
-        .union([z.enum(['low', 'medium', 'high', 'xhigh', 'max']), z.number().int()])
+        .union([
+          z.enum(['low', 'medium', 'high', 'xhigh', 'max']),
+          z.number().int(),
+        ])
         .optional()
         .describe(
           'Reasoning effort level for this agent. Either a named level or an integer',
@@ -1753,7 +1755,6 @@ export const SDKSessionStateChangedMessageSchema = lazySchema(() =>
       "Mirrors notifySessionStateChanged. 'idle' fires after heldBackResult flushes and the bg-agent do-while exits — authoritative turn-over signal.",
     ),
 )
-
 
 export const SDKTaskProgressMessageSchema = lazySchema(() =>
   z.object({

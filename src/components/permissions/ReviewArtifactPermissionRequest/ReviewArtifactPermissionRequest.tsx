@@ -3,8 +3,8 @@
 // Dynamically require'd by PermissionRequest.tsx when REVIEW_ARTIFACT feature is enabled.
 // Stub: renders null.
 
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
 export function ReviewArtifactPermissionRequest(): ReactNode {
-  return null
+  return null;
 }

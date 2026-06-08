@@ -108,7 +108,8 @@ export async function hasImageInClipboard(): Promise<boolean> {
       const { getNativeModule } = await import('image-processor-napi')
       const nativeModule = getNativeModule()
       if (nativeModule && 'hasClipboardImage' in nativeModule) {
-        const hasImage = (nativeModule as unknown as Record<string, Function>).hasClipboardImage
+        const hasImage = (nativeModule as unknown as Record<string, Function>)
+          .hasClipboardImage
         if (hasImage) return hasImage()
       }
     } catch (e) {
@@ -137,9 +138,11 @@ export async function getImageFromClipboard(): Promise<ImageWithDimensions | nul
     try {
       const { getNativeModule } = await import('image-processor-napi')
       const nativeModule = getNativeModule()
-      const readClipboard = nativeModule && 'readClipboardImage' in nativeModule
-        ? (nativeModule as unknown as Record<string, Function>).readClipboardImage
-        : undefined
+      const readClipboard =
+        nativeModule && 'readClipboardImage' in nativeModule
+          ? (nativeModule as unknown as Record<string, Function>)
+              .readClipboardImage
+          : undefined
       if (!readClipboard) {
         throw new Error('native clipboard reader unavailable')
       }
@@ -192,8 +195,7 @@ export async function getImageFromClipboard(): Promise<ImageWithDimensions | nul
     // Check if clipboard has image
     // Security: commands.checkImage is a fixed platform string (from
     // getClipboardCommands()), not user-controllable input
-    const checkResult = await execa(commands.checkImage, {
-      shell: true,
+    const checkResult = await execa('sh', ['-c', commands.checkImage], {
       reject: false,
     })
     if (checkResult.exitCode !== 0) {
@@ -202,8 +204,7 @@ export async function getImageFromClipboard(): Promise<ImageWithDimensions | nul
 
     // Save the image
     // Security: commands.saveImage is a fixed platform string, not user-controllable
-    const saveResult = await execa(commands.saveImage, {
-      shell: true,
+    const saveResult = await execa('sh', ['-c', commands.saveImage], {
       reject: false,
     })
     if (saveResult.exitCode !== 0) {
@@ -237,7 +238,7 @@ export async function getImageFromClipboard(): Promise<ImageWithDimensions | nul
 
     // Cleanup (fire-and-forget, don't await)
     // Security: commands.deleteFile is a fixed platform string, not user-controllable
-    void execa(commands.deleteFile, { shell: true, reject: false })
+    void execa('sh', ['-c', commands.deleteFile], { reject: false })
 
     return {
       base64: base64Image,
@@ -255,8 +256,7 @@ export async function getImagePathFromClipboard(): Promise<string | null> {
   try {
     // Try to get text from clipboard
     // Security: commands.getPath is a fixed platform string, not user-controllable
-    const result = await execa(commands.getPath, {
-      shell: true,
+    const result = await execa('sh', ['-c', commands.getPath], {
       reject: false,
     })
     if (result.exitCode !== 0 || !result.stdout) {

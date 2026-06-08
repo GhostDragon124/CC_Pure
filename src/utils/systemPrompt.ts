@@ -13,9 +13,7 @@ import * as proactiveModuleValue from '../proactive/index.js'
 export { asSystemPrompt, type SystemPrompt } from './systemPromptType.js'
 
 const proactiveModule =
-  feature('PROACTIVE') || feature('KAIROS')
-    ? proactiveModuleValue
-    : null
+  feature('PROACTIVE') || feature('KAIROS') ? proactiveModuleValue : null
 
 function isProactiveActive_SAFE_TO_CALL_ANYWHERE(): boolean {
   return proactiveModule?.isProactiveActive() ?? false

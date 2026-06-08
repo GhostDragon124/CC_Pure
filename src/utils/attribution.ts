@@ -18,7 +18,6 @@ import {
   type AttributionData,
   calculateCommitAttribution,
   isInternalModelRepo,
-  isInternalModelRepoCached,
   sanitizeModelName,
 } from './commitAttribution.js'
 import { getRealModelName } from './attributionModel.js'
@@ -28,8 +27,6 @@ import { logError } from './log.js'
 import {
   getCanonicalName,
   getMainLoopModel,
-  getPublicModelDisplayName,
-  getPublicModelName,
 } from './model/model.js'
 import { isMemoryFileAccess } from './sessionFileAccessHooks.js'
 import { getTranscriptPath } from './sessionStorage.js'

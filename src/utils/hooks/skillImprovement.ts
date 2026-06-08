@@ -271,7 +271,9 @@ Rules:
 
   endTrace(langfuseTrace)
 
-  const responseText = extractTextContent(Array.isArray(response.message.content) ? response.message.content : []).trim()
+  const responseText = extractTextContent(
+    Array.isArray(response.message.content) ? response.message.content : [],
+  ).trim()
 
   const updatedContent = extractTag(responseText, 'updated_file')
   if (!updatedContent) {

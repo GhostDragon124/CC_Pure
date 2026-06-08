@@ -1,6 +1,5 @@
 import type { SetStateAction } from 'react'
 import {
-  apiFetchSession,
   apiFetchSessionHistory,
   apiBind,
   apiSendEvent,
@@ -66,12 +65,6 @@ export const sseBus = new SSEBus()
 // =============================================================================
 // RCS Chat Adapter — 将 SSE 事件转为 ThreadEntry
 // =============================================================================
-
-function mapToolStatus(status: string): ToolCallStatus {
-  if (status === 'completed') return 'complete'
-  if (status === 'failed') return 'error'
-  return 'running'
-}
 
 function extractEventText(payload: EventPayload): string {
   if (typeof payload.content === 'string') return payload.content

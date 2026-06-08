@@ -6,9 +6,7 @@ import { TASK_STOP_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TaskS
 import type { PermissionRuleValue } from './PermissionRule.js'
 
 const BRIEF_TOOL_NAME: string | null =
-  feature('KAIROS') || feature('KAIROS_BRIEF')
-    ? BRIEF_TOOL_NAME_VALUE
-    : null
+  feature('KAIROS') || feature('KAIROS_BRIEF') ? BRIEF_TOOL_NAME_VALUE : null
 
 // Maps legacy tool names to their current canonical names.
 // When a tool is renamed, add old → new here so permission rules,

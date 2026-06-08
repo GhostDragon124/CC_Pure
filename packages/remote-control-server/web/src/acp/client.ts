@@ -1,7 +1,6 @@
 import type {
   ACPSettings,
   AgentCapabilities,
-  AgentSessionInfo,
   BrowserToolParams,
   BrowserToolResult,
   ConnectionState,
@@ -16,7 +15,6 @@ import type {
   ResumeSessionRequest,
   SessionUpdate,
   SessionModelState,
-  ModelInfo,
   AvailableCommand,
 } from './types'
 
@@ -118,8 +116,6 @@ export class ACPClient {
     reject: (err: Error) => void
     timer: ReturnType<typeof setTimeout>
   } | null = null
-  // biome-ignore lint/correctness/noUnusedPrivateClassMembers: state flag — tracks active session target for pending operations
-  private pendingSessionTarget: string | null = null
 
   private connectResolve: ((value: undefined) => void) | null = null
   private connectReject: ((error: Error) => void) | null = null
@@ -416,7 +412,6 @@ export class ACPClient {
         this._error('[ACPClient] Error:', response.payload)
         const errorMsg =
           response.payload?.message || JSON.stringify(response.payload)
-        this.pendingSessionTarget = null
         // Reject pending session operations if any (clear their timers)
         if (this.pendingSessionList) {
           clearTimeout(this.pendingSessionList.timer)
@@ -447,7 +442,6 @@ export class ACPClient {
 
       case 'session_created':
         this.sessionId = response.payload.sessionId
-        this.pendingSessionTarget = null
         // Reference: Zed stores promptCapabilities from session/initialize response
         this._promptCapabilities = response.payload.promptCapabilities ?? null
         // Reference: Zed stores model state from NewSessionResponse.models
@@ -479,7 +473,6 @@ export class ACPClient {
 
       case 'session_loaded':
         this.sessionId = response.payload.sessionId
-        this.pendingSessionTarget = null
         this._promptCapabilities = response.payload.promptCapabilities ?? null
         this._modelState = response.payload.models ?? null
         this._log('[ACPClient] Session loaded:', response.payload.sessionId)
@@ -494,7 +487,6 @@ export class ACPClient {
 
       case 'session_resumed':
         this.sessionId = response.payload.sessionId
-        this.pendingSessionTarget = null
         this._promptCapabilities = response.payload.promptCapabilities ?? null
         this._modelState = response.payload.models ?? null
         this._log('[ACPClient] Session resumed:', response.payload.sessionId)
@@ -769,11 +761,9 @@ export class ACPClient {
       throw new Error('Loading sessions is not supported by this agent')
     }
     return new Promise((resolve, reject) => {
-      this.pendingSessionTarget = request.sessionId
       this.onSessionSwitching?.(request.sessionId)
       const timer = setTimeout(() => {
         if (this.pendingSessionLoad) {
-          this.pendingSessionTarget = null
           this.pendingSessionLoad = null
           reject(new Error('Load session timed out'))
         }
@@ -783,7 +773,6 @@ export class ACPClient {
         this.send({ type: 'load_session', payload: request })
       } catch (err) {
         clearTimeout(timer)
-        this.pendingSessionTarget = null
         this.pendingSessionLoad = null
         reject(err)
       }
@@ -800,11 +789,9 @@ export class ACPClient {
       throw new Error('Resuming sessions is not supported by this agent')
     }
     return new Promise((resolve, reject) => {
-      this.pendingSessionTarget = request.sessionId
       this.onSessionSwitching?.(request.sessionId)
       const timer = setTimeout(() => {
         if (this.pendingSessionResume) {
-          this.pendingSessionTarget = null
           this.pendingSessionResume = null
           reject(new Error('Resume session timed out'))
         }
@@ -814,7 +801,6 @@ export class ACPClient {
         this.send({ type: 'resume_session', payload: request })
       } catch (err) {
         clearTimeout(timer)
-        this.pendingSessionTarget = null
         this.pendingSessionResume = null
         reject(err)
       }
@@ -844,7 +830,6 @@ export class ACPClient {
     }
     this.setState('disconnected')
     this.sessionId = null
-    this.pendingSessionTarget = null
     this._modelState = null
     this._agentCapabilities = null
     this._availableCommands = []

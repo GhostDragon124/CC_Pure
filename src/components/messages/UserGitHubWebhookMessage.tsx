@@ -3,8 +3,8 @@
 // Dynamically require'd by UserTextMessage.tsx when KAIROS_GITHUB_WEBHOOKS feature is enabled.
 // Stub: renders null.
 
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
 export function UserGitHubWebhookMessage(): ReactNode {
-  return null
+  return null;
 }

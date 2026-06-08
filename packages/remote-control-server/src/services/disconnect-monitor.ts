@@ -1,4 +1,4 @@
-import { log, error as logError } from "../logger";
+import { log } from "../logger";
 import { storeListActiveEnvironments, storeUpdateEnvironment, storeMarkAcpAgentOffline } from "../store";
 import { storeListSessions } from "../store";
 import { config } from "../config";

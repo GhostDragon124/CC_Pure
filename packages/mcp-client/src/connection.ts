@@ -86,8 +86,6 @@ export async function withConnectionTimeout<T>(
   timeoutMs: number,
   onTimeout: () => Promise<void> | void,
 ): Promise<T> {
-  const startTime = Date.now()
-
   const timeoutPromise = new Promise<never>((_, reject) => {
     const timeoutId = setTimeout(async () => {
       await onTimeout()
@@ -205,7 +203,6 @@ export function installConnectionMonitor(
     serverName,
     transportType,
     logger,
-    closeTransport,
     onConnectionClosed,
   } = options
   const connectionStartTime = Date.now()
@@ -448,7 +445,6 @@ export interface CleanupOptions {
 export function createCleanup(options: CleanupOptions): () => Promise<void> {
   const {
     client,
-    transport,
     transportType,
     childPid,
     inProcessServer,

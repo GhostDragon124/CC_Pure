@@ -220,7 +220,7 @@ export function closeAllConnections(): void {
   if (count === 0) return;
 
   log(`[WS] Gracefully closing ${count} active connection(s)...`);
-  for (const [sessionId, entry] of cleanupBySession) {
+  for (const [, entry] of cleanupBySession) {
     try {
       entry.unsub();
       clearInterval(entry.keepalive);

@@ -9,9 +9,7 @@ const SEND_USER_FILE_TOOL_NAME_VALUE = 'SendUserFile'
 
 // Dead code elimination: Brief tool names are only used when KAIROS/KAIROS_BRIEF is on.
 const BRIEF_TOOL_NAME: string | null =
-  feature('KAIROS') || feature('KAIROS_BRIEF')
-    ? BRIEF_TOOL_NAME_VALUE
-    : null
+  feature('KAIROS') || feature('KAIROS_BRIEF') ? BRIEF_TOOL_NAME_VALUE : null
 const SEND_USER_FILE_TOOL_NAME: string | null = feature('KAIROS')
   ? SEND_USER_FILE_TOOL_NAME_VALUE
   : null
@@ -73,7 +71,8 @@ export function isDeferredTool(tool: Tool): boolean {
     type ForkMod =
       typeof import('@claude-code-best/builtin-tools/tools/AgentTool/forkSubagent.js')
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const m = require('@claude-code-best/builtin-tools/tools/AgentTool/forkSubagent.js') as ForkMod
+    const m =
+      require('@claude-code-best/builtin-tools/tools/AgentTool/forkSubagent.js') as ForkMod
     if (m.isForkSubagentEnabled()) return false
   }
 

@@ -4,8 +4,8 @@
 // Dynamically require'd by Message.tsx.
 // Stub: renders null.
 
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
 export function SnipBoundaryMessage(): ReactNode {
-  return null
+  return null;
 }

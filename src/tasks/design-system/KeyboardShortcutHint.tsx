@@ -3,8 +3,14 @@
 // Imported by MonitorMcpTask dialogs for rendering keyboard shortcut hints.
 // Stub: renders nothing.
 
-import React from 'react'
+import React from 'react';
 
-export function KeyboardShortcutHint({ shortcut: _shortcut, action: _action }: { shortcut?: string; action?: string }): React.ReactNode {
-  return null
+export function KeyboardShortcutHint({
+  shortcut: _shortcut,
+  action: _action,
+}: {
+  shortcut?: string;
+  action?: string;
+}): React.ReactNode {
+  return null;
 }

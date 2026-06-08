@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { apiFetchSession, apiSendControl, apiInterrupt } from '../api/client';
-import type { Session, SessionEvent } from '../types';
-import { isClosedSessionStatus, formatTime, cn } from '../lib/utils';
+import { apiFetchSession, apiSendControl } from '../api/client';
+import type { Session } from '../types';
+import { isClosedSessionStatus, formatTime } from '../lib/utils';
 import { Info } from 'lucide-react';
 import { RCSChatAdapter } from '../lib/rcs-chat-adapter';
 import type { ThreadEntry, PendingPermission } from '../lib/types';

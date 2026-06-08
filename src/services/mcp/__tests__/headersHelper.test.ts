@@ -37,9 +37,12 @@ function makeConfig(headersHelper: string): McpHTTPServerConfig {
 function validHelperCommand(value: string): string {
   const script =
     'console.log(JSON.stringify({ Authorization: process.argv[1] }))'
-  return [process.execPath, '-e', JSON.stringify(script), JSON.stringify(value)].join(
-    ' ',
-  )
+  return [
+    process.execPath,
+    '-e',
+    JSON.stringify(script),
+    JSON.stringify(value),
+  ].join(' ')
 }
 
 describe('getMcpHeadersFromHelper', () => {
