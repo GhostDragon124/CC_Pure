@@ -719,6 +719,15 @@ export function DiscoverPlugins({
         </Box>
       )}
 
+      {/* Error messages */}
+      {error && (
+        <Box marginTop={1}>
+          <Text color="error">
+            {figures.cross} {error}
+          </Text>
+        </Box>
+      )}
+
       <DiscoverPluginsKeyHint
         hasSelection={selectedForInstall.size > 0}
         canToggle={selectedIndex < filteredPlugins.length && !filteredPlugins[selectedIndex]?.isInstalled}
