@@ -41,9 +41,7 @@ export function renderToolUseMessage(
 
   let message = '';
 
-  if (query) {
-    message += `"${query}"`;
-  }
+  message += `"${query}"`;
 
   if (verbose) {
     if (allowed_domains && allowed_domains.length > 0) {

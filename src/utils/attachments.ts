@@ -820,6 +820,7 @@ export async function getAttachments(
                   suppressNextDiscovery = false
                   return []
                 }
+                suppressNextDiscovery = true
                 const result =
                   await skillSearchModules.prefetch.getTurnZeroSkillDiscovery(
                     input,

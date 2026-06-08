@@ -146,10 +146,10 @@ function extractQuotedContent(command: string, isJq = false): QuoteExtraction {
     }
 
     if (char === '\\' && !inSingleQuote) {
+      withDoubleQuotes += char
+      if (!inDoubleQuote) fullyUnquoted += char
+      if (!inDoubleQuote) unquotedKeepQuoteChars += char
       escaped = true
-      if (!inSingleQuote) withDoubleQuotes += char
-      if (!inSingleQuote && !inDoubleQuote) fullyUnquoted += char
-      if (!inSingleQuote && !inDoubleQuote) unquotedKeepQuoteChars += char
       continue
     }
 
@@ -1574,7 +1574,6 @@ function hasBackslashEscapedWhitespace(command: string): boolean {
 
     if (char === "'" && !inDoubleQuote) {
       inSingleQuote = !inSingleQuote
-      continue
     }
   }
 
@@ -1687,7 +1686,6 @@ function hasBackslashEscapedOperator(command: string): boolean {
     }
     if (char === '"' && !inSingleQuote) {
       inDoubleQuote = !inDoubleQuote
-      continue
     }
   }
 

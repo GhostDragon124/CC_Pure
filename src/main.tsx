@@ -2049,7 +2049,7 @@ async function run(): Promise<CommanderCommand> {
         }
 
         // For --mcp-config, allow if all servers are internal types (sdk)
-        if (dynamicMcpConfig && !areMcpConfigsAllowedWithEnterpriseMcpConfig(dynamicMcpConfig)) {
+        if (!areMcpConfigsAllowedWithEnterpriseMcpConfig(dynamicMcpConfig)) {
           process.stderr.write(
             chalk.red('You cannot dynamically configure MCP servers when an enterprise MCP config is present'),
           );

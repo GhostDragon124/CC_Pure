@@ -62,10 +62,10 @@ export function ThemeProvider({
   defaultTheme = 'system',
 }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>(
-    () => getStoredTheme() || defaultTheme,
+    () => getStoredTheme(),
   )
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
-    const stored = getStoredTheme() || defaultTheme
+    const stored = getStoredTheme()
     return stored === 'system' ? getSystemTheme() : stored
   })
 

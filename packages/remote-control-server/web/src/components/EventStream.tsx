@@ -898,7 +898,7 @@ export function useEventProcessor() {
         const text = extractEventText(payload as Record<string, unknown>);
         if (text) {
           setMessages(prev => [...prev, { kind: 'user', content: text }]);
-          if (!replay) showLoading();
+          showLoading();
         }
         break;
       }

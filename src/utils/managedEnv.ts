@@ -71,7 +71,7 @@ let ccdSpawnEnvKeys: Set<string> | null | undefined
 function withoutCcdSpawnEnvKeys(
   env: Record<string, string> | undefined,
 ): Record<string, string> {
-  if (!env || !ccdSpawnEnvKeys) return env || {}
+  if (!ccdSpawnEnvKeys) return env
   const out: Record<string, string> = {}
   for (const [key, value] of Object.entries(env)) {
     if (!ccdSpawnEnvKeys.has(key)) out[key] = value

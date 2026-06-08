@@ -15,7 +15,7 @@ export function renderToolUseMessage(
     return null;
   }
   if (verbose) {
-    return `url: "${url}"${verbose && prompt ? `, prompt: "${prompt}"` : ''}`;
+    return `url: "${url}"${prompt ? `, prompt: "${prompt}"` : ''}`;
   }
   return url;
 }
