@@ -9,11 +9,15 @@ export function stripHtmlToText(html: string): string {
   // (e.g. <<scr<script>ipt>...</script>)
   let prev = ''
   let content = html
-  const scriptStyleRegex = /<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi
+  const scriptStyleRegex =
+    /<script[\s\S]*?<\/script\s*>|<style[\s\S]*?<\/style\s*>/gi
   while (content !== prev) {
     prev = content
     content = content.replace(scriptStyleRegex, '')
   }
+  // Final sweep: catch script fragments left after nested bypass
+  // (e.g. <<scr<script>ipt> → <<script> after inner tag removed)
+  content = content.replace(/<script/gi, '')
   return (
     he
       .decode(

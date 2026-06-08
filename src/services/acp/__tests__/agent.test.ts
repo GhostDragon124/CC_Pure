@@ -742,7 +742,7 @@ describe('AcpAgent', () => {
       const res1 = await agent.newSession({ cwd: '/tmp' } as any)
       const sid = res1.sessionId
       const originalSession = agent.sessions.get(sid)
-      const res2 = await agent.unstable_resumeSession({
+      await agent.unstable_resumeSession({
         sessionId: sid,
         cwd: '/tmp',
         mcpServers: [],
