@@ -1431,7 +1431,6 @@ export function updateMessageLookupsIncremental(
     const msg = messages[i]!
     if (msg.type === 'assistant') {
       const aMsg = msg as AssistantMessage
-      const id = aMsg.message.id!
       if (Array.isArray(aMsg.message.content)) {
         const newToolUseIDs: string[] = []
         for (const content of aMsg.message.content) {
@@ -2705,17 +2704,6 @@ export function mergeAssistantMessages(
       ] as ContentBlockParam[] | ContentBlock[],
     },
   }
-}
-
-function isToolResultMessage(msg: Message): boolean {
-  if (msg.type !== 'user') {
-    return false
-  }
-  const content = msg.message?.content
-  if (!content || typeof content === 'string') return false
-  return (content as Array<{ type: string }>).some(
-    block => block.type === 'tool_result',
-  )
 }
 
 export function mergeUserMessages(a: UserMessage, b: UserMessage): UserMessage {
