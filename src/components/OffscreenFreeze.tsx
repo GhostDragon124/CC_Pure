@@ -23,8 +23,6 @@ type Props = {
 export function OffscreenFreeze({ children }: Props): React.ReactNode {
   // React Compiler: reading cached.current in the return is the entire
   // freeze mechanism — memoizing this component would defeat it. Opt out.
-  // eslint-disable-next-line
-  'use no memo';
   const inVirtualList = useContext(InVirtualListContext);
   const [ref, { isVisible }] = useTerminalViewport();
   const cached = useRef(children);

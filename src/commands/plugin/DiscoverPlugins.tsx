@@ -685,11 +685,7 @@ export function DiscoverPlugins({
         const isLast = visibleIndex === visiblePlugins.length - 1;
 
         return (
-          <Box
-            key={`${pagination.startIndex}-${plugin.pluginId}`}
-            flexDirection="column"
-            marginBottom={isLast && !error ? 0 : 1}
-          >
+          <Box key={`${pagination.startIndex}-${plugin.pluginId}`} flexDirection="column" marginBottom={isLast ? 0 : 1}>
             <Box>
               <Text color={isSelected && !isSearchMode ? 'suggestion' : undefined}>
                 {isSelected && !isSearchMode ? figures.pointer : ' '}{' '}

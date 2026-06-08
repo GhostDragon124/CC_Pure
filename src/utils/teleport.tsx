@@ -198,7 +198,7 @@ async function fetchFromOrigin(branch?: string): Promise<void> {
   if (fetchCode !== 0) {
     // If fetching a specific branch fails, it might not exist locally yet
     // Try fetching just the ref without mapping to local branch
-    if (branch && fetchStderr.includes('refspec')) {
+    if (fetchStderr.includes('refspec')) {
       logForDebugging(`Specific branch fetch failed, trying to fetch ref: ${branch}`);
       const { code: refFetchCode, stderr: refFetchStderr } = await execFileNoThrow(gitExe(), [
         'fetch',

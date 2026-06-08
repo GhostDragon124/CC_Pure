@@ -142,8 +142,6 @@ export function StreamingMarkdown({ children }: StreamingProps): React.ReactNode
   // the ref mutation is idempotent under StrictMode double-render — but the
   // compiler can't prove that, and memoizing around the ref reads would
   // break the algorithm (stale boundary). Opt out.
-  // eslint-disable-next-line
-  'use no memo';
   configureMarked();
 
   // Strip before boundary tracking so it matches <Markdown>'s stripping

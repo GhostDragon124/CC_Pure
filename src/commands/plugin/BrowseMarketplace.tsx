@@ -845,7 +845,7 @@ export function BrowseMarketplace({
         const isLast = visibleIndex === visiblePlugins.length - 1;
 
         return (
-          <Box key={plugin.pluginId} flexDirection="column" marginBottom={isLast && !error ? 0 : 1}>
+          <Box key={plugin.pluginId} flexDirection="column" marginBottom={isLast ? 0 : 1}>
             <Box>
               <Text color={isSelected ? 'suggestion' : undefined}>{isSelected ? figures.pointer : ' '} </Text>
               <Text color={plugin.isInstalled ? 'success' : undefined}>
