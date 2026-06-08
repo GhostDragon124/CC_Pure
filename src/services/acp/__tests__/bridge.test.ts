@@ -467,7 +467,7 @@ describe('toolUpdateFromToolResult', () => {
         is_error: false,
         tool_use_id: 't1',
       },
-      { name: 'SearchExtraTools', id: 't1' },
+      { name: 'ToolSearch', id: 't1' },
     )
     expect(result.content).toEqual([
       { type: 'content', content: { type: 'text', text: 'Tool: some_tool' } },
@@ -981,8 +981,7 @@ describe('forwardSessionUpdates', () => {
       undefined,
       unknown
     > {
-      // biome-ignore lint/correctness/useYield: yield before throw keeps biome happy
-      if (false) yield undefined as unknown as SDKMessage
+      yield undefined as unknown as SDKMessage
       throw new Error('stream exploded')
     }
     await expect(
