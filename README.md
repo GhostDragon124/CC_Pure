@@ -80,6 +80,7 @@ CC Pure 基于 CCB v2.6.11 反编译源码，做了以下核心变更：
 | soul-distilled | 2026-06-08 | — | **🎭 人格觉醒**：上线模式系统，7 种 AI 人格即时切换。70KB 泄露 Soul Document 蒸馏为 Claude 专属 persona，模式 systemPrompt 注入系统提示链路打通 |
 | v2.6.11 | 2026-06-06 | 6 commits | **版本同步 2.6.5→2.6.11**：Vite 构建优化 (RSS 966MB→35MB)、ACP subagent 层级透传、cacheWarningEnabled 配置、ACP loadSession/sessionId 对齐。合 6 个功能 commit，跳 1 个（edit tool 旧逻辑删除 — CCP fork 点） |
 | type-wrought | 2026-06-08 | — | **🔧 类型系统完工**：Zod v4 + MCP SDK 类型裂缝修复。`zodMCPCompat.ts` shim 以 `as unknown as` 桥接两套类型入口，消除全部 7 处 `as any`。`tsc --noEmit` **0 错误**——CC_Pure 史上首次 |
+| scars-mapped | 2026-06-09 | — | **🛡️ CodeQL 安全审计完工**：升级 security-and-quality，83→39。44 条修/dismiss（含 3 处功能退化 revert），39 条架构债记录不修（TOCTOU/临时文件/间接注入）。`docs/CodeQL_KNOWN_DEBT.md` |
 | v2.6.5 | 2026-06-05 | 8 commits | **类型修复**：反编译残留全量清零（270→22，248 个修复。剩余 22 为社区代码） + 上游安全 cherry-pick x8 |
 | v2.3.0 | 2026-06-04 | 7 commits | **RCS/Web 全量迁移 + SSH Remote**：vanilla JS → React（29 组件 + shadcn/ui），SSH stub 替换为 2029 行完整实现 |
 | v2.2.2 | 2026-06-04 | 16 文件 | **Autonomy 全量合并**：f2e9af49 PR #386 源码 + 11 测试文件，3699 pass |
@@ -183,7 +184,7 @@ tail -f ~/.claude/local_analytics.jsonl
 | 测试通过 | 3007 | **3919** | +912 |
 | 构建 | 不稳定 | **稳定（splitting: true）** | ✅ |
 | 遥测外连 | 有 | **0** | ✅ |
-| CodeQL open | 175+ | **0** | ✅ |
+| CodeQL open | 175+ | **39**（已知架构债） | 83→39，44 修/dismiss |
 | as any (核心) | 94 | **0** | ✅ |
 
 ### 🔧 Zod v4 类型裂缝修复（方案 C）
@@ -204,9 +205,9 @@ export function asMCPSchema<T extends $ZodType>(
 - 不碰 `node_modules`，不引入 `patch-package`，干净且可维护
 - 全部 7 处替换后 `tsc --noEmit` 归零——CC_Pure 史上首次
 
-### 安全审计（Phase 0-4，已完成）
+### 安全审计（Phase 0-5，已完成）
 
-四阶段安全审计，175 个 CodeQL 告警全量审查并关闭：
+四阶段安全审计 + security-and-quality 升级再审计，175→83→39：
 
 | 阶段 | 范围 | 关键修复 |
 |:----:|------|----------|
@@ -215,8 +216,9 @@ export function asMCPSchema<T extends $ZodType>(
 | 2 | 结构对齐 | 删除 `src/tools/` 去重，修复 BashTool/AgentTool 回归 |
 | 3 | 漏洞修复 | shell 注入、URL 解析、HTML 过滤 |
 | 4 | 残余告警 | 命令注入（which）、ReDoS、净化绕过 |
+| 5 | security-and-quality | 83→39：44 条修/dismiss（含 3 处功能退化 revert 和 stripHtml 加固），39 条架构债记录不修 |
 
-**全部 175 个告警经人工审查后关闭**：误报（PKCE SHA-256、execa 数组 args）、feature-gated 代码、或预期行为。详见 [SECURITY.md](SECURITY.md)。
+**剩余 39 条全为架构债**（file-system-race ×23, insecure-temporary-file ×11, indirect-command-line-injection ×5）——需改变文件操作范式，单用户 CLI 工具中利用窗口极小，记录不修。详见 [docs/CodeQL_KNOWN_DEBT.md](docs/CodeQL_KNOWN_DEBT.md)。
 
 ---
 
