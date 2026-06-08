@@ -29,6 +29,22 @@ export function toInternalMessages(
   messages: readonly DeepImmutable<SDKMessage>[],
 ): Message[] {
   return messages.flatMap(message => {
+    if (message.type === 'system' && message.subtype === 'compact_boundary') {
+      return [
+        {
+          type: 'system',
+          content: 'Conversation compacted',
+          level: 'info',
+          subtype: 'compact_boundary',
+          compactMetadata: fromSDKCompactMetadata(
+            message.compact_metadata as SDKCompactMetadata,
+          ),
+          uuid: message.uuid,
+          timestamp: new Date().toISOString(),
+        } as Message,
+      ]
+    }
+
     switch (message.type) {
       case 'assistant':
         return [
@@ -50,24 +66,6 @@ export function toInternalMessages(
             isMeta: message.isSynthetic,
           } as unknown as Message,
         ]
-        // Handle compact boundary messages
-        if (message.subtype === 'compact_boundary') {
-          const compactMsg = message
-          return [
-            {
-              type: 'system',
-              content: 'Conversation compacted',
-              level: 'info',
-              subtype: 'compact_boundary',
-              compactMetadata: fromSDKCompactMetadata(
-                compactMsg.compact_metadata as SDKCompactMetadata,
-              ),
-              uuid: message.uuid,
-              timestamp: new Date().toISOString(),
-            } as Message,
-          ]
-        }
-        return []
       default:
         return []
     }

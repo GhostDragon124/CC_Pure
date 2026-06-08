@@ -29,11 +29,13 @@ import {
   SYNTHETIC_MODEL,
   ensureToolResultPairing,
 } from '../messages'
+import type { SDKMessage } from '../../entrypoints/agentSdkTypes'
 import type {
   Message,
   AssistantMessage,
   UserMessage,
 } from '../../types/message'
+import { toInternalMessages } from '../messages/mappers'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────
 
@@ -48,6 +50,47 @@ function makeAssistantMsg(
 function makeUserMsg(text: string): UserMessage {
   return createUserMessage({ content: text })
 }
+
+// ─── SDK Message Mappers ────────────────────────────────────────────────
+
+describe('toInternalMessages', () => {
+  test('preserves compact boundary SDK messages', () => {
+    const messages = toInternalMessages([
+      {
+        type: 'system',
+        subtype: 'compact_boundary',
+        uuid: '00000000-0000-0000-0000-000000000001',
+        compact_metadata: {
+          trigger: 'manual',
+          pre_tokens: 123,
+          preserved_segment: {
+            head_uuid: '00000000-0000-0000-0000-000000000002',
+            anchor_uuid: '00000000-0000-0000-0000-000000000003',
+            tail_uuid: '00000000-0000-0000-0000-000000000004',
+          },
+        },
+      } as SDKMessage,
+    ])
+
+    expect(messages).toHaveLength(1)
+    expect(messages[0]).toMatchObject({
+      type: 'system',
+      content: 'Conversation compacted',
+      level: 'info',
+      subtype: 'compact_boundary',
+      uuid: '00000000-0000-0000-0000-000000000001',
+      compactMetadata: {
+        trigger: 'manual',
+        preTokens: 123,
+        preservedSegment: {
+          headUuid: '00000000-0000-0000-0000-000000000002',
+          anchorUuid: '00000000-0000-0000-0000-000000000003',
+          tailUuid: '00000000-0000-0000-0000-000000000004',
+        },
+      },
+    })
+  })
+})
 
 // ─── deriveShortMessageId ───────────────────────────────────────────────
 
