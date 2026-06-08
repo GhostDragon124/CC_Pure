@@ -79,7 +79,7 @@ CC Pure 基于 CCB v2.6.11 反编译源码，做了以下核心变更：
 |------|------|:------:|------|
 | soul-distilled | 2026-06-08 | — | **🎭 人格觉醒**：上线模式系统，7 种 AI 人格即时切换。70KB 泄露 Soul Document 蒸馏为 Claude 专属 persona，模式 systemPrompt 注入系统提示链路打通 |
 | v2.6.11 | 2026-06-06 | 6 commits | **版本同步 2.6.5→2.6.11**：Vite 构建优化 (RSS 966MB→35MB)、ACP subagent 层级透传、cacheWarningEnabled 配置、ACP loadSession/sessionId 对齐。合 6 个功能 commit，跳 1 个（edit tool 旧逻辑删除 — CCP fork 点） |
-| v2.6.11-ccp | 2026-06-08 | — | **🎉 正式版**：Anthropic-core as any 94→1、反编译残留全量清零 (tsc 270→20)、CodeQL 安全审计完成 (175→0)、上游 commit 逐条审查 187→59 MERGE、完整类型安全文档体系 |
+| type-wrought | 2026-06-08 | — | **🔧 类型系统完工**：Zod v4 + MCP SDK 类型裂缝修复。`zodMCPCompat.ts` shim 以 `as unknown as` 桥接两套类型入口，消除全部 7 处 `as any`。`tsc --noEmit` **0 错误**——CC_Pure 史上首次 |
 | v2.6.5 | 2026-06-05 | 8 commits | **类型修复**：反编译残留全量清零（270→22，248 个修复。剩余 22 为社区代码） + 上游安全 cherry-pick x8 |
 | v2.3.0 | 2026-06-04 | 7 commits | **RCS/Web 全量迁移 + SSH Remote**：vanilla JS → React（29 组件 + shadcn/ui），SSH stub 替换为 2029 行完整实现 |
 | v2.2.2 | 2026-06-04 | 16 文件 | **Autonomy 全量合并**：f2e9af49 PR #386 源码 + 11 测试文件，3699 pass |
@@ -179,12 +179,30 @@ tail -f ~/.claude/local_analytics.jsonl
 
 | 指标 | CCB 基线 | CC Pure 当前 | 提升 |
 |------|:--------:|:----------:|:----:|
-| tsc 错误 | 62 | **20** (全部社区代码) | 反编译残留清零 |
+| tsc 错误 | 62 | **0** | 反编译残留+类型裂缝全清零 |
 | 测试通过 | 3007 | **3919** | +912 |
 | 构建 | 不稳定 | **稳定（splitting: true）** | ✅ |
 | 遥测外连 | 有 | **0** | ✅ |
 | CodeQL open | 175+ | **0** | ✅ |
-| as any (核心) | 94 | **1** (社区代码) | ✅ |
+| as any (核心) | 94 | **0** | ✅ |
+
+### 🔧 Zod v4 类型裂缝修复（方案 C）
+
+Anthropic 原版代码中 Zod v4 和 MCP SDK (`zod-compat`) 存在类型裂缝——两者从不同入口导入 schema 类型（`zod/v4` vs `zod/v4/core`），TS 不认为它们兼容。上游用 `as any` 糊弄了 7 处。
+
+我们的方案 C 创建了 `src/utils/zodMCPCompat.ts`——一个 9 行的本地 type shim：
+
+```ts
+export function asMCPSchema<T extends $ZodType>(
+  schema: () => T,
+): () => AnyObjectSchema {
+  return schema as unknown as () => AnyObjectSchema
+}
+```
+
+- `as unknown as` 不是 `as any`——它精确声明两个类型在运行时等同，中间的 `unknown` 告诉 TS 这不是意外
+- 不碰 `node_modules`，不引入 `patch-package`，干净且可维护
+- 全部 7 处替换后 `tsc --noEmit` 归零——CC_Pure 史上首次
 
 ### 安全审计（Phase 0-4，已完成）
 
