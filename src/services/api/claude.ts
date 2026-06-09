@@ -1383,9 +1383,8 @@ async function* queryModel(
   // so the fingerprint reflects the actual user input.
   const fingerprint = computeFingerprintFromMessages(messagesForAPI)
 
-  // When the delta attachment is enabled, deferred tools are announced
-  // via persisted deferred_tools_delta attachments instead of this
-  // ephemeral prepend (which busts cache whenever the pool changes).
+  // Compute deferred tool list once for reuse in both system prompt and reminder paths
+  let deferredToolListContent = ''
   if (useSearchExtraTools && !isDeferredToolsDeltaEnabled()) {
     const deferredToolList = tools
       .filter(t => deferredToolNames.has(t.name))
@@ -1393,16 +1392,26 @@ async function* queryModel(
       .sort()
       .join('\n')
     if (deferredToolList) {
-      // Append to the end of the messages array (not prepend) so it
-      // never抢占 <project-instructions> (CLAUDE.md) at the front.
-      messagesForAPI = [
-        ...messagesForAPI,
-        createUserMessage({
-          content: `<system-reminder>\n<available-deferred-tools>\n${deferredToolList}\n</available-deferred-tools>\n</system-reminder>`,
-          isMeta: true,
-        }),
-      ]
+      deferredToolListContent = `<available-deferred-tools>\n${deferredToolList}\n</available-deferred-tools>`
     }
+  }
+
+  // When MCP servers are still pending, tools may appear dynamically,
+  // so append the list as a per-turn reminder (outside cache breakpoint).
+  // When stable (!hasPendingMcpServers), move the list into the system
+  // prompt prefix (inside cache) to save tokens across turns.
+  const shouldAppendDeferredListAsReminder =
+    deferredToolListContent && options.hasPendingMcpServers
+  if (shouldAppendDeferredListAsReminder) {
+    // Append to the end of the messages array (not prepend) so it
+    // never抢占 <project-instructions> (CLAUDE.md) at the front.
+    messagesForAPI = [
+      ...messagesForAPI,
+      createUserMessage({
+        content: `<system-reminder>\n${deferredToolListContent}\n</system-reminder>`,
+        isMeta: true,
+      }),
+    ]
   }
 
   // Chrome tool-search instructions: when the delta attachment is enabled,
@@ -1415,6 +1424,14 @@ async function* queryModel(
   const injectChromeHere =
     useSearchExtraTools && hasChromeTools && !isMcpInstructionsDeltaEnabled()
 
+  // Inject deferred tool list into system prompt when MCP is stable.
+  // When !hasPendingMcpServers, the list is static across turns, so placing
+  // it in the system prompt prefix allows cache reuse (no per-turn reminder cost).
+  const deferredToolListForSystemPrompt =
+    deferredToolListContent && !options.hasPendingMcpServers
+      ? deferredToolListContent
+      : ''
+
   // filter(Boolean) works by converting each element to a boolean - empty strings become false and are filtered out.
   systemPrompt = asSystemPrompt(
     [
@@ -1424,6 +1441,9 @@ async function* queryModel(
         hasAppendSystemPrompt: options.hasAppendSystemPrompt,
       }),
       ...systemPrompt,
+      ...(deferredToolListForSystemPrompt
+        ? [deferredToolListForSystemPrompt]
+        : []),
       ...(advisorModel ? [ADVISOR_TOOL_INSTRUCTIONS] : []),
       ...(injectChromeHere ? [CHROME_SEARCH_EXTRA_TOOLS_INSTRUCTIONS] : []),
     ].filter(Boolean),
