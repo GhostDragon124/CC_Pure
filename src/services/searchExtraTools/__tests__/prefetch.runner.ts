@@ -74,7 +74,6 @@ mock.module('src/services/searchExtraTools/toolIndex.js', () => ({
 
 const {
   startSearchExtraToolsPrefetch,
-  getTurnZeroSearchExtraToolsPrefetch,
   collectSearchExtraToolsPrefetch,
   buildToolDiscoveryAttachment,
 } = await import('../prefetch.js')
@@ -145,51 +144,6 @@ describe('startSearchExtraToolsPrefetch', () => {
       makeMockMessages('test'),
     )
     expect(result).toEqual([])
-  })
-})
-
-describe('getTurnZeroSearchExtraToolsPrefetch', () => {
-  beforeEach(() => {
-    mockGetToolIndex.mockResolvedValue([
-      { name: 'index-entry', tokens: ['test'], tfVector: new Map() },
-    ] as never)
-    mockSearchTools.mockReturnValue([])
-  })
-
-  test('returns non-null attachment for matching tools', async () => {
-    mockSearchTools.mockReturnValue([
-      {
-        name: 'CronCreateTool',
-        description: 'Create cron jobs',
-        searchHint: 'schedule recurring',
-        score: 0.5,
-        isMcp: false,
-        isDeferred: true,
-        inputSchema: undefined,
-      },
-    ] as never)
-
-    const result = await getTurnZeroSearchExtraToolsPrefetch(
-      'schedule cron job',
-      [],
-    )
-    // Feature disabled: turn-zero user-input tool recommendations caused
-    // frequent popups. Function is hardcoded to return null.
-    expect(result).toBeNull()
-  })
-
-  test('returns null for empty input', async () => {
-    const result = await getTurnZeroSearchExtraToolsPrefetch('', [])
-    expect(result).toBeNull()
-  })
-
-  test('returns null when no tools match', async () => {
-    mockSearchTools.mockReturnValue([])
-    const result = await getTurnZeroSearchExtraToolsPrefetch(
-      'quantum physics',
-      [],
-    )
-    expect(result).toBeNull()
   })
 })
 

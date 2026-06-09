@@ -135,16 +135,6 @@ export async function startSearchExtraToolsPrefetch(
   }
 }
 
-export async function getTurnZeroSearchExtraToolsPrefetch(
-  _input: string,
-  _tools: Tools,
-): Promise<Attachment | null> {
-  // Disabled: turn-zero user-input tool recommendations caused frequent
-  // popups. Inter-turn discovery (startSearchExtraToolsPrefetch) is still
-  // active and provides non-intrusive suggestions during assistant turns.
-  return null
-}
-
 export async function collectSearchExtraToolsPrefetch(
   pending: Promise<Attachment[]>,
 ): Promise<Attachment[]> {

@@ -96,12 +96,7 @@ const skillSearchModules = feature('EXPERIMENTAL_SKILL_SEARCH')
         require('../services/skillSearch/prefetch.js') as typeof import('../services/skillSearch/prefetch.js'),
     }
   : null
-const searchExtraToolsModules = feature('EXPERIMENTAL_SEARCH_EXTRA_TOOLS')
-  ? {
-      prefetch:
-        require('../services/searchExtraTools/prefetch.js') as typeof import('../services/searchExtraTools/prefetch.js'),
-    }
-  : null
+/* eslint-enable @typescript-eslint/no-require-imports */
 const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER')
   ? autoModeStateModuleValue
   : null
@@ -819,25 +814,6 @@ export async function getAttachments(
                     input,
                     messages ?? [],
                     context,
-                  )
-                return result ? [result] : []
-              }),
-            ]
-          : []),
-        // Tool discovery on turn 0. Inter-turn discovery runs via
-        // startSearchExtraToolsPrefetch in query.ts.
-        ...(feature('EXPERIMENTAL_SEARCH_EXTRA_TOOLS') &&
-        searchExtraToolsModules &&
-        !options?.skipSkillDiscovery
-          ? [
-              maybe('tool_discovery', async () => {
-                if (suppressNextDiscovery) {
-                  return []
-                }
-                const result =
-                  await searchExtraToolsModules.prefetch.getTurnZeroSearchExtraToolsPrefetch(
-                    input,
-                    context.options.tools ?? [],
                   )
                 return result ? [result] : []
               }),
