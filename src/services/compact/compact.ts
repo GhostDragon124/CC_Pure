@@ -18,7 +18,7 @@ import {
   FILE_READ_TOOL_NAME,
   FILE_UNCHANGED_STUB,
 } from '@claude-code-best/builtin-tools/tools/FileReadTool/prompt.js'
-import { SearchExtraToolsTool } from '@claude-code-best/builtin-tools/tools/SearchExtraToolsTool/SearchExtraToolsTool.js'
+import { ToolSearchTool } from 'src/tools/ToolSearchTool/ToolSearchTool.js'
 import type { AgentId } from '../../types/ids.js'
 import type {
   AssistantMessage,
@@ -91,8 +91,8 @@ import {
 } from '../../utils/tokens.js'
 import {
   extractDiscoveredToolNames,
-  isSearchExtraToolsEnabled,
-} from '../../utils/searchExtraTools.js'
+  isToolSearchEnabled,
+} from '../../utils/toolSearch.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -1266,7 +1266,7 @@ async function streamCompactSummary({
 
       // Check if tool search is enabled using the main loop's tools list.
       // context.options.tools includes MCP tools merged via useMergedTools.
-      const useSearchExtraTools = await isSearchExtraToolsEnabled(
+      const useToolSearch = await isToolSearchEnabled(
         context.options.mainLoopModel,
         context.options.tools,
         async () => appState.toolPermissionContext,
@@ -1274,19 +1274,19 @@ async function streamCompactSummary({
         'compact',
       )
 
-      // When tool search is enabled, include SearchExtraToolsTool and MCP tools. They get
+      // When tool search is enabled, include ToolSearchTool and MCP tools. They get
       // defer_loading: true and don't count against context - the API filters them out
       // of system_prompt_tools before token counting (see api/token_count_api/counting.py:188
       // and api/public_api/messages/handler.py:324).
       // Filter MCP tools from context.options.tools (not appState.mcp.tools) so we
       // get the permission-filtered set from useMergedTools — same source used for
-      // isSearchExtraToolsEnabled above and normalizeMessagesForAPI below.
+      // isToolSearchEnabled above and normalizeMessagesForAPI below.
       // Deduplicate by name to avoid API errors when MCP tools share names with built-in tools.
-      const tools: Tool[] = useSearchExtraTools
+      const tools: Tool[] = useToolSearch
         ? uniqBy(
             [
               FileReadTool,
-              SearchExtraToolsTool,
+              ToolSearchTool,
               ...context.options.tools.filter(t => t.isMcp),
             ],
             'name',

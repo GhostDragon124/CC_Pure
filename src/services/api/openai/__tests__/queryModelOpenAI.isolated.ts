@@ -196,7 +196,7 @@ async function runQueryModel(
 // We mock at module level. Bun's mock.module replaces the module for the
 // entire file, so we configure the stream per-test via a shared variable.
 let _nextEvents: BetaRawMessageStreamEvent[] = []
-let _searchExtraToolsEnabled = false
+let _toolSearchEnabled = false
 
 /** Captured arguments from the last chat.completions.create() call */
 let _lastCreateArgs: Record<string, any> | null = null
@@ -330,20 +330,17 @@ mock.module('../../../../utils/api.js', () => ({
   toolToAPISchema: async (t: any) => t,
 }))
 
-mock.module('../../../../utils/searchExtraTools.js', () => ({
-  isSearchExtraToolsEnabled: async () => _searchExtraToolsEnabled,
+mock.module('../../../../utils/toolSearch.js', () => ({
+  isToolSearchEnabled: async () => _toolSearchEnabled,
   extractDiscoveredToolNames: () => new Set(),
   isDeferredToolsDeltaEnabled: () => false,
 }))
 
-mock.module(
-  '@claude-code-best/builtin-tools/tools/SearchExtraToolsTool/prompt.js',
-  () => ({
-    isDeferredTool: (t: any) => t.isMcp === true,
-    formatDeferredToolLine: (t: any) => t.name,
-    SEARCH_EXTRA_TOOLS_TOOL_NAME: '__tool_search__',
-  }),
-)
+mock.module('src/tools/ToolSearchTool/prompt.js', () => ({
+  isDeferredTool: (t: any) => t.isMcp === true,
+  formatDeferredToolLine: (t: any) => t.name,
+  TOOL_SEARCH_TOOL_NAME: '__tool_search__',
+}))
 
 mock.module('../../../../cost-tracker.js', () => ({
   addToTotalSessionCost: () => {},
@@ -623,15 +620,15 @@ describe('queryModelOpenAI — max_tokens forwarded to request', () => {
 })
 
 describe('queryModelOpenAI — deferred MCP tool visibility', () => {
-  test('prepends available deferred MCP tools to OpenAI messages', async () => {
-    _searchExtraToolsEnabled = true
+  test('omits undiscovered deferred MCP tools from the OpenAI request', async () => {
+    _toolSearchEnabled = true
     _nextEvents = [makeMessageStart(), makeMessageStop()]
 
     try {
       const { queryModelOpenAI } = await import('../index.js')
       const tools: any[] = [
         {
-          name: 'SearchExtraTools',
+          name: 'ToolSearch',
           isMcp: false,
           input_schema: { type: 'object', properties: {} },
           prompt: async () => 'Search deferred tools',
@@ -670,11 +667,15 @@ describe('queryModelOpenAI — deferred MCP tool visibility', () => {
       }
 
       expect(_lastCreateArgs).not.toBeNull()
-      expect(JSON.stringify(_lastCreateArgs!.messages)).toContain(
-        '<available-deferred-tools>\\nmcp__wechat__send_message\\n</available-deferred-tools>',
+      expect(JSON.stringify(_lastCreateArgs!.messages)).not.toContain(
+        '<available-deferred-tools>',
+      )
+      expect(JSON.stringify(_lastCreateArgs!.tools)).toContain('ToolSearch')
+      expect(JSON.stringify(_lastCreateArgs!.tools)).not.toContain(
+        'mcp__wechat__send_message',
       )
     } finally {
-      _searchExtraToolsEnabled = false
+      _toolSearchEnabled = false
     }
   })
 })

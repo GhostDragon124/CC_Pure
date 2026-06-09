@@ -327,7 +327,7 @@ export function useReplBridge(
                   setMessages(prev => [
                     ...prev,
                     createSystemMessage(
-                      'Remote Control 已连接。现在可以使用 PushNotification、SendUserFile、Brief 工具，请使用 SearchExtraTools 搜索发现。',
+                      'Remote Control 已连接。现在可以使用 PushNotification、SendUserFile、Brief 工具，请使用 ToolSearch 搜索发现。',
                       'info',
                     ),
                   ]);

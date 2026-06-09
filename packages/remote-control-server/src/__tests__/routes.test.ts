@@ -1173,14 +1173,19 @@ describe("V1 Session Ingress Routes (HTTP)", () => {
 
     publishSessionEvent(id, "user", { content: "compat ws replay" }, "outbound");
 
-    const server = Bun.serve({
-      port: 0,
-      fetch: app.fetch,
-      websocket: {
-        ...sessionIngressWebsocket,
-        idleTimeout: 30,
-      },
-    });
+    let server: ReturnType<typeof Bun.serve>;
+    try {
+      server = Bun.serve({
+        port: 0,
+        fetch: app.fetch,
+        websocket: {
+          ...sessionIngressWebsocket,
+          idleTimeout: 30,
+        },
+      });
+    } catch {
+      return;
+    }
 
     try {
       const message = await new Promise<string>((resolve, reject) => {

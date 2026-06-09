@@ -29,9 +29,7 @@ mock.module('src/services/analytics/growthbook.js', () => ({
 }))
 
 const { CORE_TOOLS } = await import('../tools.js')
-const { isDeferredTool } = await import(
-  '@claude-code-best/builtin-tools/tools/SearchExtraToolsTool/prompt.js'
-)
+const { isDeferredTool } = await import('src/tools/ToolSearchTool/prompt.js')
 
 type MockTool = {
   name: string
@@ -66,7 +64,7 @@ describe('CORE_TOOLS', () => {
       'Grep',
       'Agent',
       'AskUserQuestion',
-      'SearchExtraTools',
+      'ToolSearch',
       'WebSearch',
       'WebFetch',
       'Sleep',
@@ -117,14 +115,19 @@ describe('isDeferredTool', () => {
     expect(isDeferredTool(tool as never)).toBe(false)
   })
 
-  test('returns true for non-core built-in tools', () => {
+  test('returns false for built-in tools unless shouldDefer is set', () => {
     const tool = makeTool({ name: 'ConfigTool' })
+    expect(isDeferredTool(tool as never)).toBe(false)
+  })
+
+  test('returns true for built-in tools with shouldDefer: true', () => {
+    const tool = makeTool({ name: 'ConfigTool', shouldDefer: true })
     expect(isDeferredTool(tool as never)).toBe(true)
   })
 
-  test('returns true for agent/team tools (TeamCreate, TeamDelete, SendMessage)', () => {
+  test('returns true for agent/team tools when shouldDefer is set', () => {
     for (const name of ['TeamCreate', 'TeamDelete', 'SendMessage']) {
-      const tool = makeTool({ name })
+      const tool = makeTool({ name, shouldDefer: true })
       expect(isDeferredTool(tool as never), `${name} should be deferred`).toBe(
         true,
       )

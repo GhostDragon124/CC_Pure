@@ -42,9 +42,7 @@ import { randomUUID, type UUID } from 'node:crypto'
 import { dirname } from 'node:path'
 import type { Message } from '../../types/message.js'
 import { deserializeMessages } from '../../utils/conversationRecovery.js'
-import {
-  getLastSessionLog,
-} from '../../utils/sessionStorage.js'
+import { getLastSessionLog } from '../../utils/sessionStorage.js'
 import { QueryEngine } from '../../QueryEngine.js'
 import type { QueryEngineConfig } from '../../QueryEngine.js'
 import type { Tools } from '../../Tool.js'

@@ -37,12 +37,7 @@ import {
   moveVirtualCursor,
 } from '../win32/virtualCursor.js'
 import { showIndicator, hideIndicator } from '../win32/inputIndicator.js'
-import {
-  ps,
-  psAsync,
-  validateHwnd,
-  VK_MAP,
-} from '../win32/shared.js'
+import { ps, psAsync, validateHwnd, VK_MAP } from '../win32/shared.js'
 
 // ---------------------------------------------------------------------------
 // Python Bridge (lazy-loaded, preferred over PowerShell for screenshots)

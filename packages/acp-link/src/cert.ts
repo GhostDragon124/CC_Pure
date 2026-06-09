@@ -13,7 +13,12 @@ import { generate } from "selfsigned";
  */
 export function getLanIPs(): string[] {
   const ips: string[] = [];
-  const nets = networkInterfaces();
+  let nets: ReturnType<typeof networkInterfaces>;
+  try {
+    nets = networkInterfaces();
+  } catch {
+    return ips;
+  }
   for (const name of Object.keys(nets)) {
     for (const net of nets[name] || []) {
       // Skip internal (loopback) and non-IPv4 addresses
@@ -171,4 +176,3 @@ export async function getOrCreateCertificate(): Promise<TlsOptions> {
     cert: pems.cert,
   };
 }
-

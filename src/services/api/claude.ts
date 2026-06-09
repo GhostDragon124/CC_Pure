@@ -154,12 +154,13 @@ import {
 import { getAgentContext } from 'src/utils/agentContext.js'
 import { isClaudeAISubscriber } from 'src/utils/auth.js'
 import {
+  getToolSearchBetaHeader,
   modelSupportsStructuredOutputs,
   shouldIncludeFirstPartyOnlyBetas,
   shouldUseGlobalCacheScope,
 } from 'src/utils/betas.js'
 import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from 'src/utils/claudeInChrome/common.js'
-import { CHROME_SEARCH_EXTRA_TOOLS_INSTRUCTIONS } from 'src/utils/claudeInChrome/prompt.js'
+import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from 'src/utils/claudeInChrome/prompt.js'
 import { getMaxThinkingTokensForModel } from 'src/utils/context.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { logForDiagnosticsNoPII } from 'src/utils/diagLogs.js'
@@ -181,16 +182,17 @@ import {
   type ThinkingConfig,
 } from 'src/utils/thinking.js'
 import {
+  extractDiscoveredToolNames,
   isDeferredToolsDeltaEnabled,
-  isSearchExtraToolsEnabled,
-} from 'src/utils/searchExtraTools.js'
+  isToolSearchEnabled,
+} from 'src/utils/toolSearch.js'
 import { API_MAX_MEDIA_PER_REQUEST } from '../../constants/apiLimits.js'
 import { ADVISOR_BETA_HEADER } from '../../constants/betas.js'
 import {
   formatDeferredToolLine,
   isDeferredTool,
-  SEARCH_EXTRA_TOOLS_TOOL_NAME,
-} from '@claude-code-best/builtin-tools/tools/SearchExtraToolsTool/prompt.js'
+  TOOL_SEARCH_TOOL_NAME,
+} from 'src/tools/ToolSearchTool/prompt.js'
 import { insertBlockAfterToolResults } from '../../utils/contentArray.js'
 import { validateBoundedIntEnvVar } from '../../utils/envValidation.js'
 import { safeParseJSON } from '../../utils/json.js'
@@ -1153,7 +1155,7 @@ async function* queryModel(
 
   // Check if tool search is enabled (checks mode, model support, and threshold for auto mode)
   // This is async because it may need to calculate MCP tool description sizes for TstAuto mode
-  let useSearchExtraTools = await isSearchExtraToolsEnabled(
+  let useToolSearch = await isToolSearchEnabled(
     options.model,
     tools,
     options.getToolPermissionContext,
@@ -1163,7 +1165,7 @@ async function* queryModel(
 
   // Precompute once — isDeferredTool does 2 GrowthBook lookups per call
   const deferredToolNames = new Set<string>()
-  if (useSearchExtraTools) {
+  if (useToolSearch) {
     for (const t of tools) {
       if (isDeferredTool(t)) deferredToolNames.add(t.name)
     }
@@ -1171,46 +1173,51 @@ async function* queryModel(
 
   // Even if tool search mode is enabled, skip if there are no deferred tools
   // AND no MCP servers are still connecting. When servers are pending, keep
-  // SearchExtraTools available so the model can discover tools after they connect.
+  // ToolSearch available so the model can discover tools after they connect.
   if (
-    useSearchExtraTools &&
+    useToolSearch &&
     deferredToolNames.size === 0 &&
     !options.hasPendingMcpServers
   ) {
     logForDebugging(
       'Tool search disabled: no deferred tools available to search',
     )
-    useSearchExtraTools = false
+    useToolSearch = false
   }
 
-  // Dynamic tool loading: filter deferred tools that haven't been discovered yet
+  // Filter out ToolSearchTool if tool search is not enabled for this model.
+  // ToolSearchTool returns tool_reference blocks which unsupported models can't handle.
   let filteredTools: Tools
 
-  // Deferred tools that haven't been discovered are filtered out from the API
-  // request — their schemas are only included after SearchExtraTools discovers them.
+  if (useToolSearch) {
+    // Dynamic tool loading: Only include deferred tools that have been discovered
+    // via tool_reference blocks in the message history. This eliminates the need
+    // to predeclare all deferred tools upfront and removes limits on tool quantity.
+    const discoveredToolNames = extractDiscoveredToolNames(messages)
 
-  if (useSearchExtraTools) {
-    // Never include deferred tools in the API tools array — they are invoked
-    // via ExecuteExtraTool which looks them up from the global tool registry
-    // at runtime. Keeping the tools array stable preserves the prompt cache
-    // across turns (discovered tools no longer bloat the tools JSON).
     filteredTools = tools.filter(tool => {
-      // Always include non-deferred tools (core tools)
+      // Always include non-deferred tools.
       if (!deferredToolNames.has(tool.name)) return true
-      // Always include SearchExtraToolsTool (so it can discover more tools)
-      if (toolMatchesName(tool, SEARCH_EXTRA_TOOLS_TOOL_NAME)) return true
-      // All other deferred tools are excluded — use ExecuteExtraTool instead
-      return false
+      // Always include ToolSearchTool (so it can discover more tools).
+      if (toolMatchesName(tool, TOOL_SEARCH_TOOL_NAME)) return true
+      // Only include deferred tools that have been discovered.
+      return discoveredToolNames.has(tool.name)
     })
   } else {
     filteredTools = tools.filter(
-      t => !toolMatchesName(t, SEARCH_EXTRA_TOOLS_TOOL_NAME),
+      t => !toolMatchesName(t, TOOL_SEARCH_TOOL_NAME),
     )
   }
 
-  // Tool search beta header and defer_loading removed — unified self-built
-  // tool search via SearchExtraToolsTool + ExecuteExtraTool for all providers.
-  // No longer relies on API-side tool_reference or defer_loading features.
+  // Add tool search beta header if enabled - required for defer_loading to be accepted.
+  // Header differs by provider: 1P/Foundry use advanced-tool-use, Vertex/Bedrock use tool-search-tool.
+  // For Bedrock, this header must go in extraBodyParams, not the betas array.
+  const toolSearchHeader = useToolSearch ? getToolSearchBetaHeader() : null
+  if (toolSearchHeader && getAPIProvider() !== 'bedrock') {
+    if (!betas.includes(toolSearchHeader)) {
+      betas.push(toolSearchHeader)
+    }
+  }
 
   // Determine if cached microcompact is enabled for this model.
   // Computed once here (in async context) and captured by paramsFromContext.
@@ -1237,8 +1244,7 @@ async function* queryModel(
 
   const useGlobalCacheFeature = shouldUseGlobalCacheScope()
   const willDefer = (t: Tool) =>
-    useSearchExtraTools &&
-    (deferredToolNames.has(t.name) || shouldDeferLspTool(t))
+    useToolSearch && (deferredToolNames.has(t.name) || shouldDeferLspTool(t))
   // MCP tools are per-user → dynamic tool section → can't globally cache.
   // Only gate when an MCP tool will actually render (not defer_loading).
   const needsToolBasedCacheMarker =
@@ -1262,7 +1268,7 @@ async function* queryModel(
 
   // Build tool schemas, adding defer_loading for MCP tools when tool search is enabled
   // Note: We pass the full `tools` list (not filteredTools) to toolToAPISchema so that
-  // SearchExtraToolsTool's prompt can list ALL available MCP tools. The filtering only affects
+  // ToolSearchTool's prompt can list ALL available MCP tools. The filtering only affects
   // which tools are actually sent to the API, not what the model sees in tool descriptions.
   const toolSchemas = await Promise.all(
     filteredTools.map(tool =>
@@ -1277,9 +1283,12 @@ async function* queryModel(
     ),
   )
 
-  if (useSearchExtraTools) {
+  if (useToolSearch) {
+    const includedDeferredTools = filteredTools.filter(t =>
+      deferredToolNames.has(t.name),
+    ).length
     logForDebugging(
-      `Dynamic tool loading: 0/${deferredToolNames.size} deferred tools in API tools array (all via ExecuteExtraTool)`,
+      `Dynamic tool loading: ${includedDeferredTools}/${deferredToolNames.size} deferred tools included`,
     )
   }
 
@@ -1299,17 +1308,17 @@ async function* queryModel(
   // selected model doesn't support tool search.
   //
   // Why is this needed in addition to normalizeMessagesForAPI?
-  // - normalizeMessagesForAPI uses isSearchExtraToolsEnabledNoModelCheck() because it's
+  // - normalizeMessagesForAPI uses isToolSearchEnabledNoModelCheck() because it's
   //   called from ~20 places (analytics, feedback, sharing, etc.), many of which
   //   don't have model context. Adding model to its signature would be a large refactor.
-  // - This post-processing uses the model-aware isSearchExtraToolsEnabled() check
+  // - This post-processing uses the model-aware isToolSearchEnabled() check
   // - This handles mid-conversation model switching (e.g., Sonnet → Haiku) where
   //   stale tool-search fields from the previous model would cause 400 errors
   //
   // Note: For assistant messages, normalizeMessagesForAPI already normalized the
   // tool inputs, so stripCallerFieldFromAssistantMessage only needs to remove the
   // 'caller' field (not re-normalize inputs).
-  if (!useSearchExtraTools) {
+  if (!useToolSearch) {
     messagesForAPI = messagesForAPI.map(msg => {
       switch (msg.type) {
         case 'user':
@@ -1347,36 +1356,12 @@ async function* queryModel(
   // after shared preprocessing (message normalization, tool filtering,
   // media stripping) but before Anthropic-specific logic (betas, thinking, caching).
 
-  // Compute deferred tool list once for reuse in system prompt + reminders.
-  // Must run BEFORE provider split so both Anthropic and OpenAI paths see it.
-  let deferredToolListContent = ''
-  if (useSearchExtraTools && !isDeferredToolsDeltaEnabled()) {
-    const deferredToolList = tools
-      .filter(t => deferredToolNames.has(t.name))
-      .map(formatDeferredToolLine)
-      .sort()
-      .join('\n')
-    if (deferredToolList) {
-      deferredToolListContent = `<available-deferred-tools>\n${deferredToolList}\n</available-deferred-tools>`
-    }
-  }
-
-  // When MCP is stable (!hasPendingMcpServers), inject deferred list into
-  // systemPrompt prefix so it lives inside the cache breakpoint. When pending,
-  // the list is dynamic — handled per-path via reminders below.
-  if (deferredToolListContent && !options.hasPendingMcpServers) {
-    systemPrompt = [...systemPrompt, deferredToolListContent]
-  }
-
   if (getAPIProvider() === 'openai') {
     const { queryModelOpenAI } = await import('./openai/index.js')
-    // OpenAI emulates Anthropic's dynamic tool loading client-side. It needs
-    // the full tool pool so SearchExtraToolsTool can search deferred MCP tools that
-    // were intentionally filtered out of the initial API tool list above.
     yield* queryModelOpenAI(
       messagesForAPI,
       systemPrompt,
-      tools,
+      filteredTools,
       signal,
       options,
     )
@@ -1405,24 +1390,6 @@ async function* queryModel(
   // so the fingerprint reflects the actual user input.
   const fingerprint = computeFingerprintFromMessages(messagesForAPI)
 
-  // When MCP servers are still pending, tools may appear dynamically,
-  // so append the list as a per-turn reminder (outside cache breakpoint).
-  // When stable (!hasPendingMcpServers), the list is already in systemPrompt
-  // (injected before the provider split above).
-  const shouldAppendDeferredListAsReminder =
-    deferredToolListContent && options.hasPendingMcpServers
-  if (shouldAppendDeferredListAsReminder) {
-    // Append to the end of the messages array (not prepend) so it
-    // never抢占 <project-instructions> (CLAUDE.md) at the front.
-    messagesForAPI = [
-      ...messagesForAPI,
-      createUserMessage({
-        content: `<system-reminder>\n${deferredToolListContent}\n</system-reminder>`,
-        isMeta: true,
-      }),
-    ]
-  }
-
   // Chrome tool-search instructions: when the delta attachment is enabled,
   // these are carried as a client-side block in mcp_instructions_delta
   // (attachments.ts) instead of here. This per-request sys-prompt append
@@ -1431,7 +1398,7 @@ async function* queryModel(
     isToolFromMcpServer(t.name, CLAUDE_IN_CHROME_MCP_SERVER_NAME),
   )
   const injectChromeHere =
-    useSearchExtraTools && hasChromeTools && !isMcpInstructionsDeltaEnabled()
+    useToolSearch && hasChromeTools && !isMcpInstructionsDeltaEnabled()
 
   // filter(Boolean) works by converting each element to a boolean - empty strings become false and are filtered out.
   systemPrompt = asSystemPrompt(
@@ -1443,7 +1410,7 @@ async function* queryModel(
       }),
       ...systemPrompt,
       ...(advisorModel ? [ADVISOR_TOOL_INSTRUCTIONS] : []),
-      ...(injectChromeHere ? [CHROME_SEARCH_EXTRA_TOOLS_INSTRUCTIONS] : []),
+      ...(injectChromeHere ? [CHROME_TOOL_SEARCH_INSTRUCTIONS] : []),
     ].filter(Boolean),
   )
 

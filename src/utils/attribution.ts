@@ -24,10 +24,7 @@ import { getRealModelName } from './attributionModel.js'
 import { logForDebugging } from './debug.js'
 import { parseJSONL } from './json.js'
 import { logError } from './log.js'
-import {
-  getCanonicalName,
-  getMainLoopModel,
-} from './model/model.js'
+import { getCanonicalName, getMainLoopModel } from './model/model.js'
 import { isMemoryFileAccess } from './sessionFileAccessHooks.js'
 import { getTranscriptPath } from './sessionStorage.js'
 import { readTranscriptForLoad } from './sessionStoragePortable.js'

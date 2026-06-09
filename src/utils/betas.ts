@@ -16,8 +16,8 @@ import {
   REDACT_THINKING_BETA_HEADER,
   STRUCTURED_OUTPUTS_BETA_HEADER,
   TOKEN_EFFICIENT_TOOLS_BETA_HEADER,
-  SEARCH_EXTRA_TOOLS_BETA_HEADER_1P,
-  SEARCH_EXTRA_TOOLS_BETA_HEADER_3P,
+  TOOL_SEARCH_BETA_HEADER_1P,
+  TOOL_SEARCH_BETA_HEADER_3P,
   WEB_SEARCH_BETA_HEADER,
 } from '../constants/betas.js'
 import { OAUTH_BETA_HEADER } from '../constants/oauth.js'
@@ -200,12 +200,12 @@ export function modelSupportsAutoMode(model: string): boolean {
  * - Claude API / Foundry: advanced-tool-use-2025-11-20
  * - Vertex AI / Bedrock: tool-search-tool-2025-10-19
  */
-export function getSearchExtraToolsBetaHeader(): string {
+export function getToolSearchBetaHeader(): string {
   const provider = getAPIProvider()
   if (provider === 'vertex' || provider === 'bedrock') {
-    return SEARCH_EXTRA_TOOLS_BETA_HEADER_3P
+    return TOOL_SEARCH_BETA_HEADER_3P
   }
-  return SEARCH_EXTRA_TOOLS_BETA_HEADER_1P
+  return TOOL_SEARCH_BETA_HEADER_1P
 }
 
 /**
@@ -414,8 +414,4 @@ export function clearBetasCaches(): void {
   getAllModelBetas.cache?.clear?.()
   getModelBetas.cache?.clear?.()
   getBedrockExtraBodyParamsBetas.cache?.clear?.()
-}
-
-export function getToolSearchBetaHeader() {
-  return null
 }

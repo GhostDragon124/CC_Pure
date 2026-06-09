@@ -1460,6 +1460,7 @@ export const connectToServer = memoize(
               }
 
               // Wait for graceful shutdown with rapid escalation (total 500ms to keep CLI responsive)
+              // biome-ignore lint/suspicious/noAsyncPromiseExecutor: shutdown escalation is timer/callback driven
               await new Promise<void>(async resolve => {
                 let resolved = false
 

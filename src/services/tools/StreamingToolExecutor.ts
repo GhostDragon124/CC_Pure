@@ -147,7 +147,7 @@ export class StreamingToolExecutor {
   /**
    * Check if a tool can execute based on current concurrency state
    */
-  private canExecuteTool(isConcurrencySafe: boolean): boolean {
+  private can(isConcurrencySafe: boolean): boolean {
     const executingTools = this.tools.filter(t => t.status === 'executing')
     return (
       executingTools.length === 0 ||
@@ -162,7 +162,7 @@ export class StreamingToolExecutor {
     for (const tool of this.tools) {
       if (tool.status !== 'queued') continue
 
-      if (this.canExecuteTool(tool.isConcurrencySafe)) {
+      if (this.can(tool.isConcurrencySafe)) {
         await this.executeTool(tool)
       } else {
         // Can't execute this tool yet, and since we need to maintain order for non-concurrent tools, stop here

@@ -7,6 +7,7 @@ import {
   toRelativePath,
   getDirectoryForPath,
 } from '../path'
+import { runWithCwdOverride } from '../cwd'
 
 // ─── containsPathTraversal ──────────────────────────────────────────────
 
@@ -137,38 +138,46 @@ describe('normalizePathForConfigKey', () => {
 
 describe('toRelativePath', () => {
   test('returns relative path for a child of cwd', () => {
-    // Build a path that is inside the current working directory.
-    // resolve() returns an absolute path, and toRelativePath should give
-    // back just the final segment (or relative form without ..).
-    const abs = resolve(process.cwd(), 'package.json')
-    const result = toRelativePath(abs)
-    expect(result).toBe('package.json')
-    expect(result).not.toContain('..')
+    runWithCwdOverride(process.cwd(), () => {
+      // Build a path that is inside the current working directory.
+      // resolve() returns an absolute path, and toRelativePath should give
+      // back just the final segment (or relative form without ..).
+      const abs = resolve(process.cwd(), 'package.json')
+      const result = toRelativePath(abs)
+      expect(result).toBe('package.json')
+      expect(result).not.toContain('..')
+    })
   })
 
   test('returns absolute path when target is outside cwd', () => {
-    // A well-known absolute path that is always outside any typical cwd
-    // (any absolute path that doesn't start with process.cwd() will work)
-    const cwd = process.cwd()
-    // Build a path guaranteed to be outside cwd by going to the root's parent
-    // of cwd, then a sibling directory with an unlikely name
-    const outsidePath = resolve(cwd, '../../__unlikely_dir_xyz__')
-    const result = toRelativePath(outsidePath)
-    // relative(cwd, outsidePath) will start with '../..' so function returns absolute
-    expect(result).toBe(outsidePath)
+    runWithCwdOverride(process.cwd(), () => {
+      // A well-known absolute path that is always outside any typical cwd
+      // (any absolute path that doesn't start with process.cwd() will work)
+      const cwd = process.cwd()
+      // Build a path guaranteed to be outside cwd by going to the root's parent
+      // of cwd, then a sibling directory with an unlikely name
+      const outsidePath = resolve(cwd, '../../__unlikely_dir_xyz__')
+      const result = toRelativePath(outsidePath)
+      // relative(cwd, outsidePath) will start with '../..' so function returns absolute
+      expect(result).toBe(outsidePath)
+    })
   })
 
   test('returns empty string for cwd itself', () => {
-    const cwd = process.cwd()
-    const result = toRelativePath(cwd)
-    // relative(cwd, cwd) === '' which does not start with '..'
-    expect(result).toBe('')
+    runWithCwdOverride(process.cwd(), () => {
+      const cwd = process.cwd()
+      const result = toRelativePath(cwd)
+      // relative(cwd, cwd) === '' which does not start with '..'
+      expect(result).toBe('')
+    })
   })
 
   test('returns a string for any absolute path', () => {
-    const abs = resolve(process.cwd(), 'src')
-    const result = toRelativePath(abs)
-    expect(typeof result).toBe('string')
+    runWithCwdOverride(process.cwd(), () => {
+      const abs = resolve(process.cwd(), 'src')
+      const result = toRelativePath(abs)
+      expect(typeof result).toBe('string')
+    })
   })
 })
 

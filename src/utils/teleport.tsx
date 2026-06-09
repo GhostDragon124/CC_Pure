@@ -824,6 +824,8 @@ export async function teleportToRemote(options: {
    */
   description?: string;
   model?: string;
+  /** Caller identifier for telemetry/debugging. */
+  source?: string;
   permissionMode?: PermissionMode;
   ultraplan?: boolean;
   signal: AbortSignal;
