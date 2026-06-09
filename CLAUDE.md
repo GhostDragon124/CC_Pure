@@ -88,7 +88,9 @@ bun run docs:dev
 - **Pre-commit**: husky + lint-staged。提交时自动对暂存文件执行 `biome check --fix`（TS/JS）和 `biome format --write`（JSON）。
 - **CI Lint**: `ci.yml` 在依赖安装后、类型检查前执行 `bunx biome ci .`，lint 或格式化不达标则 CI 失败。
 - **Defines**: 集中管理在 `scripts/defines.ts`。当前版本 `2.1.888`。
-- **CI**: GitHub Actions — `ci.yml`（lint + 构建 + 测试）、`release-rcs.yml`（RCS 发布）、`update-contributors.yml`（自动更新贡献者）。
+- **CI**: GitHub Actions — `ci.yml`（lint + 构建 + 测试）、`codeql.yml`（CodeQL 安全扫描）、`release-rcs.yml`（RCS 发布）、`update-contributors.yml`（自动更新贡献者）。
+
+**⛔ WORKFLOW FILES ARE NEVER REDUNDANT.** `.github/workflows/*.yml` 文件绝对不可删除或标记为 dead/冗余。CI 和 CodeQL 是项目质量基础设施，不是可选的。Codex 和其他 agent 曾在 `3013db2d` 一刀切删除全部 4 个 workflow——这是严重错误。任何清理任务都必须跳过 `.github/workflows/` 目录。
 
 ### Entry & Bootstrap
 
