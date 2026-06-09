@@ -174,6 +174,8 @@ tail -f ~/.claude/local_analytics.jsonl
 > Claude 人格提炼自 Anthropic 内部 Claude 4.5 Opus Soul Document（泄露于 2026 年 5 月）。
 > 包含核心人格特质、诚实原则（7 条）、帮助性与谨慎的平衡、协作立场、身份稳定性。
 > 完整蒸馏版 → `src/modes/personas/claude.ts`，一键安装版 → `~/.claude/modes/claude.yaml`。
+>
+> 详见 → [CCP Claude Persona 模式 SWE-bench Lite 评测报告](docs/ccp-claude-persona-swebench-report.md) — 90 实例对比实验：Claude 人格 vs Default，**+11pp 解决率**（68.6% vs 57.5%）
 
 ---
 
