@@ -173,9 +173,9 @@ describe('getTurnZeroSearchExtraToolsPrefetch', () => {
       'schedule cron job',
       [],
     )
-    expect(result).not.toBeNull()
-    expect((result as any).type).toBe('tool_discovery' as any)
-    expect((result as Record<string, unknown>).trigger).toBe('user_input')
+    // Feature disabled: turn-zero user-input tool recommendations caused
+    // frequent popups. Function is hardcoded to return null.
+    expect(result).toBeNull()
   })
 
   test('returns null for empty input', async () => {

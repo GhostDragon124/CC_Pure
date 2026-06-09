@@ -25,7 +25,7 @@ async function runIsolatedTestFile(relativePath: string) {
 describe('queryModelOpenAI isolated runner', () => {
   test('runs queryModelOpenAI regression suite without leaking mocks', async () => {
     await runIsolatedTestFile(
-      './src/services/api/openai/__tests__/queryModelOpenAI.runner.ts',
+      './src/services/api/openai/__tests__/queryModelOpenAI.isolated.ts',
     )
   })
 })

@@ -318,6 +318,7 @@ If no fix was needed, omit <commits-pushed> and <files-changed> and explain in <
     try {
       session = await teleportToRemote({
         initialMessage,
+        source: 'autofix_pr',
         branchName,
         skipBundle: true,
         title: `Autofix PR: ${target}`,

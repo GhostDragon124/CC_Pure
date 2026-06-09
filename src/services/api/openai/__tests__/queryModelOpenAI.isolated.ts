@@ -227,6 +227,7 @@ mock.module('../../../../utils/envUtils.js', () => ({
     value === '1' || value === 'true' || value === 'yes' || value === 'on',
   isEnvDefinedFalsy: (value: string | undefined) =>
     value === '0' || value === 'false' || value === 'no' || value === 'off',
+  getClaudeConfigHomeDir: () => '/tmp/.claude-test',
 }))
 
 mock.module('../../../../services/analytics/growthbook.js', () => ({
@@ -234,9 +235,39 @@ mock.module('../../../../services/analytics/growthbook.js', () => ({
     fallback,
 }))
 
-mock.module('src/bootstrap/state.js', () => ({
-  isReplBridgeActive: () => false,
-}))
+const noop = () => {}
+// Proxy-based state mock: returns noop/Promise.resolve for any unknown export.
+// CC_Pure's import graph pulls in many state exports that upstream doesn't need.
+const stateMock = new Proxy(
+  {
+    isReplBridgeActive: () => false,
+    getSessionId: () => 'test-session',
+    getParentSessionId: () => undefined,
+    getCwdState: () => process.cwd(),
+    getOriginalCwd: () => process.cwd(),
+    getSessionProjectDir: () => null,
+    getProjectRoot: () => process.cwd(),
+    setCwdState: noop,
+    setOriginalCwd: noop,
+    setLastAPIRequestMessages: noop,
+    setLastAPIRequest: noop,
+    getIsNonInteractiveSession: () => false,
+    addSlowOperation: noop,
+    addToTotalDurationState: noop,
+    waitForScrollIdle: () => Promise.resolve(),
+  },
+  {
+    get(target, prop) {
+      if (prop in target) return (target as any)[prop]
+      // Any unknown export gets a noop function — prevents whack-a-mole
+      return (..._args: any[]) => {}
+    },
+    ownKeys(target) {
+      return Reflect.ownKeys(target)
+    },
+  },
+)
+mock.module('src/bootstrap/state.js', () => stateMock)
 
 mock.module('bun:bundle', () => ({
   feature: () => false,

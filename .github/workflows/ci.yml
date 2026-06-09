@@ -35,11 +35,11 @@ jobs:
           TEST_EXIT=$?
           FAILS=$(grep -oE '[0-9]+ fail' /tmp/ci-test.log | tail -1 | grep -oE '[0-9]+')
           if [ -z "$FAILS" ]; then FAILS=0; fi
-          echo "Failures: $FAILS (baseline: 3) | bun test exit: $TEST_EXIT"
+          echo "Failures: $FAILS (baseline: 1) | bun test exit: $TEST_EXIT"
           # Show last 30 lines of test output
           tail -30 /tmp/ci-test.log
-          if [ "$FAILS" -le 3 ]; then
-            echo "✅ Test baseline OK（允许 3 预存失败：callAutofixPr / prefetch / queryModelOpenAI）"
+          if [ "$FAILS" -le 1 ]; then
+            echo "✅ Test baseline OK（允许 1 预存失败：queryModelOpenAI）"
           else
             echo "❌ Test regressions detected"
             exit 1
