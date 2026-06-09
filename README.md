@@ -2,7 +2,7 @@
 
 [![Bun](https://img.shields.io/badge/runtime-Bun-black?style=flat-square&logo=bun)](https://bun.sh/)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)]()
-[![Tests](https://img.shields.io/badge/tests-3906-brightgreen?style=flat-square)]()
+[![Tests](https://img.shields.io/badge/tests-3908-brightgreen?style=flat-square)]()
 [![CodeQL](https://img.shields.io/badge/CodeQL-0%20open%20%C2%B7%2047%20risk%20accepted-yellow?style=flat-square)]()
 [![TypeScript](https://img.shields.io/badge/tsc-0%20errors-brightgreen?style=flat-square)]()
 
@@ -182,7 +182,7 @@ tail -f ~/.claude/local_analytics.jsonl
 | 指标 | CCB 基线 | CC Pure 当前 | 提升 |
 |------|:--------:|:----------:|:----:|
 | tsc 错误 | 62 | **0** | 反编译残留+类型裂缝全清零 |
-| 测试通过 | 3007 | **3906** | +899 |
+| 测试通过 | 3007 | **3908** | +901 |
 | 构建 | 不稳定 | **稳定（splitting: true）** | ✅ |
 | 遥测外连 | 有 | **0** | ✅ |
 | CodeQL open | 175+ | **0** | 254 fixed · 260 dismissed（含 47 high 在单用户威胁模型下风险接受，非修复） |
@@ -236,7 +236,7 @@ export function asMCPSchema<T extends $ZodType>(
 bun install
 bun run dev           # 开发模式（默认全 feature 开启）
 bun run build         # 生产构建
-bun test              # 3906 tests
+bun test              # 3908 tests (3 预存失败)
 ```
 
 ---
