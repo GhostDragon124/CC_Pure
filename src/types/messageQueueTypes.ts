@@ -5,7 +5,7 @@
 /**
  * Type of queue operation performed.
  */
-export type QueueOperation = 'enqueue' | 'dequeue' | 'remove' | string
+export type QueueOperation = 'enqueue' | 'dequeue' | 'remove' | 'popAll'
 
 /**
  * Message representing an operation in the session event queue.

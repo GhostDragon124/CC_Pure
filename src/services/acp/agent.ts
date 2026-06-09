@@ -833,10 +833,12 @@ export class AcpAgent implements Agent {
 
       session.modes = { ...session.modes, currentModeId: modeId }
       // Sync mode to appState so the permission pipeline sees the correct mode
-      session.appState.toolPermissionContext = {
-        ...session.appState.toolPermissionContext,
-        mode: modeId as PermissionMode,
-      }
+      Object.assign(session.appState, {
+        toolPermissionContext: {
+          ...session.appState.toolPermissionContext,
+          mode: modeId as PermissionMode,
+        },
+      })
     }
   }
 

@@ -8,7 +8,11 @@
  * Recursively marks all properties as readonly (deeply immutable).
  * Current stub: identity passthrough — does not enforce immutability at type level.
  */
-export type DeepImmutable<T> = T
+export type DeepImmutable<T> = T extends (...args: any[]) => any
+  ? T
+  : T extends object
+    ? { readonly [K in keyof T]: DeepImmutable<T[K]> }
+    : T
 
 /**
  * Generates all permutations of a union type as a tuple.
