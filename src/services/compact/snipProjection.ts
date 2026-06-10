@@ -37,9 +37,12 @@ export type SnipBoundaryMessage = Message & { snipBoundary: SnipBoundary }
 export function isSnipBoundaryMessage(
   message: Message,
 ): message is SnipBoundaryMessage {
+  const snipBoundary = message.snipBoundary
   return (
-    'snipBoundary' in message &&
-    (message as SnipBoundaryMessage).snipBoundary?.role === 'boundary'
+    typeof snipBoundary === 'object' &&
+    snipBoundary !== null &&
+    'role' in snipBoundary &&
+    snipBoundary.role === 'boundary'
   )
 }
 
@@ -82,23 +85,29 @@ export function createSnipBoundary(opts: {
   summary?: string
 }): SnipBoundaryMessage {
   const now = new Date().toISOString()
+  const snipBoundary: SnipBoundary = {
+    role: 'boundary',
+    snippedAt: now,
+    messageCount: opts.messageCount,
+    dateRange: opts.dateRange,
+  }
+
+  if (opts.tokenCount !== undefined) snipBoundary.tokenCount = opts.tokenCount
+  if (opts.summary !== undefined) snipBoundary.summary = opts.summary
+
   return {
     type: 'user',
     uuid: randomUUID(),
     message: {
       role: 'user',
-      content: `[Earlier conversation snipped — ${opts.messageCount} messages removed]`,
+      content:
+        '[Earlier conversation snipped - ' +
+        opts.messageCount +
+        ' messages removed]',
     },
     timestamp: now,
     isSidechain: true,
     isEphemeral: true,
-    snipBoundary: {
-      role: 'boundary',
-      snippedAt: now,
-      messageCount: opts.messageCount,
-      tokenCount: opts.tokenCount,
-      dateRange: opts.dateRange,
-      summary: opts.summary,
-    },
-  } as SnipBoundaryMessage
+    snipBoundary,
+  }
 }

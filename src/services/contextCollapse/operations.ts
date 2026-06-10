@@ -53,7 +53,7 @@ export type CollapseEntry = {
  * Uses a factory pattern with sensible defaults for synthetic messages
  * so callers don't need `as unknown as Message` type bypasses.
  */
-function createSummaryMessage(entry: CollapseEntry): Message {
+export function createSummaryMessage(entry: CollapseEntry): Message {
   return {
     type: 'user',
     uuid: randomUUID(),
@@ -64,7 +64,7 @@ function createSummaryMessage(entry: CollapseEntry): Message {
     timestamp: entry.createdAt,
     isSidechain: true,
     isEphemeral: true,
-  } as Message
+  }
 }
 
 /**

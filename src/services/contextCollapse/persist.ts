@@ -3,7 +3,7 @@ import type { CollapseEntry } from './operations.js'
 /**
  * Validates that an object looks like a CollapseEntry.
  */
-function isValidEntry(entry: unknown): entry is CollapseEntry {
+export function isValidEntry(entry: unknown): entry is CollapseEntry {
   if (!entry || typeof entry !== 'object') return false
   const obj = entry as Record<string, unknown>
   return typeof obj.id === 'string' && obj.id.trim() !== ''
