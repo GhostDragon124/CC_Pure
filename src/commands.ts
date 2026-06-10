@@ -105,6 +105,24 @@ const peersCmd = feature('UDS_INBOX')
       require('./commands/peers/index.js') as typeof import('./commands/peers/index.js')
     ).default
   : null
+const attachCmd = feature('UDS_INBOX')
+  ? ({
+      type: 'local',
+      name: 'attach',
+      description: 'Attach to a sub Claude CLI instance via named pipe',
+      supportsNonInteractive: false,
+      load: () => import('./commands/attach/attach.js'),
+    } satisfies Command)
+  : null
+const pipesCmd = feature('UDS_INBOX')
+  ? ({
+      type: 'local',
+      name: 'pipes',
+      description: 'Inspect pipe registry state and toggle the pipe selector',
+      supportsNonInteractive: true,
+      load: () => import('./commands/pipes/pipes.js'),
+    } satisfies Command)
+  : null
 const forkCmd = feature('FORK_SUBAGENT')
   ? (
       require('./commands/fork/index.js') as typeof import('./commands/fork/index.js')
@@ -332,6 +350,8 @@ const COMMANDS = memoize((): Command[] => [
   ...(!isUsing3PServices() ? [logout, login()] : []),
   passes,
   ...(peersCmd ? [peersCmd] : []),
+  ...(attachCmd ? [attachCmd] : []),
+  ...(pipesCmd ? [pipesCmd] : []),
   tasks,
   ...(workflowsCmd ? [workflowsCmd] : []),
   ...(ultraplan ? [ultraplan] : []),
