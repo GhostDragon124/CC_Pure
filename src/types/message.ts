@@ -12,11 +12,10 @@ import type {
 } from '@claude-code-best/builtin-tools/tools/shared/gitOperationTracking.js'
 
 /**
- * Base message type with discriminant `type` field and common properties.
- * Individual message subtypes (UserMessage, AssistantMessage, etc.) extend
- * this with narrower `type` literals and additional fields.
+ * Internal discriminant type for Message.type.
+ * Not exported — consumers use Message, not this union directly.
  */
-export type MessageType =
+type MessageType =
   | 'user'
   | 'assistant'
   | 'system'

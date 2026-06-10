@@ -9,7 +9,7 @@
 import { feature } from 'bun:bundle'
 import { useEffect } from 'react'
 import type { Tool, ToolUseContext } from '../Tool.js'
-import type { MessageType } from '../types/message.js'
+import type { Message as MessageType } from '../types/message.js'
 
 type Deps = {
   store: { getState: () => any }

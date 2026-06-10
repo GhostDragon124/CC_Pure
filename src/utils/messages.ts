@@ -43,7 +43,6 @@ import type {
   AttachmentMessage,
   Message,
   MessageOrigin,
-  MessageType,
   NormalizedAssistantMessage,
   NormalizedMessage,
   NormalizedUserMessage,
@@ -5489,7 +5488,7 @@ export function createToolUseSummaryMessage(
   precedingToolUseIds: string[],
 ): ToolUseSummaryMessage {
   return {
-    type: 'tool_use_summary' as MessageType,
+    type: 'tool_use_summary' as Message['type'],
     summary,
     precedingToolUseIds,
     uuid: randomUUID(),
