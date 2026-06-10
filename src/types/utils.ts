@@ -1,12 +1,7 @@
-// STUB: 待补全 — 见 docs/devlog/02-tsc-stubs.md
 // Utility types shared across the codebase.
-// DeepImmutable and Permutations are placeholder type-level utilities.
-// When the upstream decompiled source is available, replace with the real
-// generic type definitions.
 
 /**
  * Recursively marks all properties as readonly (deeply immutable).
- * Current stub: identity passthrough — does not enforce immutability at type level.
  */
 export type DeepImmutable<T> = T extends (...args: any[]) => any
   ? T
@@ -15,7 +10,10 @@ export type DeepImmutable<T> = T extends (...args: any[]) => any
     : T
 
 /**
- * Generates all permutations of a union type as a tuple.
- * Current stub: simple array passthrough.
+ * Generates every ordered tuple permutation of a union type.
  */
-export type Permutations<T> = T[]
+export type Permutations<T, U = T> = [T] extends [never]
+  ? []
+  : T extends U
+    ? [T, ...Permutations<Exclude<U, T>>]
+    : never
