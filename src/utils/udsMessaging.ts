@@ -13,6 +13,7 @@ import { createServer } from 'node:net'
 import { existsSync, unlinkSync, chmodSync } from 'node:fs'
 
 let activeSocketPath: string | null = null
+let exitHandler: (() => void) | null = null
 
 /** Default UDS socket path for this process — includes hostname to avoid PID namespace collisions. */
 export function getDefaultUdsSocketPath(): string {
@@ -46,6 +47,11 @@ export async function startUdsMessaging(
     }
   }
 
+  // Guard against re-entry: only one messaging server per process
+  if (activeSocketPath !== null) {
+    throw new Error('UDS messaging already started')
+  }
+
   return new Promise<void>((resolve, reject) => {
     const server = createServer(socket => {
       socket.on('data', () => {
@@ -73,15 +79,18 @@ export async function startUdsMessaging(
 
       activeSocketPath = socketPath
 
-      // Clean up socket file on normal exit
-      const cleanup = () => {
+      // Clean up previous exit handler to prevent leak
+      if (exitHandler) process.off('exit', exitHandler)
+      exitHandler = () => {
         try {
           unlinkSync(socketPath)
         } catch {
           /* already gone */
         }
       }
-      process.on('exit', cleanup)
+      process.on('exit', exitHandler)
+
+      resolve()
     })
   })
 }
