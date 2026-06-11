@@ -8,7 +8,7 @@
 
 > Claude Code 的纯净分叉 —— 去遥测、去企业全家桶、保留核心能力。**已抵达 source-map 还原的上限。**
 
-**当前版本：2.6.11-soul-distilled** — 人格系统 + 类型完工 + CodeQL 归零 + Coordinator 事件溯源
+**当前版本（2026-06）：** 人格系统 + 类型完工 + CodeQL 归零 + Coordinator 事件溯源
 
 ---
 
@@ -290,5 +290,6 @@ TEAM_EVENT_SERVER_URL=http://machine-a:9742 bun run dev
 
 ## 致谢
 
-- [Claude Code Best](https://github.com/claude-code-best/claude-code) — 逆向工程和开源的基础
+- [GhostDragon124](https://github.com/GhostDragon124) — 本项目的维护者
+- [Claude Code Best](https://github.com/claude-code-best/claude-code) — 逆向工程与开源基础
 - [Anthropic](https://www.anthropic.com/) — Claude Code 原作者
