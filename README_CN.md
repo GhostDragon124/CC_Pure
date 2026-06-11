@@ -14,10 +14,6 @@
 >
 > **当前版本（2026-06）：** 人格系统 + 类型完工 + CodeQL 归零 + Coordinator 事件溯源
 
-### 关于
-
-CC Pure 是 Anthropic Claude Code CLI 的反编译纯净分叉，独立维护。去除了遥测上报和企业全家桶集成，完整保留了 Agent 协议（ACP）、自主代理模式、远程控制和工具系统。代码库已达到 **`tsc` 零错误、CodeQL 零告警、核心代码 `as any` 清零**——source-map 还原所能抵达的上限。
-
 ---
 
 ## ⚡ 快速开始
