@@ -14,6 +14,10 @@
 >
 > **Current (2026-06):** Personality system + 0 tsc errors + 0 CodeQL + Coordinator event sourcing
 
+### About
+
+CC Pure is a reverse-engineered, independently-maintained fork of Anthropic's Claude Code CLI. It removes telemetry and enterprise integrations while preserving the full agent protocol (ACP), autonomous modes, remote control, and tool system. The codebase is restored to **zero `tsc` errors, zero CodeQL alerts, and zero `as any` casts** in core — the limit of what source-map reconstruction can achieve.
+
 ---
 
 ## ⚡ Quick Start
