@@ -1,3 +1,180 @@
+<div align="center">
+  <a href="#english"><img src="https://img.shields.io/badge/lang-EN-blue?style=flat-square"></a>
+  <a href="#%E4%B8%AD%E6%96%87"><img src="https://img.shields.io/badge/lang-%E4%B8%AD%E6%96%87-red?style=flat-square"></a>
+</div>
+
+---
+
+<a id="english"></a>
+
+# CC Pure — A Clean Fork of Claude Code
+
+[![Bun](https://img.shields.io/badge/runtime-Bun-black?style=flat-square&logo=bun)](https://bun.sh/)
+[![Build](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)]()
+[![Tests](https://img.shields.io/badge/tests-3968-brightgreen?style=flat-square)]()
+[![CodeQL](https://img.shields.io/badge/CodeQL-0%20open%20%C2%B7%2047%20risk%20accepted-yellow?style=flat-square)]()
+[![TypeScript](https://img.shields.io/badge/tsc-0%20errors-brightgreen?style=flat-square)]()
+
+> A clean, independently-maintained fork of Claude Code. **Telemetry removed. Types fixed. Core capabilities preserved.**
+>
+> **Current (2026-06):** Personality system + 0 tsc errors + 0 CodeQL + Coordinator event sourcing
+
+---
+
+## ⚡ Quick Start
+
+### Prerequisites
+
+- [Bun](https://bun.sh/) >= 1.3.11
+
+```bash
+curl -fsSL https://bun.sh/install | bash
+```
+
+### Install
+
+```bash
+git clone https://github.com/GhostDragon124/CC_Pure.git
+cd CC_Pure
+bun install
+bun run build          # builds to dist/ (split build, ~586 files)
+```
+
+### Configure API
+
+```bash
+# Option 1: Environment variables
+export ANTHROPIC_BASE_URL="https://your-api/v1"
+export ANTHROPIC_API_KEY="sk-xxx"
+
+# Option 2: /login command in REPL
+bun run dev
+```
+
+### Verify
+
+```bash
+ccp --version           # → 2.6.11 (Claude Code)
+ccp -p "1+1"            # → 2
+```
+
+---
+
+## Relationship with Upstream
+
+CC Pure is based on decompiled CCB v2.6.11 sources with these key changes:
+
+### What Was Removed / Downgraded
+
+| Component | Status | Notes |
+|-----------|:------:|-------|
+| Sentry error tracking | ❌ Removed | Third-party data upload |
+| Anthropic telemetry | ❌ Blocked | `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1` |
+| Langfuse monitoring | 🟡 Dormant | Code preserved (`src/services/langfuse/`), activates with keys |
+| GrowthBook remote config | 🟡 Local fallback | 1,256-line client, auto-falls-back to local defaults |
+
+### What Was Preserved
+
+| Category | Feature | Status |
+|----------|---------|:------:|
+| **Agent Protocol** | ACP (external agent bridge/session/permissions) | ✅ |
+| **Browser** | Chrome Use + Computer Use (GUI automation) | ✅ |
+| **Remote Control** | BRIDGE_MODE (React Web UI + WebSocket/SSE) | ✅ |
+| | SSH_REMOTE (2,029-line full implementation) | ✅ |
+| **Autonomy** | PROACTIVE + DAEMON + COORDINATOR_MODE | ✅ |
+| | BG_SESSIONS (ps/logs/attach/kill) | ✅ |
+| **Memory** | EXTRACT_MEMORIES + LODESTONE + AWAY_SUMMARY | ✅ |
+| **Reasoning** | ULTRATHINK + ULTRAPLAN + VERIFICATION_AGENT | ✅ |
+| **Tools** | TOKEN_BUDGET + PROMPT_CACHE_BREAK_DETECTION | ✅ |
+| **Voice** | VOICE_MODE | 🟡 Code complete, needs Anthropic OAuth |
+| **Scheduling** | KAIROS / KAIROS_BRIEF | 🟡 Code complete, needs GrowthBook + OAuth backend |
+
+### Personality Modes (`soul-distilled`)
+
+`/mode` switches between 7 AI personalities — each with dedicated systemPrompt, UI theme, permissions, and response style:
+
+| Mode | Icon | Description |
+|------|:----:|-------------|
+| **Claude** | 🎭 | Authentic Claude persona — distilled from leaked 70KB Soul Document |
+| Default | ⚡ | Balanced, everyday development |
+| Gentle | 🌸 | Patient, educational |
+| Dr. Sharp | 🔍 | Rigorous 3-step code review |
+| Workhorse | 🐴 | Auto-execute, fewer confirmations |
+| Token Saver | 💰 | Minimal replies, save tokens |
+| Super AI | 🧠 | Deep thinking, comprehensive analysis |
+
+---
+
+## Engineering Quality
+
+| Metric | CCB Baseline | CC Pure | Improvement |
+|--------|:------------:|:-------:|:-----------:|
+| tsc errors | 62 | **0** | All decompilation artifacts cleared |
+| Tests passing | 3,007 | **3,968** | +961 |
+| Build | Unstable | **Stable (splitting: true)** | ✅ |
+| Telemetry egress | Yes | **0** | ✅ |
+| CodeQL open | 175+ | **0** | 254 fixed · 260 dismissed |
+| `as any` (core) | 94 | **0** | ✅ |
+
+---
+
+## Coordinator Event Log
+
+Coordinator mode now has full event sourcing to solve **compaction-resistant team context**:
+
+```
+append → projection (fold) → checkpoint → clear old events
+                                              ↓
+session end → clear() ← checkpoint restores full TeamState
+```
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| EventStore interface | `src/coordinator/teamEventStore.ts` | append / read / clear, 6 event types |
+| Projection | `src/coordinator/teamProjection.ts` | fold-based, checkpoint snapshot restore |
+| LocalFileEventStore | `src/coordinator/teamEventStore.ts` | Local JSONL storage |
+| RemoteEventStore | `src/coordinator/remoteEventStore.ts` | HTTP client (GET/POST/DELETE /events) |
+| HTTP Server | `src/coordinator/eventHttpServer.ts` | Bun.serve, port 9742 |
+
+**Cross-machine:**
+
+```bash
+# Machine A: start event server
+TEAM_EVENT_SERVER_PORT=9742 bun run src/coordinator/eventHttpServerEntry.ts
+
+# Machine B: CCP reads machine A's worker state
+TEAM_EVENT_SERVER_URL=http://machine-a:9742 bun run dev
+```
+
+Zero external dependencies — all Bun built-ins.
+
+---
+
+## ⚠️ Disclaimer
+
+1. **Research and educational use only.** All rights to Claude Code belong to [Anthropic](https://www.anthropic.com/).
+2. **Not an official CCB release.** CC Pure is a personally-maintained clean fork, not reviewed or endorsed by the CCB team.
+3. **No warranty.** Use this software at your own risk.
+4. **API compliance.** Using third-party APIs requires compliance with the respective provider's terms. This project does not provide any API keys.
+
+---
+
+## Acknowledgements
+
+- [GhostDragon124](https://github.com/GhostDragon124) — Maintainer
+- [Claude Code Best](https://github.com/claude-code-best/claude-code) — Reverse engineering & open-source foundation
+- [Anthropic](https://www.anthropic.com/) — Original author of Claude Code
+
+---
+
+<div align="center">
+  <a href="#english">↑ English</a> | <a href="#%E4%B8%AD%E6%96%87">↓ 中文</a>
+</div>
+
+---
+
+<a id="中文"></a>
+
 # CC Pure — 纯净版 Claude Code
 
 [![Bun](https://img.shields.io/badge/runtime-Bun-black?style=flat-square&logo=bun)](https://bun.sh/)
@@ -7,8 +184,8 @@
 [![TypeScript](https://img.shields.io/badge/tsc-0%20errors-brightgreen?style=flat-square)]()
 
 > Claude Code 的纯净分叉 —— 去遥测、去企业全家桶、保留核心能力。**已抵达 source-map 还原的上限。**
-
-**当前版本（2026-06）：** 人格系统 + 类型完工 + CodeQL 归零 + Coordinator 事件溯源
+>
+> **当前版本（2026-06）：** 人格系统 + 类型完工 + CodeQL 归零 + Coordinator 事件溯源
 
 ---
 
@@ -45,7 +222,7 @@ bun run dev
 ### 配置本地快捷命令
 
 ```bash
-# 创建 ccp 命令（一行搞定）
+# 创建 ccp 命令
 cat > ~/.local/bin/ccp << 'EOF'
 #!/usr/bin/env bash
 export PATH="$HOME/.bun/bin:$PATH"
@@ -80,19 +257,10 @@ CC Pure 基于 CCB v2.6.11 反编译源码，做了以下核心变更：
 
 | 版本 | 日期 | 合并数 | 说明 |
 |------|------|:------:|------|
-| soul-distilled | 2026-06-08 | — | **🎭 人格觉醒**：上线模式系统，7 种 AI 人格即时切换。70KB 泄露 Soul Document 蒸馏为 Claude 专属 persona，模式 systemPrompt 注入系统提示链路打通 |
-| v2.6.11 | 2026-06-06 | 6 commits | **版本同步 2.6.5→2.6.11**：Vite 构建优化 (RSS 966MB→35MB)、ACP subagent 层级透传、cacheWarningEnabled 配置、ACP loadSession/sessionId 对齐。合 6 个功能 commit，跳 1 个（edit tool 旧逻辑删除 — CCP fork 点） |
-| type-wrought | 2026-06-08 | — | **🔧 类型系统完工**：Zod v4 + MCP SDK 类型裂缝修复。`zodMCPCompat.ts` shim 以 `as unknown as` 桥接两套类型入口，消除全部 7 处 `as any`。`tsc --noEmit` **0 错误**——CC_Pure 史上首次 |
-| scars-mapped | 2026-06-09 | — | **🛡️ CodeQL 安全审计完工**：升级 security-and-quality，83→39。44 条修/dismiss（含 3 处功能退化 revert），39 条架构债记录不修（TOCTOU/临时文件/间接注入）。`docs/CodeQL_KNOWN_DEBT.md` |
-| v2.6.5 | 2026-06-05 | 8 commits | **类型修复**：反编译残留全量清零（270→22，248 个修复。剩余 22 为社区代码） + 上游安全 cherry-pick x8 |
-| v2.3.0 | 2026-06-04 | 7 commits | **RCS/Web 全量迁移 + SSH Remote**：vanilla JS → React（29 组件 + shadcn/ui），SSH stub 替换为 2029 行完整实现 |
-| v2.2.2 | 2026-06-04 | 16 文件 | **Autonomy 全量合并**：f2e9af49 PR #386 源码 + 11 测试文件，3699 pass |
-| v2.2.1 | 2026-06-04 | 2 | OpenAI fixes backfill：c82f5994 (stop_reason/usage/max_tokens) + 901628b4 (MCP 工具可见性) |
-| v2.2.0 | 2026-06-04 | 2 | Batch 1a 安全加固 + ad09f38f 斜杠补全 |
-| v2.1.0 | 2026-06-04 | 2 | REVIEW 24 执行完毕 |
-| v2.0.0 | 2026-06-04 | 12 | P3 A 完成 |
-| v1.8.0 | 2026-06-04 | 23 | P2 完成 |
-| ... | 2026-06 | 10 | P0/P1 + 基础设施同步 |
+| soul-distilled | 2026-06-08 | — | **🎭 人格觉醒**：上线模式系统，7 种 AI 人格即时切换 |
+| v2.6.11 | 2026-06-06 | 6 commits | **版本同步 2.6.5→2.6.11**：Vite 构建优化 (RSS 966MB→35MB)、ACP subagent 层级透传 |
+| type-wrought | 2026-06-08 | — | **🔧 类型系统完工**：Zod v4 + MCP SDK 类型裂缝修复，`tsc --noEmit` **0 错误** |
+| scars-mapped | 2026-06-09 | — | **🛡️ CodeQL 安全审计完工**：升级 security-and-quality，83→39，0 open |
 
 > **累计**：187 个候选 commit 全量审查 → ✅ 59 MERGE / 🟡 34 已存在 / ❌ 94 SKIP。
 > 详见 [`docs/upstream-sync.md`](docs/upstream-sync.md) — 958 行完整合并历史与审查清单。
@@ -101,26 +269,20 @@ CC Pure 基于 CCB v2.6.11 反编译源码，做了以下核心变更：
 
 | 组件 | 状态 | 说明 |
 |------|:---:|------|
-| Sentry 错误追踪 | ❌ 移除 | 数据上报第三方，CCP 无此集成 |
+| Sentry 错误追踪 | ❌ 移除 | 数据上报第三方 |
 | Pipe IPC / LAN Pipes | ✅ 已恢复 | 多机编排，UDS_INBOX + Coordinator 事件溯源完整实现 |
-| Coordinator Event Log | ✅ 已完成 | 事件溯源架构：append → projection → checkpoint → clear，支持 HTTP 跨机读写 |
-| UDS_INBOX | ✅ 已恢复 | 进程间通信管道，peers 命令 + UDS 消息已实现 |
+| Coordinator Event Log | ✅ 已完成 | 事件溯源架构：append → projection → checkpoint → clear，HTTP 跨机读写 |
 | Anthropic 遥测上报 | ❌ 阻断 | `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1` 启动层拦截 |
-| Langfuse 监控 | 🟡 休眠 | 代码保留（`src/services/langfuse/`），配 key 即激活，支持 Docker 自部署 |
+| Langfuse 监控 | 🟡 休眠 | 代码保留，配 key 即激活，支持 Docker 自部署 |
 | GrowthBook 远程配置 | 🟡 本地降级 | 1256 行完整客户端，远程不可用时自动使用本地静态默认值 |
 
 ### 遥测：保留源码，默认关闭，本地接管
 
-**源码保留**（Datadog / GrowthBook / BigQuery / 1P Event Logging 全部在代码里），但通过 `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1` 在启动层阻断所有上游上报。
-
-同时我们在 `logEvent()` 入口插入了**本地 JSONL sink**，所有 70+ 事件全量写入 `~/.claude/local_analytics.jsonl`。数据主权归你——你可以用自己的分析脚本查看使用统计。
+源码保留（Datadog / GrowthBook / BigQuery / 1P Event Logging），通过 `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1` 阻断所有上游上报。同时在 `logEvent()` 入口插入了本地 JSONL sink，70+ 事件全量写入 `~/.claude/local_analytics.jsonl`：
 
 ```bash
-# 查看今天的事件报告
-python3 scripts/analyze_analytics.py
-
-# 实时追踪
-tail -f ~/.claude/local_analytics.jsonl
+python3 scripts/analyze_analytics.py   # 查看今天的事件报告
+tail -f ~/.claude/local_analytics.jsonl # 实时追踪
 ```
 
 详见 → [Claude Code 的光明和阴影面（遥测系统深度分析）](docs/Claude_Code_的光明和阴影面.md)
@@ -129,32 +291,17 @@ tail -f ~/.claude/local_analytics.jsonl
 
 | 类别 | Feature | 状态 | 说明 |
 |------|---------|:---:|------|
-| **Agent 协议** | ACP | ✅ | 外部 Agent 协议，含 bridge / permissions / session / acp-link manager |
-| **浏览器** | Chrome Use | ✅ | Claude in Chrome 集成，通过浏览器扩展执行操作 |
-| | Computer Use | ✅ | GUI 自动化（截图/点击/输入），`packages/@ant/computer-use-mcp/` |
-| **远程控制** | BRIDGE_MODE | ✅ | Remote Control 私有部署（React Web UI + shadcn/ui 组件库），WebSocket + SSE 实时推送 |
-| | SSH_REMOTE | ✅ | SSH 远程连接（2029行完整实现），本地 REPL + 远端工具执行，SSHSessionManager + SSHProbe + SSHDeploy |
-| **自主代理** | PROACTIVE | ✅ | 主动自主代理模式，SleepTool 控制 tick 节奏 |
-| | DAEMON | ✅ | 守护进程 + 后台 worker |
-| | COORDINATOR_MODE | ✅ | 多 worker 编排 + 事件溯源（append/project/checkpoint/clear + HTTP 跨机） |
-| | BG_SESSIONS | ✅ | 后台会话管理（ps/logs/attach/kill） |
-| **记忆系统** | EXTRACT_MEMORIES | ✅ | /dream 记忆整理 + autoDream 自动蒸馏 |
-| | AWAY_SUMMARY | ✅ | 离线摘要（用户离开后生成总结） |
-| | LODESTONE | ✅ | 上下文锚点，优化长对话的相关性检索 |
-| **推理增强** | ULTRATHINK | ✅ | 超深度思考模式 |
-| | ULTRAPLAN | ✅ | 超级规划模式，深度分析后生成实施计划 |
-| | VERIFICATION_AGENT | ✅ | 任务完成后自动验证 |
-| **工具系统** | TOKEN_BUDGET | ✅ | Token 预算管理与控制 |
-| | PROMPT_CACHE_BREAK_DETECTION | ✅ | Prompt cache 破裂检测 |
-| **输入/摘要** | VOICE_MODE | 🟡 | 代码完整（`src/voice/` + `voiceStreamSTT.ts`），需 Anthropic OAuth 凭证 + GrowthBook kill-switch 放行，CCP 暂无可用方式登录 |
-| | KAIROS_BRIEF | 🟡 | 代码完整，依赖 KAIROS（`isBriefEntitled = feature('KAIROS') || feature('KAIROS_BRIEF')`），KAIROS 本身不可用故绑定休眠 |
-| **定时任务** | KAIROS | 🟡 | 代码完整，运行时需 GrowthBook + OAuth 后端（CCP 暂无） |
-| **可观测性** | Langfuse | 🟡 | 自托管 LLM 追踪（`src/services/langfuse/`），设 `LANGFUSE_PUBLIC_KEY` + `SECRET_KEY` 即激活，支持 Docker 自部署 |
-| **远程配置** | GrowthBook | 🟡 | 1256 行完整客户端，远程不可用时自动降级到本地静态默认值 |
+| **Agent 协议** | ACP | ✅ | 外部 Agent 协议，bridge / permissions / session |
+| **浏览器** | Chrome Use + Computer Use | ✅ | 浏览器扩展 + GUI 自动化 |
+| **远程控制** | BRIDGE_MODE + SSH_REMOTE | ✅ | React Web UI + WebSocket/SSE + SSH 远程 |
+| **自主代理** | PROACTIVE + DAEMON + COORDINATOR_MODE | ✅ | 多 worker 编排 + 事件溯源 |
+| **记忆系统** | EXTRACT_MEMORIES + LODESTONE + AWAY_SUMMARY | ✅ | 记忆整理 + 上下文锚点 |
+| **推理增强** | ULTRATHINK + ULTRAPLAN + VERIFICATION_AGENT | ✅ | 超深度思考 + 自动验证 |
+| **工具系统** | TOKEN_BUDGET + PROMPT_CACHE_BREAK_DETECTION | ✅ | Token 预算管理 |
 
 ### 🎭 人格模式系统（soul-distilled）
 
-`/mode` 命令在 7 种 AI 人格间即时切换，每种模式自带专属 systemPrompt、UI 主题色、权限策略和响应风格：
+`/mode` 命令在 7 种 AI 人格间即时切换：
 
 | 模式 | 图标 | 说明 | Persona 长度 |
 |------|:----:|------|:----------:|
@@ -172,14 +319,6 @@ tail -f ~/.claude/local_analytics.jsonl
 /mode sharp         # 切换到代码审查模式
 ```
 
-**自定义模式**：在 `~/.claude/modes/` 下放 YAML 文件即可扩展，自动加载并与内置模式合并。详见 `~/.claude/modes/claude.yaml` 示例。
-
-> Claude 人格提炼自 Anthropic 内部 Claude 4.5 Opus Soul Document（泄露于 2026 年 5 月）。
-> 包含核心人格特质、诚实原则（7 条）、帮助性与谨慎的平衡、协作立场、身份稳定性。
-> 完整蒸馏版 → `src/modes/personas/claude.ts`，一键安装版 → `~/.claude/modes/claude.md`（Markdown 通用格式）。
->
-> 详见 → [CCP Claude Persona SWE-bench Lite 评测报告 (v2)](docs/ccp-claude-persona-swebench-report-v2.md) — Markdown 统一格式版，跨工具零修改迁移。90 实例对比：**+11pp**（68.6% vs 57.5%）
-
 ---
 
 ## 工程质量
@@ -190,65 +329,32 @@ tail -f ~/.claude/local_analytics.jsonl
 | 测试通过 | 3007 | **3968** | +961 |
 | 构建 | 不稳定 | **稳定（splitting: true）** | ✅ |
 | 遥测外连 | 有 | **0** | ✅ |
-| CodeQL open | 175+ | **0** | 254 fixed · 260 dismissed（含 47 high 在单用户威胁模型下风险接受，非修复） |
+| CodeQL open | 175+ | **0** | 254 fixed · 260 dismissed |
 | as any (核心) | 94 | **0** | ✅ |
 
-### 🔧 Zod v4 类型裂缝修复（方案 C）
-
-Anthropic 原版代码中 Zod v4 和 MCP SDK (`zod-compat`) 存在类型裂缝——两者从不同入口导入 schema 类型（`zod/v4` vs `zod/v4/core`），TS 不认为它们兼容。上游用 `as any` 糊弄了 7 处。
-
-我们的方案 C 创建了 `src/utils/zodMCPCompat.ts`——一个 9 行的本地 type shim：
-
-```ts
-export function asMCPSchema<T extends $ZodType>(
-  schema: () => T,
-): () => AnyObjectSchema {
-  return schema as unknown as () => AnyObjectSchema
-}
-```
-
-- `as unknown as` 不是 `as any`——它精确声明两个类型在运行时等同，中间的 `unknown` 告诉 TS 这不是意外
-- 不碰 `node_modules`，不引入 `patch-package`，干净且可维护
-- 全部 7 处替换后 `tsc --noEmit` 归零——CC_Pure 史上首次
-
 ### 安全审计（Phase 0-6，已完成）
-
-六个阶段安全审计，514 条 CodeQL alert 全量处置：
 
 | 阶段 | 范围 | 关键工作 |
 |:----:|------|----------|
 | 0 | 基线建立 | 降级查询套件，过滤反编译噪音 |
 | 1 | 隐私泄露 | 凭证脱敏、RCS 默认绑 127.0.0.1 |
-| 2 | 结构对齐 | 删除 `src/tools/` 去重，修复 BashTool/AgentTool 回归 |
+| 2 | 结构对齐 | 删除 `src/tools/` 去重，修复工具回归 |
 | 3 | 漏洞修复 | shell 注入、URL 解析、HTML 过滤 |
 | 4 | 残余告警 | 命令注入（which）、ReDoS、净化绕过 |
-| 5 | security-and-quality | 83→39：44 修/dismiss（含 3 处功能退化 revert + stripHtml 加固） |
-| 6 | 架构债清算 | 47→0：11 medium dismiss + 36 high dismiss（见下方「还原上限」） |
+| 5 | security-and-quality | 83→39：44 修/dismiss |
+| 6 | 架构债清算 | 47→0：全量风险接受 |
 
-**最终处置**: 254 fixed · 260 dismissed · **0 open**（47 high 在单用户威胁模型下风险接受，非修复）。详见 [docs/codeql-dismissed-high-alerts.md](docs/codeql-dismissed-high-alerts.md)。
-
----
+**最终处置**: 254 fixed · 260 dismissed · **0 open**。
 
 ### 🧱 反编译的还原上限
 
-在 source-map 重建的范式下，系统性的代码质量改进已触及天花板。**tsc 零错误、CodeQL 零遗留（47 high 风险接受）、构建稳定、测试全绿。** 后续专注上游更新合并，Claude Code 的还原就此告一段落。
-
----
-
-## 本地开发
-
-```bash
-bun install
-bun run dev           # 开发模式（默认全 feature 开启）
-bun run build         # 生产构建
-bun test              # 3968 tests (0 fail · 0 skip)
-```
+在 source-map 重建的范式下，系统性的代码质量改进已触及天花板。后续专注上游更新合并。
 
 ---
 
 ## Coordinator Event Log（事件溯源架构）
 
-Coordinator 模式现在具备完整的事件溯源能力，解决多 worker 编排中 **compaction 后 team context 丢失**的问题：
+Coordinator 模式具备完整的事件溯源能力，解决多 worker 编排中 **compaction 后 team context 丢失**的问题：
 
 ```
 coordinator 写事件 → projection (fold) → compaction checkpoint → clear 旧事件
@@ -260,12 +366,10 @@ session 结束 → clear() 全清 ← checkpoint 可独立恢复完整 TeamState
 |------|------|------|
 | EventStore 接口 | `src/coordinator/teamEventStore.ts` | append / read / clear，6 种事件类型 |
 | Projection | `src/coordinator/teamProjection.ts` | fold-based，checkpoint 快照恢复 |
-| LocalFileEventStore | `src/coordinator/teamEventStore.ts` | 本地 JSONL 存储 |
 | RemoteEventStore | `src/coordinator/remoteEventStore.ts` | HTTP client（GET/POST/DELETE /events） |
 | HTTP Server | `src/coordinator/eventHttpServer.ts` | Bun.serve，端口 9742 |
-| 跨机使用 | `TEAM_EVENT_SERVER_URL` | 环境变量自动切换本地/远程存储 |
 
-### 跨机部署
+**跨机部署：**
 
 ```bash
 # Machine A: 启动事件服务器
@@ -275,7 +379,7 @@ TEAM_EVENT_SERVER_PORT=9742 bun run src/coordinator/eventHttpServerEntry.ts
 TEAM_EVENT_SERVER_URL=http://machine-a:9742 bun run dev
 ```
 
-全部使用 Bun 内置 API（fetch + Bun.serve），零外部依赖。
+全部使用 Bun 内置 API，零外部依赖。
 
 ---
 
@@ -293,3 +397,9 @@ TEAM_EVENT_SERVER_URL=http://machine-a:9742 bun run dev
 - [GhostDragon124](https://github.com/GhostDragon124) — 本项目的维护者
 - [Claude Code Best](https://github.com/claude-code-best/claude-code) — 逆向工程与开源基础
 - [Anthropic](https://www.anthropic.com/) — Claude Code 原作者
+
+---
+
+<div align="center">
+  <a href="#english">↑ English</a> | <a href="#%E4%B8%AD%E6%96%87">↑ 中文</a>
+</div>
