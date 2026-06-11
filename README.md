@@ -2,11 +2,13 @@
 
 [![Bun](https://img.shields.io/badge/runtime-Bun-black?style=flat-square&logo=bun)](https://bun.sh/)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)]()
-[![Tests](https://img.shields.io/badge/tests-3908-brightgreen?style=flat-square)]()
+[![Tests](https://img.shields.io/badge/tests-3968-brightgreen?style=flat-square)]()
 [![CodeQL](https://img.shields.io/badge/CodeQL-0%20open%20%C2%B7%2047%20risk%20accepted-yellow?style=flat-square)]()
 [![TypeScript](https://img.shields.io/badge/tsc-0%20errors-brightgreen?style=flat-square)]()
 
 > Claude Code 的纯净分叉 —— 去遥测、去企业全家桶、保留核心能力。**已抵达 source-map 还原的上限。**
+
+**当前版本：2.6.11-soul-distilled** — 人格系统 + 类型完工 + CodeQL 归零 + Coordinator 事件溯源
 
 ---
 
@@ -100,7 +102,8 @@ CC Pure 基于 CCB v2.6.11 反编译源码，做了以下核心变更：
 | 组件 | 状态 | 说明 |
 |------|:---:|------|
 | Sentry 错误追踪 | ❌ 移除 | 数据上报第三方，CCP 无此集成 |
-| Pipe IPC / LAN Pipes | ❌ 禁用 | 多机编排，个人使用不需要 |
+| Pipe IPC / LAN Pipes | ✅ 已恢复 | 多机编排，UDS_INBOX + Coordinator 事件溯源完整实现 |
+| Coordinator Event Log | ✅ 已完成 | 事件溯源架构：append → projection → checkpoint → clear，支持 HTTP 跨机读写 |
 | UDS_INBOX | ✅ 已恢复 | 进程间通信管道，peers 命令 + UDS 消息已实现 |
 | Anthropic 遥测上报 | ❌ 阻断 | `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1` 启动层拦截 |
 | Langfuse 监控 | 🟡 休眠 | 代码保留（`src/services/langfuse/`），配 key 即激活，支持 Docker 自部署 |
@@ -133,7 +136,7 @@ tail -f ~/.claude/local_analytics.jsonl
 | | SSH_REMOTE | ✅ | SSH 远程连接（2029行完整实现），本地 REPL + 远端工具执行，SSHSessionManager + SSHProbe + SSHDeploy |
 | **自主代理** | PROACTIVE | ✅ | 主动自主代理模式，SleepTool 控制 tick 节奏 |
 | | DAEMON | ✅ | 守护进程 + 后台 worker |
-| | COORDINATOR_MODE | ✅ | 多 worker 编排 |
+| | COORDINATOR_MODE | ✅ | 多 worker 编排 + 事件溯源（append/project/checkpoint/clear + HTTP 跨机） |
 | | BG_SESSIONS | ✅ | 后台会话管理（ps/logs/attach/kill） |
 | **记忆系统** | EXTRACT_MEMORIES | ✅ | /dream 记忆整理 + autoDream 自动蒸馏 |
 | | AWAY_SUMMARY | ✅ | 离线摘要（用户离开后生成总结） |
@@ -184,7 +187,7 @@ tail -f ~/.claude/local_analytics.jsonl
 | 指标 | CCB 基线 | CC Pure 当前 | 提升 |
 |------|:--------:|:----------:|:----:|
 | tsc 错误 | 62 | **0** | 反编译残留+类型裂缝全清零 |
-| 测试通过 | 3007 | **3908** | +901 |
+| 测试通过 | 3007 | **3968** | +961 |
 | 构建 | 不稳定 | **稳定（splitting: true）** | ✅ |
 | 遥测外连 | 有 | **0** | ✅ |
 | CodeQL open | 175+ | **0** | 254 fixed · 260 dismissed（含 47 high 在单用户威胁模型下风险接受，非修复） |
@@ -238,8 +241,41 @@ export function asMCPSchema<T extends $ZodType>(
 bun install
 bun run dev           # 开发模式（默认全 feature 开启）
 bun run build         # 生产构建
-bun test              # 3908 tests (3 预存失败)
+bun test              # 3968 tests (0 fail · 0 skip)
 ```
+
+---
+
+## Coordinator Event Log（事件溯源架构）
+
+Coordinator 模式现在具备完整的事件溯源能力，解决多 worker 编排中 **compaction 后 team context 丢失**的问题：
+
+```
+coordinator 写事件 → projection (fold) → compaction checkpoint → clear 旧事件
+                                                                    ↓
+session 结束 → clear() 全清 ← checkpoint 可独立恢复完整 TeamState
+```
+
+| 组件 | 文件 | 说明 |
+|------|------|------|
+| EventStore 接口 | `src/coordinator/teamEventStore.ts` | append / read / clear，6 种事件类型 |
+| Projection | `src/coordinator/teamProjection.ts` | fold-based，checkpoint 快照恢复 |
+| LocalFileEventStore | `src/coordinator/teamEventStore.ts` | 本地 JSONL 存储 |
+| RemoteEventStore | `src/coordinator/remoteEventStore.ts` | HTTP client（GET/POST/DELETE /events） |
+| HTTP Server | `src/coordinator/eventHttpServer.ts` | Bun.serve，端口 9742 |
+| 跨机使用 | `TEAM_EVENT_SERVER_URL` | 环境变量自动切换本地/远程存储 |
+
+### 跨机部署
+
+```bash
+# Machine A: 启动事件服务器
+TEAM_EVENT_SERVER_PORT=9742 bun run src/coordinator/eventHttpServerEntry.ts
+
+# Machine B: CCP 远程读取 A 的 worker 状态
+TEAM_EVENT_SERVER_URL=http://machine-a:9742 bun run dev
+```
+
+全部使用 Bun 内置 API（fetch + Bun.serve），零外部依赖。
 
 ---
 
