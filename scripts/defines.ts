@@ -67,7 +67,7 @@ export const DEFAULT_BUILD_FEATURES = [
   'KAIROS', // Kairos 定时任务系统核心
   'COORDINATOR_MODE', // 多 worker 编排模式（AgentSummary 泄露已在 52b61c2c 修复）
   'UDS_INBOX', // 进程间通信管道（inbox/pipe/peers 等命令）
-  // 'LAN_PIPES', // 局域网管道，依赖 UDS_INBOX  构建后 nodejs 环境卡住
+  'LAN_PIPES', // 局域网管道，依赖 UDS_INBOX  构建后 nodejs 环境卡住
   'BG_SESSIONS', // 后台会话管理（ps/logs/attach/kill）
   'TEMPLATES', // 模板任务（new/list/reply 子命令）
   // 'REVIEW_ARTIFACT',          // 代码审查产物（API 请求无响应，待排查 schema 兼容性）
