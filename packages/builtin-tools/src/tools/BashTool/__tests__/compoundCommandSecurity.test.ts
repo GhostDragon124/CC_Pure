@@ -49,17 +49,12 @@ describe('compound command security', () => {
     expect(parts.length).toBe(1)
   })
 
-  // SKIP: splitCommand_DEPRECATED replaces quotes with placeholders before
-  // parsing (commands.ts:144-145), so quoted && and ; leak out as operators.
-  // Fixing this requires rewriting the shell tokenizer with a quote state
-  // machine — not worth it for a DEPRECATED function. The builtin-tools
-  // package's newer implementation handles this correctly.
-  test.skip('does not split echo with quoted &&', () => {
+  test('does not split echo with quoted &&', () => {
     const parts = splitCommand_DEPRECATED('echo "a && b"')
     expect(parts.length).toBe(1)
   })
 
-  test.skip('does not split command with semicolon in quotes', () => {
+  test('does not split command with semicolon in quotes', () => {
     const parts = splitCommand_DEPRECATED("echo 'a;b'")
     expect(parts.length).toBe(1)
   })
