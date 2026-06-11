@@ -20,6 +20,12 @@ export function startEventServer(port = configuredPort()): Server<unknown> {
         return Response.json(await store.read(since))
       }
 
+      if (req.method === 'DELETE') {
+        const before = parseSince(url.searchParams.get('before'))
+        await store.clear(before)
+        return new Response('ok')
+      }
+
       if (req.method === 'POST') {
         try {
           const event = JSON.parse(await req.text()) as TeamEvent

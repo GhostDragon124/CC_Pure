@@ -132,5 +132,15 @@ describe('smoke: coordinator event log end-to-end', () => {
     console.log('   - Projection: worker statuses correct')
     console.log('   - Orphan detection: session restart detected')
     console.log('   - Context renderer: valid XML output')
+
+    // Clear: delete all events before a checkpoint
+    await store.clear(Date.now() + 3500) // keep only events after this cutoff
+    const afterClear = await store.read()
+    expect(afterClear.length).toBeLessThan(events.length)
+
+    // Clear: delete everything
+    await store.clear()
+    const afterFullClear = await store.read()
+    expect(afterFullClear).toEqual([])
   })
 })

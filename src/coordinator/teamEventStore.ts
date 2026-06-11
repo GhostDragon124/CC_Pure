@@ -1,4 +1,4 @@
-import { mkdir, readFile, appendFile } from 'fs/promises'
+import { mkdir, readFile, appendFile, writeFile } from 'fs/promises'
 import { dirname, join } from 'path'
 import { getProjectRoot } from 'src/bootstrap/state.js'
 import { logForDebugging } from 'src/utils/debug.js'
@@ -58,6 +58,7 @@ export type TeamEvent =
 export interface EventStore {
   append(event: TeamEvent): Promise<void>
   read(since?: number): Promise<TeamEvent[]>
+  clear(before?: number): Promise<void>
 }
 
 export class LocalFileEventStore implements EventStore {
@@ -106,6 +107,41 @@ export class LocalFileEventStore implements EventStore {
         `Failed to read coordinator team events: ${String(error)}`,
       )
       return []
+    }
+  }
+
+  async clear(before?: number): Promise<void> {
+    try {
+      const content = await readFile(this.filePath, 'utf8')
+      const lines = content.split('\n')
+      if (before === undefined) {
+        await writeFile(this.filePath, '', 'utf8')
+        return
+      }
+
+      const kept = lines.filter(line => {
+        const trimmed = line.trim()
+        if (!trimmed) {
+          return false
+        }
+        try {
+          const event = JSON.parse(trimmed) as TeamEvent
+          return event.timestamp >= before
+        } catch {
+          return true
+        }
+      })
+      await writeFile(
+        this.filePath,
+        kept.join('\n') + (kept.length > 0 ? '\n' : ''),
+        'utf8',
+      )
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        logForDebugging(
+          'Failed to clear coordinator team events: ' + String(error),
+        )
+      }
     }
   }
 }

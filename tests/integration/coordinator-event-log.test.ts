@@ -27,6 +27,15 @@ class MockEventStore implements EventStore {
       event => since === undefined || event.timestamp > since,
     )
   }
+
+  async clear(before?: number): Promise<void> {
+    if (before === undefined) {
+      this.events = []
+      return
+    }
+
+    this.events = this.events.filter(event => event.timestamp >= before)
+  }
 }
 
 describe('coordinator event log integration', () => {

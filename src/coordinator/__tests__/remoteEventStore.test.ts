@@ -116,6 +116,43 @@ describe('RemoteEventStore', () => {
       },
     )
   })
+
+  test('clear sends DELETE to server', async () => {
+    const requestedUrls: string[] = []
+
+    await withFetchMock(
+      async (input, init) => {
+        requestedUrls.push(String(input))
+        expect(init?.method).toBe('DELETE')
+        return new Response('ok')
+      },
+      async () => {
+        const store = new RemoteEventStore('http://machine-a.test')
+        await store.clear()
+
+        expect(requestedUrls).toEqual(['http://machine-a.test/events'])
+      },
+    )
+  })
+
+  test('clear with before sends DELETE with query parameter', async () => {
+    let receivedBefore: string | null = null
+
+    await withFetchMock(
+      async (input, init) => {
+        const url = new URL(String(input))
+        receivedBefore = url.searchParams.get('before')
+        expect(init?.method).toBe('DELETE')
+        return new Response('ok')
+      },
+      async () => {
+        const store = new RemoteEventStore('http://machine-a.test')
+        await store.clear(1234)
+
+        expect(receivedBefore).toBe('1234')
+      },
+    )
+  })
 })
 
 async function withFetchMock<T>(

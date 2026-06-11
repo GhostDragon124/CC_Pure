@@ -55,6 +55,20 @@ export class RemoteEventStore implements EventStore {
     }
   }
 
+  async clear(before?: number): Promise<void> {
+    try {
+      const url =
+        before !== undefined
+          ? `${this.eventsUrl()}?before=${encodeURIComponent(before)}`
+          : this.eventsUrl()
+      await fetch(url, { method: 'DELETE' })
+    } catch (error) {
+      logForDebugging(
+        'Failed to clear remote coordinator team events: ' + String(error),
+      )
+    }
+  }
+
   private eventsUrl(since?: number): string {
     const url = this.serverUrl + '/events'
     return since === undefined
