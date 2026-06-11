@@ -146,6 +146,36 @@ tail -f ~/.claude/local_analytics.jsonl # 实时追踪
 /mode sharp         # 切换到代码审查模式
 ```
 
+### Coordinator Event Log（事件溯源架构）
+
+事件溯源架构用于 **compaction 抗性的多 agent 通信**。coordinator 编排多个 worker 时，每次操作在下一个 LLM turn 之前即写入类型化事件——compaction 无法蒸发共享状态，因为状态存在于 token 窗口之外的 append-only 存储中。
+
+```
+coordinator 操作 → 写事件 → compaction 时 → fold 事件 → checkpoint → 恢复
+```
+
+| 组件 | 文件 | 说明 |
+|------|------|------|
+| EventStore | `src/coordinator/teamEventStore.ts` | 接口：append / read / clear，6 种事件 |
+| TeamProjection | `src/coordinator/teamProjection.ts` | Fold 投影 + checkpoint 快照恢复 |
+| LocalFileEventStore | `src/coordinator/teamEventStore.ts` | 本地 JSONL 存储（`.team-events/`） |
+| RemoteEventStore | `src/coordinator/remoteEventStore.ts` | HTTP 客户端，跨机读写 |
+| HTTP Server | `src/coordinator/eventHttpServer.ts` | Bun.serve 端口 9742，零外部依赖 |
+
+**6 种事件类型：** `session_started`、`worker_spawned`、`worker_result`、`synthesis`、`decision`、`checkpoint`
+
+**跨机部署：**
+
+```bash
+# 机器 A：启动事件服务器
+TEAM_EVENT_SERVER_PORT=9742 bun run src/coordinator/eventHttpServerEntry.ts
+
+# 机器 B：远程读取机器 A 的 worker 状态
+TEAM_EVENT_SERVER_URL=http://machine-a:9742 bun run dev
+```
+
+→ 完整设计：[`Coordinator_Event_Log_Design_Doc.md`](docs/Coordinator_Event_Log_Design_Doc.md) (EN) · [`设计文档`](docs/Coordinator_Event_Log_设计文档.md) (中文) · [`实施计划`](docs/plans/2026-06-11-coordinator-event-log.md)
+
 ---
 
 ## 工程质量
@@ -176,37 +206,6 @@ tail -f ~/.claude/local_analytics.jsonl # 实时追踪
 ### 🧱 反编译的还原上限
 
 在 source-map 重建的范式下，系统性的代码质量改进已触及天花板。后续专注上游更新合并。
-
----
-
-## Coordinator Event Log（事件溯源架构）
-
-Coordinator 模式具备完整的事件溯源能力，解决多 worker 编排中 **compaction 后 team context 丢失**的问题：
-
-```
-coordinator 写事件 → projection (fold) → compaction checkpoint → clear 旧事件
-                                                                    ↓
-session 结束 → clear() 全清 ← checkpoint 可独立恢复完整 TeamState
-```
-
-| 组件 | 文件 | 说明 |
-|------|------|------|
-| EventStore 接口 | `src/coordinator/teamEventStore.ts` | append / read / clear，6 种事件类型 |
-| Projection | `src/coordinator/teamProjection.ts` | fold-based，checkpoint 快照恢复 |
-| RemoteEventStore | `src/coordinator/remoteEventStore.ts` | HTTP client（GET/POST/DELETE /events） |
-| HTTP Server | `src/coordinator/eventHttpServer.ts` | Bun.serve，端口 9742 |
-
-**跨机部署：**
-
-```bash
-# Machine A: 启动事件服务器
-TEAM_EVENT_SERVER_PORT=9742 bun run src/coordinator/eventHttpServerEntry.ts
-
-# Machine B: CCP 远程读取 A 的 worker 状态
-TEAM_EVENT_SERVER_URL=http://machine-a:9742 bun run dev
-```
-
-全部使用 Bun 内置 API，零外部依赖。
 
 ---
 

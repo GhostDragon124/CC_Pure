@@ -98,6 +98,36 @@ CC Pure is based on decompiled CCB v2.6.11 sources with these key changes:
 | Token Saver | 💰 | Minimal replies, save tokens |
 | Super AI | 🧠 | Deep thinking, comprehensive analysis |
 
+### Coordinator Event Log (`coordinator-sourced`)
+
+Event sourcing architecture for **compaction-resistant multi-agent communication**. When coordinator orchestrates multiple workers, every action is written as a typed event before the next LLM turn — compaction can't evict shared state because state lives in an append-only store outside the token window.
+
+```
+coordinator action → write event → later: compaction → fold events → checkpoint → restore
+```
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| EventStore | `src/coordinator/teamEventStore.ts` | Interface: append / read / clear, 6 event types |
+| TeamProjection | `src/coordinator/teamProjection.ts` | Fold-based projection + checkpoint snapshot restore |
+| LocalFileEventStore | `src/coordinator/teamEventStore.ts` | Local JSONL storage under `.team-events/` |
+| RemoteEventStore | `src/coordinator/remoteEventStore.ts` | HTTP client for cross-machine (GET/POST/DELETE) |
+| HTTP Server | `src/coordinator/eventHttpServer.ts` | Bun.serve on port 9742, zero external deps |
+
+**6 event types:** `session_started`, `worker_spawned`, `worker_result`, `synthesis`, `decision`, `checkpoint`
+
+**Cross-machine deployment:**
+
+```bash
+# Machine A: start event server
+TEAM_EVENT_SERVER_PORT=9742 bun run src/coordinator/eventHttpServerEntry.ts
+
+# Machine B: read machine A's worker state remotely
+TEAM_EVENT_SERVER_URL=http://machine-a:9742 bun run dev
+```
+
+→ Full design: [`Coordinator_Event_Log_Design_Doc.md`](docs/Coordinator_Event_Log_Design_Doc.md) (EN) · [`设计文档`](docs/Coordinator_Event_Log_设计文档.md) (中文) · [`Implementation plan`](docs/plans/2026-06-11-coordinator-event-log.md)
+
 ---
 
 ## Engineering Quality
@@ -110,38 +140,6 @@ CC Pure is based on decompiled CCB v2.6.11 sources with these key changes:
 | Telemetry egress | Yes | **0** | ✅ |
 | CodeQL open | 175+ | **0** | 254 fixed · 260 dismissed |
 | `as any` (core) | 94 | **0** | ✅ |
-
----
-
-## Coordinator Event Log
-
-Coordinator mode now has full event sourcing to solve **compaction-resistant team context**:
-
-```
-append → projection (fold) → checkpoint → clear old events
-                                              ↓
-session end → clear() ← checkpoint restores full TeamState
-```
-
-| Component | File | Purpose |
-|-----------|------|---------|
-| EventStore interface | `src/coordinator/teamEventStore.ts` | append / read / clear, 6 event types |
-| Projection | `src/coordinator/teamProjection.ts` | fold-based, checkpoint snapshot restore |
-| LocalFileEventStore | `src/coordinator/teamEventStore.ts` | Local JSONL storage |
-| RemoteEventStore | `src/coordinator/remoteEventStore.ts` | HTTP client (GET/POST/DELETE /events) |
-| HTTP Server | `src/coordinator/eventHttpServer.ts` | Bun.serve, port 9742 |
-
-**Cross-machine:**
-
-```bash
-# Machine A: start event server
-TEAM_EVENT_SERVER_PORT=9742 bun run src/coordinator/eventHttpServerEntry.ts
-
-# Machine B: CCP reads machine A's worker state
-TEAM_EVENT_SERVER_URL=http://machine-a:9742 bun run dev
-```
-
-Zero external dependencies — all Bun built-ins.
 
 ---
 
