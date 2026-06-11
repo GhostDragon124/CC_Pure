@@ -1,13 +1,15 @@
 import { describe, expect, test } from 'bun:test'
 import { LocalFileEventStore } from '../teamEventStore.js'
 import { projectTeamState, renderTeamContext } from '../teamProjection.js'
-import { mkdir } from 'fs/promises'
+import { mkdir, rm } from 'fs/promises'
 import { join } from 'path'
 
 const TEST_DIR = '/tmp/ccp_smoke_test'
 
 describe('smoke: coordinator event log end-to-end', () => {
   test('full session lifecycle: start → spawn → result → synthesis → decision → project → render', async () => {
+    // Clean up from previous runs to avoid stale events
+    await rm(TEST_DIR, { recursive: true, force: true })
     await mkdir(join(TEST_DIR, '.claude', 'team'), { recursive: true })
 
     const store = new LocalFileEventStore(
