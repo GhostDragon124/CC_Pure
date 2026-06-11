@@ -159,10 +159,6 @@ TEAM_EVENT_SERVER_URL=http://machine-a:9742 bun run dev
 | CodeQL open | 175+ | **0** | 254 fixed · 260 dismissed |
 | `as any` (core) | 94 | **0** | ✅ |
 
-### 相关文档
-
-- **在线文档（Mintlify）**: [ccb.agent-aura.top](https://ccb.agent-aura.top) — Claude Code 架构详解
-
 ### Related Documentation
 
 - **DeepWiki**: [deepwiki.com/claude-code-best/claude-code](https://deepwiki.com/claude-code-best/claude-code)
