@@ -16,6 +16,10 @@ import {
   getSystemPrompt,
 } from 'src/constants/prompts.js'
 import { isCoordinatorMode } from 'src/coordinator/coordinatorMode.js'
+import {
+  getCoordinatorId,
+  getEventStore,
+} from 'src/coordinator/eventStoreInstance.js'
 import { startAgentSummarization } from 'src/services/AgentSummary/agentSummary.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import {
@@ -962,6 +966,24 @@ export const AgentTool = buildTool({
         // They are killed explicitly via chat:killAgents.
         toolUseId: toolUseContext.toolUseId,
       })
+
+      if (isCoordinatorMode()) {
+        const store = getEventStore()
+        void store
+          .append({
+            version: 1,
+            timestamp: Date.now(),
+            coordinatorId: getCoordinatorId(),
+            sessionId:
+              (toolUseContext as { sessionId?: string }).sessionId ||
+              'unknown',
+            type: 'coordinator.worker_spawned',
+            workerId: asyncAgentId,
+            directive: (prompt || description || '').slice(0, 200),
+            agentType: selectedAgent?.agentType || 'worker',
+          })
+          .catch(() => {})
+      }
 
       // Register name → agentId for SendMessage routing. Post-registerAsyncAgent
       // so we don't leave a stale entry if spawn fails. Sync agents skipped —

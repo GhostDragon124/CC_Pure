@@ -61,6 +61,7 @@ import { logError } from '../../utils/log.js'
 import { MEMORY_TYPE_VALUES } from '../../utils/memory/types.js'
 import {
   createCompactBoundaryMessage,
+  createSystemMessage,
   createUserMessage,
   getAssistantMessageText,
   getLastAssistantMessage,
@@ -332,13 +333,20 @@ export type RecompactionInfo = {
  * This ensures consistent ordering across all compaction paths.
  * Order: boundaryMarker, summaryMessages, messagesToKeep, attachments, hookResults
  */
-export function buildPostCompactMessages(result: CompactionResult): Message[] {
-  return ([result.boundaryMarker] as Message[]).concat(
+export function buildPostCompactMessages(
+  result: CompactionResult,
+  teamContext?: string,
+): Message[] {
+  const messages = ([result.boundaryMarker] as Message[]).concat(
     result.summaryMessages,
     result.messagesToKeep ?? [],
     result.attachments,
     result.hookResults,
   )
+  if (teamContext) {
+    messages.push(createSystemMessage(teamContext, 'info'))
+  }
+  return messages
 }
 
 /**

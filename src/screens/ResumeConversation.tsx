@@ -236,7 +236,7 @@ export function ResumeConversation({
         const coordinatorModule =
           require('../coordinator/coordinatorMode.js') as typeof import('../coordinator/coordinatorMode.js');
         /* eslint-enable @typescript-eslint/no-require-imports */
-        const warning = coordinatorModule.matchSessionMode(result.mode);
+        const warning = coordinatorModule.matchSessionMode(result.mode, result.sessionId);
         if (warning) {
           /* eslint-disable @typescript-eslint/no-require-imports */
           const { getAgentDefinitionsWithOverrides, getActiveAgentsFromList } =
@@ -253,6 +253,10 @@ export function ResumeConversation({
             },
           }));
           result.messages.push(createSystemMessage(warning, 'warning'));
+        }
+        const teamContextMessage = await coordinatorModule.buildRecoveredTeamContextMessage();
+        if (teamContextMessage) {
+          result.messages.unshift(teamContextMessage);
         }
       }
 

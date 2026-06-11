@@ -45,6 +45,7 @@ const coordinator = {
         } else {
           // Enable: set the env var
           process.env.CLAUDE_CODE_COORDINATOR_MODE = '1'
+          mod.recordCoordinatorSessionStarted()
           onDone(
             'Coordinator mode enabled — use Agent(subagent_type: "worker") to dispatch tasks',
             {

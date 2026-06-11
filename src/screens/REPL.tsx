@@ -2078,7 +2078,7 @@ export function REPL({
           const coordinatorModule =
             require('../coordinator/coordinatorMode.js') as typeof import('../coordinator/coordinatorMode.js');
           /* eslint-enable @typescript-eslint/no-require-imports */
-          const warning = coordinatorModule.matchSessionMode(log.mode);
+          const warning = coordinatorModule.matchSessionMode(log.mode, sessionId);
           if (warning) {
             // Re-derive agent definitions after mode switch so built-in agents
             // reflect the new coordinator/normal mode
@@ -2098,6 +2098,10 @@ export function REPL({
               },
             }));
             messages.push(createSystemMessage(warning, 'warning'));
+          }
+          const teamContextMessage = await coordinatorModule.buildRecoveredTeamContextMessage();
+          if (teamContextMessage) {
+            messages.unshift(teamContextMessage);
           }
         }
 

@@ -4965,7 +4965,10 @@ async function loadInitialMessages(
       if (result) {
         // Match coordinator mode to the resumed session's mode
         if (feature('COORDINATOR_MODE') && coordinatorModeModule) {
-          const warning = coordinatorModeModule.matchSessionMode(result.mode)
+          const warning = coordinatorModeModule.matchSessionMode(
+            result.mode,
+            result.sessionId,
+          )
           if (warning) {
             process.stderr.write(warning + '\n')
             // Refresh agent definitions to reflect the mode switch
@@ -4988,6 +4991,11 @@ async function loadInitialMessages(
                 activeAgents: getActiveAgentsFromList(freshAgentDefs.allAgents),
               },
             }))
+          }
+          const teamContextMessage =
+            await coordinatorModeModule.buildRecoveredTeamContextMessage()
+          if (teamContextMessage) {
+            result.messages.unshift(teamContextMessage)
           }
         }
 
@@ -5170,7 +5178,10 @@ async function loadInitialMessages(
 
       // Match coordinator mode to the resumed session's mode
       if (feature('COORDINATOR_MODE') && coordinatorModeModule) {
-        const warning = coordinatorModeModule.matchSessionMode(result.mode)
+        const warning = coordinatorModeModule.matchSessionMode(
+          result.mode,
+          result.sessionId,
+        )
         if (warning) {
           process.stderr.write(warning + '\n')
           // Refresh agent definitions to reflect the mode switch
@@ -5190,6 +5201,11 @@ async function loadInitialMessages(
               activeAgents: getActiveAgentsFromList(freshAgentDefs.allAgents),
             },
           }))
+        }
+        const teamContextMessage =
+          await coordinatorModeModule.buildRecoveredTeamContextMessage()
+        if (teamContextMessage) {
+          result.messages.unshift(teamContextMessage)
         }
       }
 

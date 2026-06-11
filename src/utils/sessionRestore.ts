@@ -27,7 +27,7 @@ import type {
   ContextCollapseSnapshotEntry,
   PersistedWorktreeSession,
 } from '../types/logs.js'
-import type { ContentItem, Message } from '../types/message.js'
+import type { ContentItem, Message, UserMessage } from '../types/message.js'
 import { renameRecordingForSession } from './asciicast.js'
 import { clearMemoryFileCaches } from './claudemd.js'
 import {
@@ -289,8 +289,9 @@ export type ProcessedResume = {
  * Subset of the coordinator mode module API needed for session resume.
  */
 type CoordinatorModeApi = {
-  matchSessionMode(mode?: string): string | undefined
+  matchSessionMode(mode?: string, sessionId?: string): string | undefined
   isCoordinatorMode(): boolean
+  buildRecoveredTeamContextMessage(): Promise<UserMessage | undefined>
 }
 
 /**
@@ -428,9 +429,17 @@ export async function processResumedConversation(
   // Match coordinator/normal mode to the resumed session
   let modeWarning: string | undefined
   if (feature('COORDINATOR_MODE')) {
-    modeWarning = context.modeApi?.matchSessionMode(result.mode)
+    modeWarning = context.modeApi?.matchSessionMode(
+      result.mode,
+      result.sessionId,
+    )
     if (modeWarning) {
       result.messages.push(createSystemMessage(modeWarning, 'warning'))
+    }
+    const teamContextMessage =
+      await context.modeApi?.buildRecoveredTeamContextMessage()
+    if (teamContextMessage) {
+      result.messages.unshift(teamContextMessage)
     }
   }
 

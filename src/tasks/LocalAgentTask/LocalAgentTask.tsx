@@ -1,5 +1,7 @@
 import type { BetaUsage } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs';
 import { getSdkAgentProgressSummariesEnabled } from '../../bootstrap/state.js';
+import { isCoordinatorMode } from '../../coordinator/coordinatorMode.js';
+import { getCoordinatorId, getEventStore } from '../../coordinator/eventStoreInstance.js';
 import {
   OUTPUT_FILE_TAG,
   STATUS_TAG,
@@ -315,6 +317,22 @@ export function enqueueAgentNotification({
 </${TASK_NOTIFICATION_TAG}>`;
 
   enqueuePendingNotification({ value: message, mode: 'task-notification' });
+
+  if (isCoordinatorMode()) {
+    const store = getEventStore();
+    void store
+      .append({
+        version: 1,
+        timestamp: Date.now(),
+        coordinatorId: getCoordinatorId(),
+        sessionId: 'coordinator',
+        type: 'coordinator.worker_result',
+        workerId: taskId,
+        status,
+        summary: (finalMessage || error || '').slice(0, 200),
+      })
+      .catch(() => {});
+  }
 }
 
 /**

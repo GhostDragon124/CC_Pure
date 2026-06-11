@@ -14,7 +14,12 @@ import { SYNTHETIC_OUTPUT_TOOL_NAME } from '@claude-code-best/builtin-tools/tool
 import { TASK_STOP_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TaskStopTool/prompt.js'
 import { TEAM_CREATE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TeamCreateTool/constants.js'
 import { TEAM_DELETE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TeamDeleteTool/constants.js'
+import { getSessionId } from '../bootstrap/state.js'
+import type { UserMessage } from '../types/message.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
+import { createUserMessage } from '../utils/messages.js'
+import { getCoordinatorId, getEventStore } from './eventStoreInstance.js'
+import { projectTeamState, renderTeamContext } from './teamProjection.js'
 
 // Checks the same gate as isScratchpadEnabled() in
 // utils/permissions/filesystem.ts. Duplicated here because importing
@@ -48,6 +53,7 @@ export function isCoordinatorMode(): boolean {
  */
 export function matchSessionMode(
   sessionMode: 'coordinator' | 'normal' | undefined,
+  sessionId: string = getSessionId(),
 ): string | undefined {
   // No stored mode (old session before mode tracking) — do nothing
   if (!sessionMode) {
@@ -58,6 +64,9 @@ export function matchSessionMode(
   const sessionIsCoordinator = sessionMode === 'coordinator'
 
   if (currentIsCoordinator === sessionIsCoordinator) {
+    if (sessionIsCoordinator) {
+      recordCoordinatorSessionStarted(sessionId)
+    }
     return undefined
   }
 
@@ -72,9 +81,49 @@ export function matchSessionMode(
     to: sessionMode as unknown as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   })
 
+  if (sessionIsCoordinator) {
+    recordCoordinatorSessionStarted(sessionId)
+  }
+
   return sessionIsCoordinator
     ? 'Entered coordinator mode to match resumed session.'
     : 'Exited coordinator mode to match resumed session.'
+}
+
+export function recordCoordinatorSessionStarted(
+  sessionId: string = getSessionId(),
+): void {
+  if (!isCoordinatorMode()) {
+    return
+  }
+
+  void getEventStore()
+    .append({
+      version: 1,
+      timestamp: Date.now(),
+      coordinatorId: getCoordinatorId(),
+      sessionId,
+      type: 'coordinator.session_started',
+    })
+    .catch(() => {})
+}
+
+export async function buildRecoveredTeamContextMessage(): Promise<
+  UserMessage | undefined
+> {
+  if (!isCoordinatorMode()) {
+    return undefined
+  }
+
+  const events = await getEventStore().read()
+  if (events.length === 0) {
+    return undefined
+  }
+
+  return createUserMessage({
+    content: renderTeamContext(projectTeamState(events)),
+    isMeta: true,
+  })
 }
 
 export function getCoordinatorUserContext(
@@ -333,6 +382,25 @@ Additional tips:
 - For verification: "Prove the code works, don't just confirm it exists"
 - For verification: "Try edge cases and error paths — don't just re-run what the implementation worker ran"
 - For verification: "Investigate failures — don't dismiss as unrelated without evidence"
+
+## Coordinator State Tags
+
+To help the system track your decisions, wrap synthesis and decisions in explicit tags:
+
+When you synthesize worker findings:
+<coordinator-synthesis>
+Brief summary of what you learned and what you decided.
+</coordinator-synthesis>
+
+When you decide to continue a worker:
+<decision action="continue" worker="<agent-id>">
+Why you're continuing this worker.
+</decision>
+
+When you decide to spawn a fresh worker:
+<decision action="spawn">
+Why a fresh worker is better.
+</decision>
 
 ## 6. Example Session
 
