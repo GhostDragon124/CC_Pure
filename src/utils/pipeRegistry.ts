@@ -8,7 +8,7 @@
  * File locking prevents race conditions when multiple instances start
  * simultaneously.
  */
-import { readFile, writeFile, unlink, mkdir } from 'fs/promises'
+import { readFile, writeFile, unlink, mkdir, rename } from 'fs/promises'
 import { join } from 'path'
 import { createHash } from 'crypto'
 import { isPipeAlive, getPipesDir } from './pipeTransport.js'
@@ -245,8 +245,11 @@ export async function readRegistry(): Promise<PipeRegistry> {
 }
 
 export async function writeRegistry(registry: PipeRegistry): Promise<void> {
-  await mkdir(getPipesDir(), { recursive: true })
-  await writeFile(getRegistryPath(), JSON.stringify(registry, null, 2))
+  await mkdir(getPipesDir(), { recursive: true, mode: 0o700 })
+  const path = getRegistryPath()
+  const tmp = path + '.tmp'
+  await writeFile(tmp, JSON.stringify(registry, null, 2), { mode: 0o600 })
+  await rename(tmp, path)
 }
 
 // ---------------------------------------------------------------------------
