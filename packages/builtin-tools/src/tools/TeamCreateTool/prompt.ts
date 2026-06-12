@@ -38,11 +38,23 @@ This creates:
 
 1. **Create a team** with TeamCreate - this creates both the team and its task list
 2. **Create tasks** using the Task tools (TaskCreate, TaskList, etc.) - they automatically use the team's task list
-3. **Spawn teammates** using the Agent tool with \`team_name\` and \`name\` parameters to create teammates that join the team
+3. **Spawn teammates** (beyond the lead) using the Agent tool with \`team_name\` and \`name\` parameters — but only when the task genuinely needs more than one agent. **TeamCreate already creates the lead (\`team-lead@<team_name>\`)** — do NOT pass \`name: "team-lead"\` to the Agent tool; that creates a duplicate agent, not the lead. Talk to the lead with SendMessage using the returned lead_agent_id.
 4. **Assign tasks** using TaskUpdate with \`owner\` to give tasks to idle teammates
 5. **Teammates work on assigned tasks** and mark them completed via TaskUpdate
 6. **Teammates go idle between turns** - after each turn, teammates automatically go idle and send a notification. IMPORTANT: Be patient with idle teammates! Don't comment on their idleness until it actually impacts your work.
 7. **Shutdown your team** - when the task is completed, gracefully shut down your teammates via SendMessage with \`message: {type: "shutdown_request"}\`.
+
+## Minimal Lifecycle (Single-Agent Task)
+
+When the task needs only one agent (not a multi-agent parallel workload), do NOT spawn additional teammates. The lead agent created by TeamCreate is sufficient:
+
+\`\`\`
+1. TeamCreate(team_name: "my-sweep")
+2. SendMessage(to: <lead_agent_id from step 1>, ...) — the lead receives and processes your instructions
+3. TeamDelete(team_name: "my-sweep")
+\`\`\`
+
+Use the Agent tool only to add teammates BEYOND the lead, and only when the task genuinely needs multiple agents working in parallel.
 
 ## Task Ownership
 
