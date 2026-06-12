@@ -2,6 +2,7 @@ import type { BetaUsage } from '@anthropic-ai/sdk/resources/beta/messages/messag
 import { getSdkAgentProgressSummariesEnabled } from '../../bootstrap/state.js';
 import { isCoordinatorMode } from '../../coordinator/coordinatorMode.js';
 import { getCoordinatorId, getEventStore } from '../../coordinator/eventStoreInstance.js';
+import { createKvEvent, workerKvKey } from '../../coordinator/teamEventStore.js';
 import {
   OUTPUT_FILE_TAG,
   STATUS_TAG,
@@ -320,18 +321,25 @@ export function enqueueAgentNotification({
 
   if (isCoordinatorMode()) {
     const store = getEventStore();
-    void store
-      .append({
+    void (async () => {
+      const timestamp = Date.now();
+      const base = {
         version: 1,
-        timestamp: Date.now(),
+        timestamp,
         coordinatorId: getCoordinatorId(),
         sessionId: 'coordinator',
-        type: 'coordinator.worker_result',
-        workerId: taskId,
-        status,
-        summary: (finalMessage || error || '').slice(0, 200),
-      })
-      .catch(() => {});
+      } as const;
+      await store.append(createKvEvent(workerKvKey(taskId, 'status'), status, `worker-${taskId}`, base));
+      await store.append(
+        createKvEvent(
+          workerKvKey(taskId, 'summary'),
+          (finalMessage || error || '').slice(0, 200),
+          `worker-${taskId}`,
+          base,
+        ),
+      );
+      await store.append(createKvEvent(workerKvKey(taskId, 'updatedAt'), String(timestamp), `worker-${taskId}`, base));
+    })().catch(() => {});
   }
 }
 

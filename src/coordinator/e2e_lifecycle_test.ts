@@ -8,6 +8,7 @@ import { LocalFileEventStore, type TeamEvent } from './teamEventStore.js'
 import { RemoteEventStore } from './remoteEventStore.js'
 import { projectTeamState, renderTeamContext } from './teamProjection.js'
 import { startEventServer, stopEventServer } from './eventHttpServer.js'
+import { getWorkerStatus, teamKey, workerKey } from './kvHelpers.js'
 
 const SESSION_ID = 'e2e-session'
 const COORD_ID = 'spark-c670'
@@ -97,13 +98,15 @@ const resumedState = projectTeamState(resumedEvents)
 const rendered = renderTeamContext(resumedState)
 console.log(rendered)
 
-const w1 = resumedState.workers['agent-a']
-console.log(`  Worker agent-a: status=${w1?.status}, summary="${w1?.summary}"`)
-console.log(`  Synthesis: "${resumedState.lastSynthesis?.findings}"`)
+const w1Status = getWorkerStatus(resumedState, 'agent-a')
+const w1Summary = resumedState[workerKey('agent-a', 'summary')]?.value
+const synthesisFindings = resumedState[teamKey('findings')]?.value
+console.log(`  Worker agent-a: status=${w1Status}, summary="${w1Summary}"`)
+console.log(`  Synthesis: "${synthesisFindings}"`)
 if (
-  w1?.status === 'completed' &&
-  w1.summary === 'Found null pointer at auth.ts:42' &&
-  resumedState.lastSynthesis?.findings?.includes('Null pointer')
+  w1Status === 'completed' &&
+  w1Summary === 'Found null pointer at auth.ts:42' &&
+  synthesisFindings?.includes('Null pointer')
 ) {
   console.log('  ✅ State restored correctly from checkpoint alone!')
 } else {
@@ -153,7 +156,7 @@ const remoteEvents = await remoteB.read()
 const remoteState = projectTeamState(remoteEvents)
 console.log(`  Machine B read ${remoteEvents.length} events from Machine A`)
 console.log(
-  `  Worker remote-w: ${remoteState.workers['remote-w']?.status}, "${remoteState.workers['remote-w']?.summary}"`,
+  `  Worker remote-w: ${getWorkerStatus(remoteState, 'remote-w')}, "${remoteState[workerKey('remote-w', 'summary')]?.value}"`,
 )
 
 // Cross-machine checkpoint + clear

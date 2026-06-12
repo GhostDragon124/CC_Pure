@@ -16,6 +16,7 @@ import {
   getCoordinatorId,
   getEventStore,
 } from './coordinator/eventStoreInstance.js'
+import { createKvEvent } from './coordinator/teamEventStore.js'
 import {
   projectTeamState,
   renderTeamContext,
@@ -284,30 +285,48 @@ function recordCoordinatorAssistantEvents(
     /<coordinator-synthesis>([\s\S]*?)<\/coordinator-synthesis>/,
   )
   if (synthesisMatch) {
-    void store
-      .append({
-        ...base,
-        type: 'coordinator.synthesis',
-        findings: synthesisMatch[1]!.trim().slice(0, 500),
-        decisions: '',
-      })
-      .catch(() => {})
+    void (async () => {
+      await store.append(
+        createKvEvent(
+          'team:synthesis:findings',
+          synthesisMatch[1]!.trim().slice(0, 500),
+          'coordinator',
+          base,
+        ),
+      )
+      await store.append(
+        createKvEvent('team:synthesis:decisions', '', 'coordinator', base),
+      )
+      await store.append(
+        createKvEvent(
+          'team:synthesis:timestamp',
+          String(base.timestamp),
+          'coordinator',
+          base,
+        ),
+      )
+    })().catch(() => {})
   }
 
+  let decisionIndex = 0
   for (const decisionMatch of assistantText.matchAll(
     /<decision\b([^>]*)>([\s\S]*?)<\/decision>/g,
   )) {
     const attrs = decisionMatch[1] ?? ''
     const action = extractDecisionAttribute(attrs, 'action') ?? 'unknown'
     const workerId = extractDecisionAttribute(attrs, 'worker')
+    const decisionId = `${base.timestamp}:${decisionIndex++}`
     void store
-      .append({
-        ...base,
-        type: 'coordinator.decision',
-        action,
-        ...(workerId ? { workerId } : {}),
-        rationale: (decisionMatch[2] ?? '').trim().slice(0, 500),
-      })
+      .append(
+        createKvEvent(
+          `coordinator:decision:${decisionId}`,
+          (decisionMatch[2] ?? '').trim().slice(0, 500),
+          workerId
+            ? `coordinator:${action}:${workerId}`
+            : `coordinator:${action}`,
+          base,
+        ),
+      )
       .catch(() => {})
   }
 }
@@ -320,14 +339,16 @@ export async function writeCoordinatorCheckpoint(
   const store = getEventStore()
   const events = await store.read()
   const timestamp = Date.now()
-  await store.append({
-    version: 1,
+  const state = projectTeamState(events)
+  const base = {
+    version: 1 as const,
     timestamp,
     coordinatorId: getCoordinatorId(),
     sessionId: getSessionId(),
-    type: 'coordinator.checkpoint',
-    projectedState: projectTeamState(events),
-  })
+  }
+  for (const [key, entry] of Object.entries(state)) {
+    await store.append(createKvEvent(key, entry.value, 'coordinator', base))
+  }
   return timestamp
 }
 

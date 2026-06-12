@@ -1,8 +1,9 @@
 import { describe, expect, test } from 'bun:test'
-import { LocalFileEventStore } from '../teamEventStore.js'
+import { createKvEvent, LocalFileEventStore } from '../teamEventStore.js'
 import { projectTeamState, renderTeamContext } from '../teamProjection.js'
 import { mkdir, rm } from 'fs/promises'
 import { join } from 'path'
+import { getWorkerStatus, teamKey, workerKey } from '../kvHelpers.js'
 
 const TEST_DIR = '/tmp/ccp_smoke_test'
 
@@ -16,72 +17,115 @@ describe('smoke: coordinator event log end-to-end', () => {
       join(TEST_DIR, '.claude', 'team', 'events.jsonl'),
     )
 
-    // Session started
-    await store.append({
+    const base = {
       version: 1,
-      timestamp: Date.now(),
       coordinatorId: 'spark-c670',
       sessionId: 'test-s1',
-      type: 'coordinator.session_started',
-    })
+    } as const
+
+    // Session started
+    await store.append(
+      createKvEvent('coordinator:session', 'test-s1', 'coordinator', {
+        ...base,
+        timestamp: Date.now(),
+      }),
+    )
 
     // Spawn worker
-    await store.append({
-      version: 1,
-      timestamp: Date.now(),
-      coordinatorId: 'spark-c670',
-      sessionId: 'test-s1',
-      type: 'coordinator.worker_spawned',
-      workerId: 'agent-001',
-      directive: 'Investigate auth bug in src/auth/validate.ts',
-      agentType: 'worker',
-    })
+    const spawnedAt = Date.now()
+    await appendWorkerSpawnKv(
+      store,
+      base,
+      'agent-001',
+      'Investigate auth bug in src/auth/validate.ts',
+      spawnedAt,
+    )
 
     // Worker result
-    await store.append({
-      version: 1,
-      timestamp: Date.now() + 1000,
-      coordinatorId: 'spark-c670',
-      sessionId: 'test-s1',
-      type: 'coordinator.worker_result',
-      workerId: 'agent-001',
-      status: 'completed',
-      summary: 'Found null pointer in auth.ts:42',
-    })
+    const completedAt = Date.now() + 1000
+    await store.append(
+      createKvEvent(
+        workerKey('agent-001', 'status'),
+        'completed',
+        'worker-agent-001',
+        {
+          ...base,
+          timestamp: completedAt,
+        },
+      ),
+    )
+    await store.append(
+      createKvEvent(
+        workerKey('agent-001', 'summary'),
+        'Found null pointer in auth.ts:42',
+        'worker-agent-001',
+        {
+          ...base,
+          timestamp: completedAt,
+        },
+      ),
+    )
+    await store.append(
+      createKvEvent(
+        workerKey('agent-001', 'updatedAt'),
+        String(completedAt),
+        'worker-agent-001',
+        {
+          ...base,
+          timestamp: completedAt,
+        },
+      ),
+    )
 
     // Synthesis
-    await store.append({
-      version: 1,
-      timestamp: Date.now() + 2000,
-      coordinatorId: 'spark-c670',
-      sessionId: 'test-s1',
-      type: 'coordinator.synthesis',
-      findings: 'Null pointer from expired session',
-      decisions: 'Add null check',
-    })
+    const synthesisAt = Date.now() + 2000
+    await store.append(
+      createKvEvent(
+        teamKey('findings'),
+        'Null pointer from expired session',
+        'coordinator',
+        {
+          ...base,
+          timestamp: synthesisAt,
+        },
+      ),
+    )
+    await store.append(
+      createKvEvent(teamKey('decisions'), 'Add null check', 'coordinator', {
+        ...base,
+        timestamp: synthesisAt,
+      }),
+    )
+    await store.append(
+      createKvEvent(teamKey('timestamp'), String(synthesisAt), 'coordinator', {
+        ...base,
+        timestamp: synthesisAt,
+      }),
+    )
 
     // Decision
-    await store.append({
-      version: 1,
-      timestamp: Date.now() + 2500,
-      coordinatorId: 'spark-c670',
-      sessionId: 'test-s1',
-      type: 'coordinator.decision',
-      action: 'continue',
-      workerId: 'agent-001',
-      rationale: 'Worker has context',
-    })
+    await store.append(
+      createKvEvent(
+        'coordinator:decision:1',
+        'Worker has context',
+        'coordinator',
+        {
+          ...base,
+          timestamp: Date.now() + 2500,
+        },
+      ),
+    )
 
     // Read & project
     const events = await store.read()
-    expect(events.length).toBe(5)
+    expect(events.length).toBe(14)
 
     const state = projectTeamState(events)
-    expect(state.workers['agent-001']?.status).toBe('completed')
-    expect(state.workers['agent-001']?.summary).toBe(
+    expect(getWorkerStatus(state, 'agent-001')).toBe('completed')
+    expect(state[workerKey('agent-001', 'summary')]?.value).toBe(
       'Found null pointer in auth.ts:42',
     )
-    expect(state.lastSynthesis?.findings).toContain('Null pointer')
+    expect(state[teamKey('findings')]?.value).toContain('Null pointer')
 
     // Render
     const context = renderTeamContext(state)
@@ -94,16 +138,13 @@ describe('smoke: coordinator event log end-to-end', () => {
 
     // Orphan detection: simulate coordinator restart with a still-running worker
     // Spawn a running worker in old session first
-    await store.append({
-      version: 1,
-      timestamp: Date.now() + 500,
-      coordinatorId: 'spark-c670',
-      sessionId: 'test-s1',
-      type: 'coordinator.worker_spawned',
-      workerId: 'agent-running',
-      directive: 'Long task still running',
-      agentType: 'worker',
-    })
+    await appendWorkerSpawnKv(
+      store,
+      base,
+      'agent-running',
+      'Long task still running',
+      Date.now() + 500,
+    )
     await store.append({
       version: 1,
       timestamp: Date.now() + 3000,
@@ -111,21 +152,18 @@ describe('smoke: coordinator event log end-to-end', () => {
       sessionId: 'test-s2',
       type: 'coordinator.session_started',
     })
-    await store.append({
-      version: 1,
-      timestamp: Date.now() + 3100,
-      coordinatorId: 'spark-c670',
-      sessionId: 'test-s2',
-      type: 'coordinator.worker_spawned',
-      workerId: 'agent-002',
-      directive: 'Run tests',
-      agentType: 'worker',
-    })
+    await appendWorkerSpawnKv(
+      store,
+      { ...base, sessionId: 'test-s2' },
+      'agent-002',
+      'Run tests',
+      Date.now() + 3100,
+    )
 
     const state2 = projectTeamState(await store.read())
-    expect(state2.workers['agent-running']?.status).toBe('orphaned') // running from old session → orphaned
-    expect(state2.workers['agent-001']?.status).toBe('completed') // completed from old session → NOT orphaned (correct!)
-    expect(state2.workers['agent-002']?.status).toBe('running') // from new session
+    expect(getWorkerStatus(state2, 'agent-running')).toBe('orphaned') // running from old session → orphaned
+    expect(getWorkerStatus(state2, 'agent-001')).toBe('completed') // completed from old session → NOT orphaned (correct!)
+    expect(getWorkerStatus(state2, 'agent-002')).toBe('running') // from new session
 
     console.log('\n🎉 ALL SMOKE TESTS PASSED')
     console.log(`   - Event log: ${events.length + 2} events persisted`)
@@ -144,3 +182,67 @@ describe('smoke: coordinator event log end-to-end', () => {
     expect(afterFullClear).toEqual([])
   })
 })
+
+async function appendWorkerSpawnKv(
+  store: LocalFileEventStore,
+  base: {
+    version: 1
+    coordinatorId: string
+    sessionId: string
+  },
+  workerId: string,
+  directive: string,
+  timestamp: number,
+): Promise<void> {
+  await store.append(
+    createKvEvent(workerKey(workerId, 'status'), 'running', 'coordinator', {
+      ...base,
+      timestamp,
+    }),
+  )
+  await store.append(
+    createKvEvent(
+      workerKey(workerId, 'sessionId'),
+      base.sessionId,
+      'coordinator',
+      {
+        ...base,
+        timestamp,
+      },
+    ),
+  )
+  await store.append(
+    createKvEvent(workerKey(workerId, 'directive'), directive, 'coordinator', {
+      ...base,
+      timestamp,
+    }),
+  )
+  await store.append(
+    createKvEvent(workerKey(workerId, 'agentType'), 'worker', 'coordinator', {
+      ...base,
+      timestamp,
+    }),
+  )
+  await store.append(
+    createKvEvent(
+      workerKey(workerId, 'spawnedAt'),
+      String(timestamp),
+      'coordinator',
+      {
+        ...base,
+        timestamp,
+      },
+    ),
+  )
+  await store.append(
+    createKvEvent(
+      workerKey(workerId, 'updatedAt'),
+      String(timestamp),
+      'coordinator',
+      {
+        ...base,
+        timestamp,
+      },
+    ),
+  )
+}

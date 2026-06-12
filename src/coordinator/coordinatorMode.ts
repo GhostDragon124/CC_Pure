@@ -19,6 +19,7 @@ import type { UserMessage } from '../types/message.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
 import { createUserMessage } from '../utils/messages.js'
 import { getCoordinatorId, getEventStore } from './eventStoreInstance.js'
+import { createKvEvent } from './teamEventStore.js'
 import { projectTeamState, renderTeamContext } from './teamProjection.js'
 
 // Checks the same gate as isScratchpadEnabled() in
@@ -98,13 +99,12 @@ export function recordCoordinatorSessionStarted(
   }
 
   void getEventStore()
-    .append({
-      version: 1,
-      timestamp: Date.now(),
-      coordinatorId: getCoordinatorId(),
-      sessionId,
-      type: 'coordinator.session_started',
-    })
+    .append(
+      createKvEvent('coordinator:session', sessionId, getCoordinatorId(), {
+        coordinatorId: getCoordinatorId(),
+        sessionId,
+      }),
+    )
     .catch(() => {})
 }
 

@@ -4,7 +4,11 @@ import {
   projectTeamState,
   renderTeamContext,
 } from '../../src/coordinator/teamProjection.js'
-import type { TeamEvent } from '../../src/coordinator/teamEventStore.js'
+import {
+  createKvEvent,
+  type TeamEvent,
+} from '../../src/coordinator/teamEventStore.js'
+import { getWorkerStatus, workerKey } from '../../src/coordinator/kvHelpers.js'
 
 type FetchHandler = (
   input: Parameters<typeof fetch>[0],
@@ -68,34 +72,121 @@ describe('remote coordinator event log integration', () => {
       const machineAStore = new RemoteEventStore(machineA.url)
       const machineBRemoteViewOfA = new RemoteEventStore(machineA.url)
 
-      await machineAStore.append({
+      const baseEvent = {
         version: 1,
-        timestamp: 100,
         coordinatorId: 'machine-a',
         sessionId: 'session-a',
-        type: 'coordinator.worker_spawned',
-        workerId: 'worker-remote-1',
-        directive: 'Investigate remote status',
-        agentType: 'worker',
-      })
-      await machineAStore.append({
-        version: 1,
-        timestamp: 150,
-        coordinatorId: 'machine-a',
-        sessionId: 'session-a',
-        type: 'coordinator.worker_result',
-        workerId: 'worker-remote-1',
-        status: 'completed',
-        summary: 'Remote worker finished',
-      })
+      } as const
+      await machineAStore.append(
+        createKvEvent(
+          'worker:worker-remote-1:status',
+          'running',
+          'coordinator',
+          {
+            ...baseEvent,
+            timestamp: 100,
+          },
+        ),
+      )
+      await machineAStore.append(
+        createKvEvent(
+          'worker:worker-remote-1:sessionId',
+          'session-a',
+          'coordinator',
+          {
+            ...baseEvent,
+            timestamp: 100,
+          },
+        ),
+      )
+      await machineAStore.append(
+        createKvEvent(
+          'worker:worker-remote-1:directive',
+          'Investigate remote status',
+          'coordinator',
+          {
+            ...baseEvent,
+            timestamp: 100,
+          },
+        ),
+      )
+      await machineAStore.append(
+        createKvEvent(
+          'worker:worker-remote-1:agentType',
+          'worker',
+          'coordinator',
+          {
+            ...baseEvent,
+            timestamp: 100,
+          },
+        ),
+      )
+      await machineAStore.append(
+        createKvEvent(
+          'worker:worker-remote-1:spawnedAt',
+          '100',
+          'coordinator',
+          {
+            ...baseEvent,
+            timestamp: 100,
+          },
+        ),
+      )
+      await machineAStore.append(
+        createKvEvent(
+          'worker:worker-remote-1:updatedAt',
+          '100',
+          'coordinator',
+          {
+            ...baseEvent,
+            timestamp: 100,
+          },
+        ),
+      )
+      await machineAStore.append(
+        createKvEvent(
+          'worker:worker-remote-1:status',
+          'completed',
+          'worker-remote-1',
+          {
+            ...baseEvent,
+            timestamp: 150,
+          },
+        ),
+      )
+      await machineAStore.append(
+        createKvEvent(
+          'worker:worker-remote-1:summary',
+          'Remote worker finished',
+          'worker-remote-1',
+          {
+            ...baseEvent,
+            timestamp: 150,
+          },
+        ),
+      )
+      await machineAStore.append(
+        createKvEvent(
+          'worker:worker-remote-1:updatedAt',
+          '150',
+          'worker-remote-1',
+          {
+            ...baseEvent,
+            timestamp: 150,
+          },
+        ),
+      )
 
       const remoteEvents = await machineBRemoteViewOfA.read()
       const state = projectTeamState(remoteEvents)
       const rendered = renderTeamContext(state)
 
-      expect(machineA.events).toHaveLength(2)
+      expect(machineA.events).toHaveLength(9)
       expect(machineB.events).toHaveLength(0)
-      expect(state.workers['worker-remote-1']?.status).toBe('completed')
+      expect(getWorkerStatus(state, 'worker-remote-1')).toBe('completed')
+      expect(state[workerKey('worker-remote-1', 'summary')]?.value).toBe(
+        'Remote worker finished',
+      )
       expect(rendered).toContain('worker-remote-1')
       expect(rendered).toContain('Remote worker finished')
     })

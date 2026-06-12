@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { RemoteEventStore } from '../remoteEventStore.js'
-import type { TeamEvent } from '../teamEventStore.js'
+import { createKvEvent, type TeamEvent } from '../teamEventStore.js'
 
 type FetchHandler = (
   input: Parameters<typeof fetch>[0],
@@ -29,19 +29,21 @@ describe('RemoteEventStore', () => {
       },
       async () => {
         const store = new RemoteEventStore('http://machine-a.test')
-        await store.append({
-          ...baseEvent,
-          type: 'coordinator.worker_spawned',
-          workerId: 'worker-1',
-          directive: 'Investigate tests',
-          agentType: 'worker',
-        })
+        await store.append(
+          createKvEvent(
+            'worker:worker-1:directive',
+            'Investigate tests',
+            'coordinator',
+            baseEvent,
+          ),
+        )
 
         expect(received).toHaveLength(1)
-        expect(received[0]?.type).toBe('coordinator.worker_spawned')
+        expect(received[0]?.type).toBe('coordinator.kv')
         expect(received[0]).toMatchObject({
-          workerId: 'worker-1',
-          directive: 'Investigate tests',
+          key: 'worker:worker-1:directive',
+          value: 'Investigate tests',
+          writer: 'coordinator',
         })
       },
     )

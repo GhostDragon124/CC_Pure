@@ -2,7 +2,7 @@ import { mkdir, readFile, appendFile, writeFile } from 'fs/promises'
 import { dirname, join } from 'path'
 import { getProjectRoot } from 'src/bootstrap/state.js'
 import { logForDebugging } from 'src/utils/debug.js'
-import type { TeamState } from './teamProjection.js'
+import type { LegacyTeamState, TeamState } from './teamProjection.js'
 
 export type BaseTeamEvent = {
   version: 1
@@ -44,16 +44,46 @@ export type CoordinatorSessionStartedEvent = BaseTeamEvent & {
 
 export type CoordinatorCheckpointEvent = BaseTeamEvent & {
   type: 'coordinator.checkpoint'
-  projectedState: TeamState
+  projectedState: TeamState | LegacyTeamState
+}
+
+export type KvEvent = BaseTeamEvent & {
+  type: 'coordinator.kv'
+  key: string
+  value: string
+  writer: string
 }
 
 export type TeamEvent =
+  | KvEvent
   | WorkerSpawnedEvent
   | WorkerResultEvent
   | CoordinatorSynthesisEvent
   | CoordinatorDecisionEvent
   | CoordinatorSessionStartedEvent
   | CoordinatorCheckpointEvent
+
+export function createKvEvent(
+  key: string,
+  value: string,
+  writer: string,
+  base: Partial<BaseTeamEvent> = {},
+): KvEvent {
+  return {
+    version: 1,
+    timestamp: base.timestamp ?? Date.now(),
+    coordinatorId: base.coordinatorId ?? 'unknown',
+    sessionId: base.sessionId ?? 'unknown',
+    type: 'coordinator.kv',
+    key,
+    value,
+    writer,
+  }
+}
+
+export function workerKvKey(workerId: string, field: string): string {
+  return `worker:${workerId}:${field}`
+}
 
 export interface EventStore {
   append(event: TeamEvent): Promise<void>
