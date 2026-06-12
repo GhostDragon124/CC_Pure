@@ -44,14 +44,17 @@ bun run build
 ### Configure API
 
 ```bash
-# Option 1: OpenAI-compatible (DeepSeek, OpenAI, etc.)
-export CLAUDE_CODE_USE_OPENAI=1
-export OPENAI_BASE_URL="https://api.deepseek.com/v1"
-export OPENAI_API_KEY="sk-xxx"
+# DeepSeek (OpenAI-compatible) — one-time setup, CCP reads it automatically
+mkdir -p ~/.ccp
+cat > ~/.ccp/settings.json << 'EOF'
+{"modelType":"openai","env":{"OPENAI_BASE_URL":"https://api.deepseek.com/v1","OPENAI_API_KEY":"sk-your-key"}}
+EOF
 
-# Option 2: Anthropic-compatible (Anthropic native, LiteLLM proxy, etc.)
-export ANTHROPIC_BASE_URL="https://api.anthropic.com/v1"
-export ANTHROPIC_API_KEY="sk-ant-xxx"
+# Or use environment variables for any provider:
+# export OPENAI_BASE_URL="https://api.deepseek.com/v1"
+# export OPENAI_API_KEY="sk-xxx"
+# export ANTHROPIC_BASE_URL="https://api.anthropic.com/v1"
+# export ANTHROPIC_API_KEY="sk-ant-xxx"
 ```
 
 ### Verify

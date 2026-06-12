@@ -44,14 +44,17 @@ bun run build
 ### 配置 API
 
 ```bash
-# 方式一：OpenAI 兼容（DeepSeek、OpenAI 等）
-export CLAUDE_CODE_USE_OPENAI=1
-export OPENAI_BASE_URL="https://api.deepseek.com/v1"
-export OPENAI_API_KEY="sk-xxx"
+# DeepSeek（OpenAI 兼容）— 一次配置，CCP 启动自动读取
+mkdir -p ~/.ccp
+cat > ~/.ccp/settings.json << 'EOF'
+{"modelType":"openai","env":{"OPENAI_BASE_URL":"https://api.deepseek.com/v1","OPENAI_API_KEY":"sk-your-key"}}
+EOF
 
-# 方式二：Anthropic 兼容（Anthropic 原生、LiteLLM 代理等）
-export ANTHROPIC_BASE_URL="https://api.anthropic.com/v1"
-export ANTHROPIC_API_KEY="sk-ant-xxx"
+# 也可以用环境变量：
+# export OPENAI_BASE_URL="https://api.deepseek.com/v1"
+# export OPENAI_API_KEY="sk-xxx"
+# export ANTHROPIC_BASE_URL="https://api.anthropic.com/v1"
+# export ANTHROPIC_API_KEY="sk-ant-xxx"
 ```
 
 ### 配置本地快捷命令
