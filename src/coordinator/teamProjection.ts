@@ -1,3 +1,7 @@
+/**
+ * @deprecated Team state is now rehydrated from the SQLite blackboard kv table.
+ * Keep this projection only for legacy JSONL event-log compatibility tests.
+ */
 import type { TeamEvent } from './teamEventStore.js'
 
 export type WorkerStatus =

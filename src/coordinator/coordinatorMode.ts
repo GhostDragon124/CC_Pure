@@ -19,13 +19,12 @@ import {
   initializeSessionBlackboard,
 } from 'src/blackboard/BlackboardSession.js'
 import type { BlackboardEntry } from 'src/blackboard/BlackboardTypes.js'
-import { getByPrefix } from 'src/blackboard/BlackboardStore.js'
+import { getByPrefix, getEvents } from 'src/blackboard/BlackboardStore.js'
+import { recordCoordinatorSession } from 'src/blackboard/eventRecorder.js'
 import { getSessionId } from '../bootstrap/state.js'
 import type { UserMessage } from '../types/message.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
 import { createUserMessage } from '../utils/messages.js'
-import { getCoordinatorId, getEventStore } from './eventStoreInstance.js'
-import { projectTeamState, renderTeamContext } from './teamProjection.js'
 
 // Checks the same gate as isScratchpadEnabled() in
 // utils/permissions/filesystem.ts. Duplicated here because importing
@@ -109,15 +108,13 @@ export function recordCoordinatorSessionStarted(
     // Session startup should continue even if the blackboard cannot open.
   }
 
-  void getEventStore()
-    .append({
-      version: 1,
-      timestamp: Date.now(),
-      coordinatorId: getCoordinatorId(),
-      sessionId,
-      type: 'coordinator.session_started',
-    })
-    .catch(() => {})
+  try {
+    void recordCoordinatorSession(getSessionBlackboard(), sessionId).catch(
+      () => {},
+    )
+  } catch {
+    // Session startup should continue even if the blackboard cannot write.
+  }
 }
 
 function renderBlackboardTeamContext(
@@ -128,6 +125,23 @@ function renderBlackboardTeamContext(
       `- ${entry.key} = ${entry.value} (v${entry.version}, by ${entry.updatedBy}, at ${entry.updatedAt})`,
   )
   return `Blackboard team state:\n${lines.join('\n')}`
+}
+
+function renderBlackboardAuditInfo(
+  events: ReturnType<typeof getEvents>,
+): string {
+  const recentEvents = events
+    .slice(-20)
+    .map(
+      event =>
+        `- #${event.id} ${event.ts} ${event.actor} ${event.type} ${event.key} = ${event.value}`,
+    )
+  return [
+    `Blackboard audit events: ${events.length}`,
+    recentEvents.length > 0 ? recentEvents.join('\n') : undefined,
+  ]
+    .filter((line): line is string => line !== undefined)
+    .join('\n')
 }
 
 export function buildBlackboardTeamContext(): string | undefined {
@@ -142,10 +156,16 @@ export function buildBlackboardTeamContext(): string | undefined {
       ...getByPrefix(db, 'team:'),
       ...getByPrefix(db, 'coordinator:'),
     ]
-    if (entries.length === 0) {
+    const events = getEvents(db)
+    if (entries.length === 0 && events.length === 0) {
       return undefined
     }
-    return renderBlackboardTeamContext(entries)
+    return [
+      entries.length > 0 ? renderBlackboardTeamContext(entries) : undefined,
+      renderBlackboardAuditInfo(events),
+    ]
+      .filter((section): section is string => section !== undefined)
+      .join('\n\n')
   } catch {
     return undefined
   }
@@ -166,15 +186,7 @@ export async function buildRecoveredTeamContextMessage(): Promise<
     })
   }
 
-  const events = await getEventStore().read()
-  if (events.length === 0) {
-    return undefined
-  }
-
-  return createUserMessage({
-    content: renderTeamContext(projectTeamState(events)),
-    isMeta: true,
-  })
+  return undefined
 }
 
 export function getCoordinatorUserContext(

@@ -3,9 +3,10 @@ import {
   BLACKBOARD_NAMESPACES,
   BLACKBOARD_WORKER_NAMESPACE,
 } from './BlackboardTypes.js'
-import { deleteKey, get, set } from './BlackboardStore.js'
+import { get } from './BlackboardStore.js'
+import { recordJanitorAction } from './eventRecorder.js'
+import { workerKey } from './kvHelpers.js'
 
-const JANITOR_WRITER = 'blackboard-janitor'
 const DEFAULT_STALE_WORKER_SECONDS = 60 * 60
 const DEFAULT_HEARTBEAT_SECONDS = 5 * 60
 const ACTIVE_WORKER_STATUSES = new Set(['running', 'spawned', 'waiting'])
@@ -42,7 +43,7 @@ function getWorkerStatusRows(db: Database): WorkerStatusRow[] {
     .query<WorkerStatusRow, []>(
       `
         SELECT key, value, updated_at
-        FROM blackboard
+        FROM kv
         WHERE key LIKE 'worker:%:status'
         ORDER BY key ASC
       `,
@@ -55,7 +56,12 @@ export function cleanupStaleWorkers(db: Database, maxAgeSeconds: number): void {
     if (!ACTIVE_WORKER_STATUSES.has(row.value)) continue
     if (!isOlderThan(row.updated_at, maxAgeSeconds)) continue
 
-    set(db, row.key, 'orphaned', JANITOR_WRITER)
+    void recordJanitorAction(
+      db,
+      'orphaned',
+      row.key,
+      'active worker status exceeded stale threshold',
+    ).catch(() => {})
   }
 }
 
@@ -63,13 +69,16 @@ export function cleanupOrphanedKeys(
   db: Database,
   validPrefixes: readonly string[],
 ): void {
-  const rows = db
-    .query<KeyRow, []>('SELECT key FROM blackboard ORDER BY key ASC')
-    .all()
+  const rows = db.query<KeyRow, []>('SELECT key FROM kv ORDER BY key ASC').all()
 
   for (const row of rows) {
     if (validPrefixes.some(prefix => row.key.startsWith(prefix))) continue
-    deleteKey(db, row.key)
+    void recordJanitorAction(
+      db,
+      'delete_orphaned_key',
+      row.key,
+      'key was outside valid blackboard prefixes',
+    ).catch(() => {})
   }
 }
 
@@ -83,12 +92,14 @@ export function detectDeadWorkers(
     const workerId = getWorkerIdFromStatusKey(row.key)
     if (!workerId) continue
 
-    const heartbeat = get(
-      db,
-      `${BLACKBOARD_WORKER_NAMESPACE}${workerId}:heartbeat`,
-    )
+    const heartbeat = get(db, workerKey(workerId, 'heartbeat'))
     if (!heartbeat) {
-      set(db, row.key, 'dead', JANITOR_WRITER)
+      void recordJanitorAction(
+        db,
+        'dead',
+        row.key,
+        'active worker has no heartbeat',
+      ).catch(() => {})
       continue
     }
 
@@ -96,7 +107,12 @@ export function detectDeadWorkers(
       ? heartbeat.updatedAt
       : heartbeat.value
     if (isOlderThan(heartbeatTimestamp, heartbeatThreshold)) {
-      set(db, row.key, 'dead', JANITOR_WRITER)
+      void recordJanitorAction(
+        db,
+        'dead',
+        row.key,
+        'active worker heartbeat exceeded threshold',
+      ).catch(() => {})
     }
   }
 }

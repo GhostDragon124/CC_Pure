@@ -1,3 +1,8 @@
+/**
+ * @deprecated The coordinator blackboard now stores audit events in SQLite via
+ * src/blackboard/BlackboardStore.recordEvent(). Keep this JSONL store only as
+ * a backward-compatibility reference.
+ */
 import { mkdir, readFile, appendFile, writeFile } from 'fs/promises'
 import { dirname, join } from 'path'
 import { getProjectRoot } from 'src/bootstrap/state.js'

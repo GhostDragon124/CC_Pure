@@ -1,3 +1,7 @@
+/**
+ * @deprecated The coordinator no longer serves or writes JSONL team events.
+ * SQLite blackboard events are the active event log.
+ */
 import type { Server } from 'bun'
 import { logForDebugging } from 'src/utils/debug.js'
 import { LocalFileEventStore, type TeamEvent } from './teamEventStore.js'

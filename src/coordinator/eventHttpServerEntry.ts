@@ -1,4 +1,7 @@
 /**
+ * @deprecated JSONL team event serving is superseded by SQLite blackboard
+ * events. This entrypoint is retained for legacy compatibility only.
+ *
  * Entrypoint for the coordinator team event HTTP server.
  * Run: TEAM_EVENT_SERVER_PORT=9742 bun run src/coordinator/eventHttpServerEntry.ts
  */

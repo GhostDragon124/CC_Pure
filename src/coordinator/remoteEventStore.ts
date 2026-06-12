@@ -1,3 +1,7 @@
+/**
+ * @deprecated Remote JSONL event transport has been superseded by the unified
+ * SQLite blackboard events table. Retained only for legacy compatibility.
+ */
 import { logForDebugging } from 'src/utils/debug.js'
 import type { EventStore, TeamEvent } from './teamEventStore.js'
 

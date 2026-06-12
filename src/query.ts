@@ -15,14 +15,9 @@ import {
   buildBlackboardTeamContext,
   isCoordinatorMode,
 } from './coordinator/coordinatorMode.js'
-import {
-  getCoordinatorId,
-  getEventStore,
-} from './coordinator/eventStoreInstance.js'
-import {
-  projectTeamState,
-  renderTeamContext,
-} from './coordinator/teamProjection.js'
+import { getSessionBlackboard } from './blackboard/BlackboardSession.js'
+import { recordEvent } from './blackboard/BlackboardStore.js'
+import { recordDecision, recordSynthesis } from './blackboard/eventRecorder.js'
 import { feature } from 'bun:bundle'
 /* eslint-disable @typescript-eslint/no-require-imports */
 const reactiveCompact = feature('REACTIVE_COMPACT')
@@ -261,7 +256,7 @@ export type QueryParams = {
 
 function recordCoordinatorAssistantEvents(
   assistantMessages: readonly AssistantMessage[],
-  sessionId: string,
+  _sessionId: string,
 ): void {
   if (!isCoordinatorMode()) {
     return
@@ -275,26 +270,20 @@ function recordCoordinatorAssistantEvents(
     return
   }
 
-  const store = getEventStore()
-  const base = {
-    version: 1 as const,
-    timestamp: Date.now(),
-    coordinatorId: getCoordinatorId(),
-    sessionId,
+  let db: ReturnType<typeof getSessionBlackboard>
+  try {
+    db = getSessionBlackboard()
+  } catch {
+    return
   }
 
   const synthesisMatch = assistantText.match(
     /<coordinator-synthesis>([\s\S]*?)<\/coordinator-synthesis>/,
   )
   if (synthesisMatch) {
-    void store
-      .append({
-        ...base,
-        type: 'coordinator.synthesis',
-        findings: synthesisMatch[1]!.trim().slice(0, 500),
-        decisions: '',
-      })
-      .catch(() => {})
+    void recordSynthesis(db, synthesisMatch[1]!.trim().slice(0, 500), '').catch(
+      () => {},
+    )
   }
 
   for (const decisionMatch of assistantText.matchAll(
@@ -303,42 +292,34 @@ function recordCoordinatorAssistantEvents(
     const attrs = decisionMatch[1] ?? ''
     const action = extractDecisionAttribute(attrs, 'action') ?? 'unknown'
     const workerId = extractDecisionAttribute(attrs, 'worker')
-    void store
-      .append({
-        ...base,
-        type: 'coordinator.decision',
-        action,
-        ...(workerId ? { workerId } : {}),
-        rationale: (decisionMatch[2] ?? '').trim().slice(0, 500),
-      })
-      .catch(() => {})
+    void recordDecision(
+      db,
+      action,
+      (decisionMatch[2] ?? '').trim().slice(0, 500),
+      workerId,
+    ).catch(() => {})
   }
 }
 
 export async function writeCoordinatorCheckpoint(
   teamContext: string | undefined,
 ): Promise<number> {
-  void teamContext
-
-  const store = getEventStore()
-  const events = await store.read()
   const timestamp = Date.now()
-  await store.append({
-    version: 1,
-    timestamp,
-    coordinatorId: getCoordinatorId(),
-    sessionId: getSessionId(),
-    type: 'coordinator.checkpoint',
-    projectedState: projectTeamState(events),
-  })
+  recordEvent(
+    getSessionBlackboard(),
+    'coordinator',
+    'coordinator_checkpoint',
+    'coordinator:last_checkpoint',
+    String(timestamp),
+    { teamContext: teamContext ?? '', sessionId: getSessionId() },
+  )
   return timestamp
 }
 
 export async function clearEventsBeforeCheckpoint(
   teamContext: string | undefined,
 ): Promise<void> {
-  const timestamp = await writeCoordinatorCheckpoint(teamContext)
-  await getEventStore().clear(timestamp)
+  await writeCoordinatorCheckpoint(teamContext)
 }
 
 function extractDecisionAttribute(
@@ -354,17 +335,7 @@ async function buildCoordinatorTeamContext(): Promise<string | undefined> {
     return undefined
   }
 
-  const blackboardContext = buildBlackboardTeamContext()
-  if (blackboardContext) {
-    return blackboardContext
-  }
-
-  const events = await getEventStore().read()
-  if (events.length === 0) {
-    return undefined
-  }
-
-  return renderTeamContext(projectTeamState(events))
+  return buildBlackboardTeamContext()
 }
 
 // -- query loop state
@@ -460,12 +431,6 @@ export async function* query(
         terminal?.reason === 'aborted_streaming' ||
         terminal?.reason === 'aborted_tools'
       endTrace(langfuseTrace, undefined, isAborted ? 'interrupted' : undefined)
-    }
-
-    if (isCoordinatorMode()) {
-      void getEventStore()
-        .clear()
-        .catch(() => {})
     }
   }
 

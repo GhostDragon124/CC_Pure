@@ -25,3 +25,13 @@ export type BlackboardEntry = {
   updatedAt: string
   updatedBy: string
 }
+
+export type BlackboardEvent = {
+  id: number
+  ts: number
+  actor: string
+  type: string
+  key: string
+  value: string
+  payload: Record<string, unknown>
+}

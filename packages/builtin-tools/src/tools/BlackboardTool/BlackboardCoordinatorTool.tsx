@@ -1,7 +1,10 @@
 import { z } from 'zod/v4'
 import { getSessionBlackboard } from 'src/blackboard/BlackboardSession.js'
-import type { BlackboardEntry } from 'src/blackboard/BlackboardTypes.js'
-import { get, getByPrefix } from 'src/blackboard/BlackboardStore.js'
+import type {
+  BlackboardEntry,
+  BlackboardEvent,
+} from 'src/blackboard/BlackboardTypes.js'
+import { get, getByPrefix, getEvents } from 'src/blackboard/BlackboardStore.js'
 import { buildTool, type ToolResultBlockParam } from 'src/Tool.js'
 import { lazySchema } from 'src/utils/lazySchema.js'
 import { BLACKBOARD_COORDINATOR_TOOL_NAME } from './constants.js'
@@ -45,6 +48,7 @@ const outputSchema = lazySchema(() =>
     entry: entrySchema.nullable().optional(),
     entries: z.array(entrySchema).optional(),
     anomalies: z.array(anomalySchema).optional(),
+    eventCount: z.number().optional(),
     error: z.string().optional(),
   }),
 )
@@ -87,6 +91,30 @@ function scanAnomalies(entries: BlackboardEntry[]): Output['anomalies'] {
     }
   }
 
+  return anomalies
+}
+
+function scanEventAnomalies(
+  entries: BlackboardEntry[],
+  events: BlackboardEvent[],
+): Output['anomalies'] {
+  const byKey = new Map(entries.map(entry => [entry.key, entry]))
+  const latestByKey = new Map<string, BlackboardEvent>()
+
+  for (const event of events) {
+    latestByKey.set(event.key, event)
+  }
+
+  const anomalies: NonNullable<Output['anomalies']> = []
+  for (const [key, event] of latestByKey) {
+    const entry = byKey.get(key)
+    if (!entry || entry.value === event.value) continue
+    anomalies.push({
+      key,
+      kind: 'event_kv_mismatch',
+      detail: `Latest event value is ${event.value}, but kv value is ${entry.value}`,
+    })
+  }
   return anomalies
 }
 
@@ -154,6 +182,7 @@ Actions:
 
   async call(input) {
     const db = getSessionBlackboard()
+    const events = getEvents(db)
 
     if (input.action === 'scan') {
       const entries = getByPrefix(db, 'worker:')
@@ -162,7 +191,11 @@ Actions:
           success: true,
           action: input.action,
           entries,
-          anomalies: scanAnomalies(entries),
+          anomalies: [
+            ...(scanAnomalies(entries) ?? []),
+            ...(scanEventAnomalies(entries, events) ?? []),
+          ],
+          eventCount: events.length,
         },
       }
     }
@@ -173,6 +206,7 @@ Actions:
           success: true,
           action: input.action,
           entry: get(db, input.key),
+          eventCount: events.length,
         },
       }
     }
@@ -182,6 +216,7 @@ Actions:
         success: true,
         action: input.action,
         entries: getByPrefix(db, input.prefix ?? ''),
+        eventCount: events.length,
       },
     }
   },

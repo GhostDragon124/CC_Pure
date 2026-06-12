@@ -1,3 +1,8 @@
+/**
+ * @deprecated Active coordinator writes now use SQLite blackboard events via
+ * src/blackboard/eventRecorder.ts. This JSONL/remote event-store selector is
+ * retained only for legacy compatibility.
+ */
 import { hostname } from 'os'
 import { RemoteEventStore } from './remoteEventStore.js'
 import { LocalFileEventStore, type EventStore } from './teamEventStore.js'
