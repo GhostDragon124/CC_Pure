@@ -93,6 +93,7 @@ import { TaskGetTool } from '@claude-code-best/builtin-tools/tools/TaskGetTool/T
 import { TaskUpdateTool } from '@claude-code-best/builtin-tools/tools/TaskUpdateTool/TaskUpdateTool.js'
 import { TaskListTool } from '@claude-code-best/builtin-tools/tools/TaskListTool/TaskListTool.js'
 import { BlackboardTool } from '@claude-code-best/builtin-tools/tools/BlackboardTool/BlackboardTool.js'
+import { BlackboardCoordinatorTool } from '@claude-code-best/builtin-tools/tools/BlackboardTool/BlackboardCoordinatorTool.js'
 import uniqBy from 'lodash-es/uniqBy.js'
 import { isToolSearchEnabledOptimistic } from './utils/toolSearch.js'
 import { isTodoV2Enabled } from './utils/tasks.js'
@@ -221,6 +222,7 @@ export function getAllBaseTools(): Tools {
     WebSearchTool,
     TaskStopTool,
     BlackboardTool,
+    BlackboardCoordinatorTool,
     AskUserQuestionTool,
     SkillTool,
     EnterPlanModeTool,

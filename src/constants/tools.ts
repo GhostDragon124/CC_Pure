@@ -22,7 +22,10 @@ import { TASK_CREATE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/Tas
 import { TASK_GET_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TaskGetTool/constants.js'
 import { TASK_LIST_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TaskListTool/constants.js'
 import { TASK_UPDATE_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/TaskUpdateTool/constants.js'
-import { BLACKBOARD_WORKER_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/BlackboardTool/constants.js'
+import {
+  BLACKBOARD_COORDINATOR_TOOL_NAME,
+  BLACKBOARD_WORKER_TOOL_NAME,
+} from '@claude-code-best/builtin-tools/tools/BlackboardTool/constants.js'
 import { TOOL_SEARCH_TOOL_NAME } from 'src/tools/ToolSearchTool/prompt.js'
 import { SYNTHETIC_OUTPUT_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/SyntheticOutputTool/SyntheticOutputTool.js'
 import { SLEEP_TOOL_NAME } from '@claude-code-best/builtin-tools/tools/SleepTool/prompt.js'
@@ -119,6 +122,7 @@ export const COORDINATOR_MODE_ALLOWED_TOOLS = new Set([
   AGENT_TOOL_NAME,
   TASK_STOP_TOOL_NAME,
   SEND_MESSAGE_TOOL_NAME,
+  BLACKBOARD_COORDINATOR_TOOL_NAME,
   SYNTHETIC_OUTPUT_TOOL_NAME,
 ])
 
