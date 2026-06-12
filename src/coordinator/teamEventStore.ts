@@ -1,8 +1,13 @@
-import { mkdir, readFile, appendFile, writeFile } from 'fs/promises'
+/**
+ * @deprecated The coordinator blackboard now stores audit events in SQLite via
+ * src/blackboard/BlackboardStore.recordEvent(). Keep this JSONL store only as
+ * a backward-compatibility reference.
+ */
+import { mkdir, readFile, appendFile, writeFile, rename } from 'fs/promises'
 import { dirname, join } from 'path'
 import { getProjectRoot } from 'src/bootstrap/state.js'
 import { logForDebugging } from 'src/utils/debug.js'
-import type { LegacyTeamState, TeamState } from './teamProjection.js'
+import type { TeamState } from './teamProjection.js'
 
 export type BaseTeamEvent = {
   version: 1
@@ -44,46 +49,16 @@ export type CoordinatorSessionStartedEvent = BaseTeamEvent & {
 
 export type CoordinatorCheckpointEvent = BaseTeamEvent & {
   type: 'coordinator.checkpoint'
-  projectedState: TeamState | LegacyTeamState
-}
-
-export type KvEvent = BaseTeamEvent & {
-  type: 'coordinator.kv'
-  key: string
-  value: string
-  writer: string
+  projectedState: TeamState
 }
 
 export type TeamEvent =
-  | KvEvent
   | WorkerSpawnedEvent
   | WorkerResultEvent
   | CoordinatorSynthesisEvent
   | CoordinatorDecisionEvent
   | CoordinatorSessionStartedEvent
   | CoordinatorCheckpointEvent
-
-export function createKvEvent(
-  key: string,
-  value: string,
-  writer: string,
-  base: Partial<BaseTeamEvent> = {},
-): KvEvent {
-  return {
-    version: 1,
-    timestamp: base.timestamp ?? Date.now(),
-    coordinatorId: base.coordinatorId ?? 'unknown',
-    sessionId: base.sessionId ?? 'unknown',
-    type: 'coordinator.kv',
-    key,
-    value,
-    writer,
-  }
-}
-
-export function workerKvKey(workerId: string, field: string): string {
-  return `worker:${workerId}:${field}`
-}
 
 export interface EventStore {
   append(event: TeamEvent): Promise<void>
@@ -100,9 +75,16 @@ export class LocalFileEventStore implements EventStore {
     this.filePath = filePath
   }
 
+  /** Write atomically: write to .tmp then rename to final path. */
+  private async atomicWrite(path: string, data: string): Promise<void> {
+    const tmp = path + '.tmp'
+    await writeFile(tmp, data, { mode: 0o600 })
+    await rename(tmp, path)
+  }
+
   async append(event: TeamEvent): Promise<void> {
     try {
-      await mkdir(dirname(this.filePath), { recursive: true })
+      await mkdir(dirname(this.filePath), { recursive: true, mode: 0o700 })
       await appendFile(this.filePath, `${JSON.stringify(event)}\n`, 'utf8')
     } catch (error) {
       logForDebugging(
@@ -145,7 +127,7 @@ export class LocalFileEventStore implements EventStore {
       const content = await readFile(this.filePath, 'utf8')
       const lines = content.split('\n')
       if (before === undefined) {
-        await writeFile(this.filePath, '', 'utf8')
+        await this.atomicWrite(this.filePath, '')
         return
       }
 
@@ -161,10 +143,9 @@ export class LocalFileEventStore implements EventStore {
           return true
         }
       })
-      await writeFile(
+      await this.atomicWrite(
         this.filePath,
         kept.join('\n') + (kept.length > 0 ? '\n' : ''),
-        'utf8',
       )
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
