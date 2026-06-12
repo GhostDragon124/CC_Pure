@@ -44,12 +44,14 @@ bun run build
 ### Configure API
 
 ```bash
-# Option 1: Environment variables
-export ANTHROPIC_BASE_URL="https://your-api/v1"
-export ANTHROPIC_API_KEY="sk-xxx"
+# Option 1: OpenAI-compatible (DeepSeek, OpenAI, etc.)
+export CLAUDE_CODE_USE_OPENAI=1
+export OPENAI_BASE_URL="https://api.deepseek.com/v1"
+export OPENAI_API_KEY="sk-xxx"
 
-# Option 2: /login command in REPL
-bun run dev
+# Option 2: Anthropic-compatible (Anthropic native, LiteLLM proxy, etc.)
+export ANTHROPIC_BASE_URL="https://api.anthropic.com/v1"
+export ANTHROPIC_API_KEY="sk-ant-xxx"
 ```
 
 ### Verify

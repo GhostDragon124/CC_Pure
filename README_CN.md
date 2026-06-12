@@ -44,12 +44,14 @@ bun run build
 ### 配置 API
 
 ```bash
-# 方式一：环境变量
-export ANTHROPIC_BASE_URL="https://your-api/v1"
-export ANTHROPIC_API_KEY="sk-xxx"
+# 方式一：OpenAI 兼容（DeepSeek、OpenAI 等）
+export CLAUDE_CODE_USE_OPENAI=1
+export OPENAI_BASE_URL="https://api.deepseek.com/v1"
+export OPENAI_API_KEY="sk-xxx"
 
-# 方式二：REPL 内 /login 命令
-bun run dev
+# 方式二：Anthropic 兼容（Anthropic 原生、LiteLLM 代理等）
+export ANTHROPIC_BASE_URL="https://api.anthropic.com/v1"
+export ANTHROPIC_API_KEY="sk-ant-xxx"
 ```
 
 ### 配置本地快捷命令
