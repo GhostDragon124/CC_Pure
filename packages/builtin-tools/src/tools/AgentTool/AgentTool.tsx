@@ -44,6 +44,10 @@ import {
   updateProgressFromMessage,
 } from 'src/tasks/LocalAgentTask/LocalAgentTask.js'
 import {
+  writeWorkerStatus,
+  writeWorkerTask,
+} from 'src/blackboard/BlackboardLifecycle.js'
+import {
   checkRemoteAgentEligibility,
   formatPreconditionError,
   getRemoteTaskSessionUrl,
@@ -479,6 +483,8 @@ export const AgentTool = buildTool({
         prompt,
         ...result.data,
       }
+      writeWorkerStatus(spawnResult.agent_id, 'spawned')
+      writeWorkerTask(spawnResult.agent_id, prompt || description)
       return { data: spawnResult } as unknown as { data: Output }
     }
 
@@ -704,6 +710,8 @@ export const AgentTool = buildTool({
         agent_type:
           selectedAgent.agentType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
+      writeWorkerStatus(taskId, 'spawned')
+      writeWorkerTask(taskId, prompt || description)
 
       const remoteResult: RemoteLaunchedOutput = {
         status: 'remote_launched',
@@ -847,6 +855,8 @@ export const AgentTool = buildTool({
 
     // Create a stable agent ID early so it can be used for worktree slug
     const earlyAgentId = createAgentId()
+    writeWorkerStatus(earlyAgentId, 'spawned')
+    writeWorkerTask(earlyAgentId, prompt || description)
 
     // Set up worktree isolation if requested
     let worktreeInfo: {
