@@ -12,7 +12,7 @@
 
 > Claude Code 的纯净分叉 —— 去遥测、去企业全家桶、保留核心能力。**已抵达 source-map 还原的上限。**
 >
-> **当前版本（2026-06）：** 人格系统 + 类型完工 + CodeQL 归零 + Coordinator SQLite 黑板
+> **当前版本（2026-06）：** 人格系统 · Coordinator SQLite 黑板 · 类型完工 · CodeQL 归零
 
 ---
 
@@ -143,7 +143,11 @@ tail -f ~/.claude/local_analytics.jsonl # 实时追踪
 
 → [CCP Claude Persona SWE-bench Lite 评测报告 (v2)](docs/ccp-claude-persona-swebench-report-v2.md) — 跨工具零迁移，90 实例：**+11pp**（68.6% vs 57.5%）
 
-### Coordinator SQLite 黑板（blackboard-sourced）
+### 🤝 通讯系统 — 结构化黑板（blackboard-sourced）
+
+> **与人格系统同级的核心模块。** 多 agent 通信层——比 Anthropic 原版的事件溯源更快、更简单、更不容易出错。
+>
+> 完整设计文档：[`黑板书通信系统设计文档`](docs/communication-system-design.md) | [演化记录](docs/from-event-sourcing-to-unified-blackboard.md)
 
 基于 SQLite 的**结构化键名黑板**，实现 compaction 抗性多 agent 协调。每次状态变更同时写入审计事件和键值条目，单事务保证一致性——worker 写入，coordinator 读取，janitor 清理。
 

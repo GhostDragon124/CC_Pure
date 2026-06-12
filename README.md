@@ -12,7 +12,7 @@
 
 > A clean, independently-maintained fork of Claude Code. **Telemetry removed. Types fixed. Core capabilities preserved.**
 >
-> **Current (2026-06):** Personality system + 0 tsc errors + 0 CodeQL + Coordinator SQLite blackboard
+> **Current (2026-06):** Personality system · Coordinator SQLite blackboard · 0 tsc errors · 0 CodeQL
 
 ---
 
@@ -119,7 +119,11 @@ tail -f ~/.claude/local_analytics.jsonl # real-time trace
 
 → [CCP Claude Persona SWE-bench Lite Report (v2)](docs/ccp-claude-persona-swebench-report-v2-en.md) — cross-tool zero-migration. 90 instances: **+11pp** (68.6% vs 57.5%)
 
-### Coordinator SQLite Blackboard (`blackboard-sourced`)
+### 🤝 Communication System — Structured Blackboard (`blackboard-sourced`)
+
+> **Peer module to Personality system.** The multi-agent communication layer — faster, simpler, and less error-prone than Anthropic's original event sourcing.
+>
+> Full design doc: [`黑板书通信系统设计文档`](docs/communication-system-design.md) (Chinese) | [Evolution log](docs/from-event-sourcing-to-unified-blackboard.md)
 
 SQLite-backed blackboard with **structured key naming** for compaction-resistant multi-agent coordination. Every state mutation is recorded as both an audit event and a key-value entry in a single transaction — workers write, coordinator reads, janitor cleans.
 
