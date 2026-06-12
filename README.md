@@ -95,30 +95,6 @@ tail -f ~/.claude/local_analytics.jsonl # real-time trace
 
 → [Claude Code's Light and Shadow: A Telemetry Deep-Dive](docs/Claude_Code_Light_and_Shadow.md)
 
-### Personality Modes (`soul-distilled`)
-
-`/mode` switches between 7 AI personalities — each with dedicated systemPrompt, UI theme, permissions, and response style:
-
-| Mode | Icon | Description | Persona |
-|------|:----:|-------------|:-------:|
-| **Claude** | 🎭 | Authentic Claude persona — distilled from leaked 70KB Soul Document | 2,848 chars |
-| Default | ⚡ | Balanced, everyday development | — |
-| Gentle | 🌸 | Patient, educational | 231 chars |
-| Dr. Sharp | 🔍 | Rigorous 3-step code review | 1,845 chars |
-| Workhorse | 🐴 | Auto-execute, fewer confirmations | 203 chars |
-| Token Saver | 💰 | Minimal replies, save tokens | 165 chars |
-| Super AI | 🧠 | Deep thinking, comprehensive analysis | 266 chars |
-
-```bash
-/mode               # interactive picker
-/mode claude        # switch directly to Claude persona
-/mode sharp         # switch to code review mode
-```
-
-**Custom modes:** Drop a YAML file in `~/.claude/modes/` — auto-loaded alongside built-ins.
-
-→ [CCP Claude Persona SWE-bench Lite Report (v2)](docs/ccp-claude-persona-swebench-report-v2-en.md) — cross-tool zero-migration. 90 instances: **+11pp** (68.6% vs 57.5%)
-
 ### 🤝 Communication System — Structured Blackboard (`blackboard-sourced`)
 
 > **Peer module to Personality system.** The multi-agent communication layer — faster, simpler, and less error-prone than Anthropic's original event sourcing.
@@ -151,6 +127,30 @@ CLAUDE_CODE_USE_OPENAI=1 bun run dev -- --coordinator
 ```
 
 → Design: [`EN`](docs/Coordinator_Event_Log_Design_Doc.md) · [`中文`](docs/Coordinator_Event_Log_设计文档.md) · [`Plan`](docs/plans/2026-06-11-coordinator-event-log.md)
+
+### Personality Modes (`soul-distilled`)
+
+`/mode` switches between 7 AI personalities — each with dedicated systemPrompt, UI theme, permissions, and response style:
+
+| Mode | Icon | Description | Persona |
+|------|:----:|-------------|:-------:|
+| **Claude** | 🎭 | Authentic Claude persona — distilled from leaked 70KB Soul Document | 2,848 chars |
+| Default | ⚡ | Balanced, everyday development | — |
+| Gentle | 🌸 | Patient, educational | 231 chars |
+| Dr. Sharp | 🔍 | Rigorous 3-step code review | 1,845 chars |
+| Workhorse | 🐴 | Auto-execute, fewer confirmations | 203 chars |
+| Token Saver | 💰 | Minimal replies, save tokens | 165 chars |
+| Super AI | 🧠 | Deep thinking, comprehensive analysis | 266 chars |
+
+```bash
+/mode               # interactive picker
+/mode claude        # switch directly to Claude persona
+/mode sharp         # switch to code review mode
+```
+
+**Custom modes:** Drop a YAML file in `~/.claude/modes/` — auto-loaded alongside built-ins.
+
+→ [CCP Claude Persona SWE-bench Lite Report (v2)](docs/ccp-claude-persona-swebench-report-v2-en.md) — cross-tool zero-migration. 90 instances: **+11pp** (68.6% vs 57.5%)
 
 ---
 

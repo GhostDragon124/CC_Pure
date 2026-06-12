@@ -108,6 +108,39 @@ tail -f ~/.claude/local_analytics.jsonl # 实时追踪
 
 详见 → [Claude Code 的光明和阴影面（遥测系统深度分析）](docs/Claude_Code_的光明和阴影面.md)
 
+### 🤝 通讯系统 — 结构化黑板（blackboard-sourced）
+
+> **与人格系统同级的核心模块。** 多 agent 通信层——比 Anthropic 原版的事件溯源更快、更简单、更不容易出错。
+>
+> 完整设计文档：[`黑板书通信系统设计文档`](docs/communication-system-design.md) | [演化记录](docs/from-event-sourcing-to-unified-blackboard.md)
+
+基于 SQLite 的**结构化键名黑板**，实现 compaction 抗性多 agent 协调。每次状态变更同时写入审计事件和键值条目，单事务保证一致性——worker 写入，coordinator 读取，janitor 清理。
+
+```
+worker 写入 → recordEvent() → [events + kv 在单个 SQLite 事务中]
+coordinator 读取 → 按 key 获取最新状态 → janitor 清理过期条目
+```
+
+| 组件 | 文件 | 说明 |
+|------|------|------|
+| BlackboardStore | `src/blackboard/BlackboardStore.ts` | SQLite CRUD：upsert、前缀查询、CAS |
+| KvHelpers | `src/blackboard/kvHelpers.ts` | 结构化键构建（`workerKey()`）+ 解析（`parseWorkerKey()`） |
+| BlackboardJanitor | `src/blackboard/BlackboardJanitor.ts` | 规则引擎：清理过期键、孤立条目、心跳监控 |
+| eventRecorder | `src/blackboard/eventRecorder.ts` | `recordEvent()` — 单事务同时写入 `events` 和 `kv` 两表 |
+| RemoteEventStore | `src/coordinator/remoteEventStore.ts` | HTTP 客户端，跨机（Phase 2） |
+| HTTP Server | `src/coordinator/eventHttpServer.ts` | Bun.serve:9742，零依赖 |
+
+**键名约定：** `worker:N:status`、`worker:N:result`、`team:sources`、`coordinator:decision`
+
+**已弃用：** `teamEventStore.ts`（JSONL 事件日志）和 `teamProjection.ts`（fold 逻辑）— 保留在 `persist/coordinator-event-sourcing` 分支供参考。
+
+```bash
+# 以 coordinator 模式运行（使用黑板）
+CLAUDE_CODE_USE_OPENAI=1 bun run dev -- --coordinator
+```
+
+→ 设计：[`EN`](docs/Coordinator_Event_Log_Design_Doc.md) · [`中文`](docs/Coordinator_Event_Log_设计文档.md) · [`Plan`](docs/plans/2026-06-11-coordinator-event-log.md)
+
 ### 保留的核心能力
 
 | 类别 | Feature | 状态 |
@@ -142,39 +175,6 @@ tail -f ~/.claude/local_analytics.jsonl # 实时追踪
 **自定义模式：** `~/.claude/modes/` 下放 YAML → 自动加载。
 
 → [CCP Claude Persona SWE-bench Lite 评测报告 (v2)](docs/ccp-claude-persona-swebench-report-v2.md) — 跨工具零迁移，90 实例：**+11pp**（68.6% vs 57.5%）
-
-### 🤝 通讯系统 — 结构化黑板（blackboard-sourced）
-
-> **与人格系统同级的核心模块。** 多 agent 通信层——比 Anthropic 原版的事件溯源更快、更简单、更不容易出错。
->
-> 完整设计文档：[`黑板书通信系统设计文档`](docs/communication-system-design.md) | [演化记录](docs/from-event-sourcing-to-unified-blackboard.md)
-
-基于 SQLite 的**结构化键名黑板**，实现 compaction 抗性多 agent 协调。每次状态变更同时写入审计事件和键值条目，单事务保证一致性——worker 写入，coordinator 读取，janitor 清理。
-
-```
-worker 写入 → recordEvent() → [events + kv 在单个 SQLite 事务中]
-coordinator 读取 → 按 key 获取最新状态 → janitor 清理过期条目
-```
-
-| 组件 | 文件 | 说明 |
-|------|------|------|
-| BlackboardStore | `src/blackboard/BlackboardStore.ts` | SQLite CRUD：upsert、前缀查询、CAS |
-| KvHelpers | `src/blackboard/kvHelpers.ts` | 结构化键构建（`workerKey()`）+ 解析（`parseWorkerKey()`） |
-| BlackboardJanitor | `src/blackboard/BlackboardJanitor.ts` | 规则引擎：清理过期键、孤立条目、心跳监控 |
-| eventRecorder | `src/blackboard/eventRecorder.ts` | `recordEvent()` — 单事务同时写入 `events` 和 `kv` 两表 |
-| RemoteEventStore | `src/coordinator/remoteEventStore.ts` | HTTP 客户端，跨机（Phase 2） |
-| HTTP Server | `src/coordinator/eventHttpServer.ts` | Bun.serve:9742，零依赖 |
-
-**键名约定：** `worker:N:status`、`worker:N:result`、`team:sources`、`coordinator:decision`
-
-**已弃用：** `teamEventStore.ts`（JSONL 事件日志）和 `teamProjection.ts`（fold 逻辑）— 保留在 `persist/coordinator-event-sourcing` 分支供参考。
-
-```bash
-# 以 coordinator 模式运行（使用黑板）
-CLAUDE_CODE_USE_OPENAI=1 bun run dev -- --coordinator
-```
-
-→ 设计：[`EN`](docs/Coordinator_Event_Log_Design_Doc.md) · [`中文`](docs/Coordinator_Event_Log_设计文档.md) · [`Plan`](docs/plans/2026-06-11-coordinator-event-log.md)
 
 ---
 
