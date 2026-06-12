@@ -9,7 +9,23 @@ const noop = () => {}
 mock.module('src/utils/debug.ts', debugMock)
 mock.module('src/utils/log.ts', logMock)
 
+const RealSessionStorage = await import('src/utils/sessionStorage.js')
+const RealDiskOutput = await import('src/utils/task/diskOutput.js')
+const RealMessageQueueManager = await import('src/utils/messageQueueManager.js')
+const RealState = await import('src/bootstrap/state.js')
+const RealSpeculation = await import(
+  'src/services/PromptSuggestion/speculation.js'
+)
+const RealCleanupRegistry = await import('src/utils/cleanupRegistry.js')
+const RealAbortController = await import('src/utils/abortController.js')
+const RealSdkProgress = await import('src/utils/task/sdkProgress.js')
+const RealSdkEventQueue = await import('src/utils/sdkEventQueue.js')
+const RealXml = await import('src/constants/xml.js')
+const RealAnalytics = await import('src/services/analytics/index.js')
+const RealCollapseReadSearch = await import('src/utils/collapseReadSearch.js')
+
 mock.module('src/utils/sessionStorage.js', () => ({
+  ...RealSessionStorage,
   getAgentTranscriptPath: (id: string) => `/tmp/transcripts/${id}.jsonl`,
   recordSidechainTranscript: async () => {},
   recordQueueOperation: noop,
@@ -17,6 +33,7 @@ mock.module('src/utils/sessionStorage.js', () => ({
 }))
 
 mock.module('src/utils/task/diskOutput.js', () => ({
+  ...RealDiskOutput,
   evictTaskOutput: noop,
   getTaskOutputPath: (id: string) => `/tmp/output/${id}`,
   initTaskOutputAsSymlink: async () => {},
@@ -26,12 +43,14 @@ mock.module('src/utils/task/diskOutput.js', () => ({
 // Capture enqueuePendingNotification calls for verification
 const enqueuedNotifications: string[] = []
 mock.module('src/utils/messageQueueManager.js', () => ({
+  ...RealMessageQueueManager,
   enqueuePendingNotification: (cmd: any) => {
     enqueuedNotifications.push(cmd.value)
   },
 }))
 
 mock.module('src/bootstrap/state.js', () => ({
+  ...RealState,
   getSdkAgentProgressSummariesEnabled: () => false,
   getSessionId: () => 'test-session-001',
   getProjectRoot: () => '/test/project',
@@ -40,15 +59,18 @@ mock.module('src/bootstrap/state.js', () => ({
 }))
 
 mock.module('src/services/PromptSuggestion/speculation.js', () => ({
+  ...RealSpeculation,
   abortSpeculation: noop,
 }))
 
 const cleanupFns: (() => void)[] = []
 mock.module('src/utils/cleanupRegistry.js', () => ({
+  ...RealCleanupRegistry,
   registerCleanup: () => noop,
 }))
 
 mock.module('src/utils/abortController.js', () => ({
+  ...RealAbortController,
   createAbortController: () => new AbortController(),
   createChildAbortController: (parent: AbortController) => {
     const ac = new AbortController()
@@ -58,14 +80,17 @@ mock.module('src/utils/abortController.js', () => ({
 }))
 
 mock.module('src/utils/task/sdkProgress.js', () => ({
+  ...RealSdkProgress,
   emitTaskProgress: noop,
 }))
 
 mock.module('src/utils/sdkEventQueue.js', () => ({
+  ...RealSdkEventQueue,
   enqueueSdkEvent: noop,
 }))
 
 mock.module('src/constants/xml.js', () => ({
+  ...RealXml,
   TASK_NOTIFICATION_TAG: 'task_notification',
   TASK_ID_TAG: 'task_id',
   TOOL_USE_ID_TAG: 'tool_use_id',
@@ -79,6 +104,7 @@ mock.module('src/constants/xml.js', () => ({
 }))
 
 mock.module('src/services/analytics/index.js', () => ({
+  ...RealAnalytics,
   logEvent: noop,
   logEventAsync: async () => {},
   stripProtoFields: (v: any) => v,
@@ -88,6 +114,7 @@ mock.module('src/services/analytics/index.js', () => ({
 }))
 
 mock.module('src/utils/collapseReadSearch.js', () => ({
+  ...RealCollapseReadSearch,
   getToolSearchOrReadInfo: () => undefined,
 }))
 
