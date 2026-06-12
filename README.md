@@ -6,13 +6,13 @@
 
 [![Bun](https://img.shields.io/badge/runtime-Bun-black?style=flat-square&logo=bun)](https://bun.sh/)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)]()
-[![Tests](https://img.shields.io/badge/tests-3968-brightgreen?style=flat-square)]()
+[![Tests](https://img.shields.io/badge/tests-3986-brightgreen?style=flat-square)]()
 [![CodeQL](https://img.shields.io/badge/CodeQL-0%20open%20%C2%B7%2047%20risk%20accepted-yellow?style=flat-square)]()
 [![TypeScript](https://img.shields.io/badge/tsc-0%20errors-brightgreen?style=flat-square)]()
 
 > A clean, independently-maintained fork of Claude Code. **Telemetry removed. Types fixed. Core capabilities preserved.**
 >
-> **Current (2026-06):** Personality system + 0 tsc errors + 0 CodeQL + Coordinator event sourcing
+> **Current (2026-06):** Personality system + 0 tsc errors + 0 CodeQL + Coordinator SQLite blackboard
 
 ---
 
@@ -119,29 +119,31 @@ tail -f ~/.claude/local_analytics.jsonl # real-time trace
 
 → [CCP Claude Persona SWE-bench Lite Report (v2)](docs/ccp-claude-persona-swebench-report-v2-en.md) — cross-tool zero-migration. 90 instances: **+11pp** (68.6% vs 57.5%)
 
-### Coordinator Event Log (`coordinator-sourced`)
+### Coordinator SQLite Blackboard (`blackboard-sourced`)
 
-Event sourcing for **compaction-resistant multi-agent communication**. Every coordinator action is written as a typed event before the next LLM turn — state lives outside the token window.
+SQLite-backed blackboard with **structured key naming** for compaction-resistant multi-agent coordination. Every state mutation is recorded as both an audit event and a key-value entry in a single transaction — workers write, coordinator reads, janitor cleans.
 
 ```
-coordinator action → write event → compaction → fold events → checkpoint → restore
+worker writes → recordEvent() → [events + kv in single SQLite tx]
+coordinator reads → latest state by key → janitor reaps stale entries
 ```
 
 | Component | File | Purpose |
 |-----------|------|---------|
-| EventStore | `src/coordinator/teamEventStore.ts` | append / read / clear, 6 event types |
-| TeamProjection | `src/coordinator/teamProjection.ts` | fold-based projection + checkpoint restore |
-| LocalFileEventStore | `src/coordinator/teamEventStore.ts` | local JSONL (`.team-events/`) |
-| RemoteEventStore | `src/coordinator/remoteEventStore.ts` | HTTP client, cross-machine |
+| BlackboardStore | `src/blackboard/BlackboardStore.ts` | SQLite CRUD: upsert, prefix query, CAS |
+| KvHelpers | `src/blackboard/kvHelpers.ts` | Structured key builders (`workerKey()`) + parsers (`parseWorkerKey()`) |
+| BlackboardJanitor | `src/blackboard/BlackboardJanitor.ts` | Rule engine: reaps expired keys, cleans orphans, monitors heartbeats |
+| eventRecorder | `src/blackboard/eventRecorder.ts` | `recordEvent()` — single transaction writes both `events` and `kv` tables |
+| RemoteEventStore | `src/coordinator/remoteEventStore.ts` | HTTP client, cross-machine (Phase 2) |
 | HTTP Server | `src/coordinator/eventHttpServer.ts` | Bun.serve:9742, zero deps |
 
-**6 events:** `session_started` · `worker_spawned` · `worker_result` · `synthesis` · `decision` · `checkpoint`
+**Key convention:** `worker:N:status`, `worker:N:result`, `team:sources`, `coordinator:decision`
+
+**Deprecated:** `teamEventStore.ts` (JSONL event log) and `teamProjection.ts` (fold logic) — preserved in `persist/coordinator-event-sourcing` branch for reference.
 
 ```bash
-# Machine A: serve events
-TEAM_EVENT_SERVER_PORT=9742 bun run src/coordinator/eventHttpServerEntry.ts
-# Machine B: read remotely
-TEAM_EVENT_SERVER_URL=http://machine-a:9742 bun run dev
+# Run coordinator mode with blackboard
+CLAUDE_CODE_USE_OPENAI=1 bun run dev -- --coordinator
 ```
 
 → Design: [`EN`](docs/Coordinator_Event_Log_Design_Doc.md) · [`中文`](docs/Coordinator_Event_Log_设计文档.md) · [`Plan`](docs/plans/2026-06-11-coordinator-event-log.md)
@@ -153,7 +155,7 @@ TEAM_EVENT_SERVER_URL=http://machine-a:9742 bun run dev
 | Metric | CCB Baseline | CC Pure | Improvement |
 |--------|:------------:|:-------:|:-----------:|
 | tsc errors | 62 | **0** | All decompilation artifacts cleared |
-| Tests passing | 3,007 | **3,968** | +961 |
+| Tests passing | 3,007 | **3,986** | +979 |
 | Build | Unstable | **Stable (splitting: true)** | ✅ |
 | Telemetry egress | Yes | **0** | ✅ |
 | CodeQL open | 175+ | **0** | 254 fixed · 260 dismissed |

@@ -6,13 +6,13 @@
 
 [![Bun](https://img.shields.io/badge/runtime-Bun-black?style=flat-square&logo=bun)](https://bun.sh/)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)]()
-[![Tests](https://img.shields.io/badge/tests-3968-brightgreen?style=flat-square)]()
+[![Tests](https://img.shields.io/badge/tests-3986-brightgreen?style=flat-square)]()
 [![CodeQL](https://img.shields.io/badge/CodeQL-0%20open%20%C2%B7%2047%20risk%20accepted-yellow?style=flat-square)]()
 [![TypeScript](https://img.shields.io/badge/tsc-0%20errors-brightgreen?style=flat-square)]()
 
 > Claude Code 的纯净分叉 —— 去遥测、去企业全家桶、保留核心能力。**已抵达 source-map 还原的上限。**
 >
-> **当前版本（2026-06）：** 人格系统 + 类型完工 + CodeQL 归零 + Coordinator 事件溯源
+> **当前版本（2026-06）：** 人格系统 + 类型完工 + CodeQL 归零 + Coordinator SQLite 黑板
 
 ---
 
@@ -91,8 +91,8 @@ CC Pure 基于 CCB v2.6.11 反编译源码，做了以下核心变更：
 | 组件 | 状态 | 说明 |
 |------|:---:|------|
 | Sentry | ❌ 移除 | 数据上报第三方 |
-| Pipe IPC / LAN Pipes | ✅ 已恢复 | UDS_INBOX + Coordinator 事件溯源 |
-| Coordinator Event Log | ✅ 已完成 | append → projection → checkpoint → clear，HTTP 跨机 |
+| Pipe IPC / LAN Pipes | ✅ 已恢复 | UDS_INBOX + Coordinator 通信就绪 |
+| Coordinator 黑板 | ✅ 已完成 | SQLite 黑板 + 结构化键名 + Janitor，HTTP 跨机 |
 | Anthropic 遥测 | ❌ 阻断 | `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1` |
 | Langfuse | 🟡 休眠 | 代码保留，配 key 即激活 |
 | GrowthBook | 🟡 本地降级 | 1256 行客户端，自动 fallback |
@@ -143,29 +143,31 @@ tail -f ~/.claude/local_analytics.jsonl # 实时追踪
 
 → [CCP Claude Persona SWE-bench Lite 评测报告 (v2)](docs/ccp-claude-persona-swebench-report-v2.md) — 跨工具零迁移，90 实例：**+11pp**（68.6% vs 57.5%）
 
-### Coordinator Event Log（事件溯源架构）
+### Coordinator SQLite 黑板（blackboard-sourced）
 
-Compaction 抗性多 agent 通信。coordinator 每次操作即时写入类型化事件——状态在 token 窗口外。
+基于 SQLite 的**结构化键名黑板**，实现 compaction 抗性多 agent 协调。每次状态变更同时写入审计事件和键值条目，单事务保证一致性——worker 写入，coordinator 读取，janitor 清理。
 
 ```
-coordinator 操作 → 写事件 → compaction → fold 事件 → checkpoint → 恢复
+worker 写入 → recordEvent() → [events + kv 在单个 SQLite 事务中]
+coordinator 读取 → 按 key 获取最新状态 → janitor 清理过期条目
 ```
 
 | 组件 | 文件 | 说明 |
 |------|------|------|
-| EventStore | `src/coordinator/teamEventStore.ts` | append / read / clear，6 种事件 |
-| TeamProjection | `src/coordinator/teamProjection.ts` | Fold 投影 + checkpoint 恢复 |
-| LocalFileEventStore | `src/coordinator/teamEventStore.ts` | 本地 JSONL（`.team-events/`） |
-| RemoteEventStore | `src/coordinator/remoteEventStore.ts` | HTTP 客户端，跨机 |
+| BlackboardStore | `src/blackboard/BlackboardStore.ts` | SQLite CRUD：upsert、前缀查询、CAS |
+| KvHelpers | `src/blackboard/kvHelpers.ts` | 结构化键构建（`workerKey()`）+ 解析（`parseWorkerKey()`） |
+| BlackboardJanitor | `src/blackboard/BlackboardJanitor.ts` | 规则引擎：清理过期键、孤立条目、心跳监控 |
+| eventRecorder | `src/blackboard/eventRecorder.ts` | `recordEvent()` — 单事务同时写入 `events` 和 `kv` 两表 |
+| RemoteEventStore | `src/coordinator/remoteEventStore.ts` | HTTP 客户端，跨机（Phase 2） |
 | HTTP Server | `src/coordinator/eventHttpServer.ts` | Bun.serve:9742，零依赖 |
 
-**6 种事件：** `session_started` · `worker_spawned` · `worker_result` · `synthesis` · `decision` · `checkpoint`
+**键名约定：** `worker:N:status`、`worker:N:result`、`team:sources`、`coordinator:decision`
+
+**已弃用：** `teamEventStore.ts`（JSONL 事件日志）和 `teamProjection.ts`（fold 逻辑）— 保留在 `persist/coordinator-event-sourcing` 分支供参考。
 
 ```bash
-# 机器 A：启动事件服务器
-TEAM_EVENT_SERVER_PORT=9742 bun run src/coordinator/eventHttpServerEntry.ts
-# 机器 B：远程读取
-TEAM_EVENT_SERVER_URL=http://machine-a:9742 bun run dev
+# 以 coordinator 模式运行（使用黑板）
+CLAUDE_CODE_USE_OPENAI=1 bun run dev -- --coordinator
 ```
 
 → 设计：[`EN`](docs/Coordinator_Event_Log_Design_Doc.md) · [`中文`](docs/Coordinator_Event_Log_设计文档.md) · [`Plan`](docs/plans/2026-06-11-coordinator-event-log.md)
@@ -177,7 +179,7 @@ TEAM_EVENT_SERVER_URL=http://machine-a:9742 bun run dev
 | 指标 | CCB 基线 | CC Pure 当前 | 提升 |
 |------|:--------:|:----------:|:----:|
 | tsc 错误 | 62 | **0** | 反编译残留全清零 |
-| 测试通过 | 3007 | **3968** | +961 |
+| 测试通过 | 3007 | **3986** | +979 |
 | 构建 | 不稳定 | **稳定（splitting）** | ✅ |
 | 遥测外连 | 有 | **0** | ✅ |
 | CodeQL open | 175+ | **0** | 254 fixed · 260 dismissed |
