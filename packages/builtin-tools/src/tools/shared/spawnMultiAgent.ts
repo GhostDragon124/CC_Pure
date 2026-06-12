@@ -279,6 +279,17 @@ export async function generateUniqueTeammateName(
 
   const existingNames = new Set(teamFile.members.map(m => m.name.toLowerCase()))
 
+  // If the caller tries to spawn "team-lead" which already exists (created by
+  // TeamCreate), fail with a redirect — silently deduping to "team-lead-2"
+  // would cascade into wrong SendMessage recipients and blocked TeamDelete.
+  if (baseName.toLowerCase() === TEAM_LEAD_NAME && existingNames.has(TEAM_LEAD_NAME)) {
+    throw new Error(
+      `"${TEAM_LEAD_NAME}" already exists in team "${teamName}" — it was created by TeamCreate. ` +
+        `Use SendMessage to communicate with the lead. ` +
+        `To add a different teammate, choose another name.`,
+    )
+  }
+
   // If the base name doesn't exist, use it as-is
   if (!existingNames.has(baseName.toLowerCase())) {
     return baseName
