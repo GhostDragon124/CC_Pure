@@ -44,17 +44,10 @@ bun run build
 ### Configure API
 
 ```bash
-# DeepSeek (OpenAI-compatible) — one-time setup, CCP reads it automatically
-mkdir -p ~/.ccp
-cat > ~/.ccp/settings.json << 'EOF'
-{"modelType":"openai","env":{"OPENAI_BASE_URL":"https://api.deepseek.com/v1","OPENAI_API_KEY":"sk-your-key"}}
-EOF
-
-# Or use environment variables for any provider:
-# export OPENAI_BASE_URL="https://api.deepseek.com/v1"
-# export OPENAI_API_KEY="sk-xxx"
-# export ANTHROPIC_BASE_URL="https://api.anthropic.com/v1"
-# export ANTHROPIC_API_KEY="sk-ant-xxx"
+# Run CCP once, then type /login in the REPL to configure your model provider.
+# Supports OpenAI (DeepSeek), Anthropic, Gemini, and Grok protocols.
+bun run dev
+# > /login
 ```
 
 ### Verify

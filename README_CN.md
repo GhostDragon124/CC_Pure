@@ -44,17 +44,10 @@ bun run build
 ### 配置 API
 
 ```bash
-# DeepSeek（OpenAI 兼容）— 一次配置，CCP 启动自动读取
-mkdir -p ~/.ccp
-cat > ~/.ccp/settings.json << 'EOF'
-{"modelType":"openai","env":{"OPENAI_BASE_URL":"https://api.deepseek.com/v1","OPENAI_API_KEY":"sk-your-key"}}
-EOF
-
-# 也可以用环境变量：
-# export OPENAI_BASE_URL="https://api.deepseek.com/v1"
-# export OPENAI_API_KEY="sk-xxx"
-# export ANTHROPIC_BASE_URL="https://api.anthropic.com/v1"
-# export ANTHROPIC_API_KEY="sk-ant-xxx"
+# 首次运行后，在 REPL 中输入 /login 配置模型供应商。
+# 支持 OpenAI（DeepSeek）、Anthropic、Gemini、Grok 协议。
+bun run dev
+# > /login
 ```
 
 ### 配置本地快捷命令
