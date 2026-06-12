@@ -53,6 +53,8 @@ export type Output = {
   team_name: string
   team_file_path: string
   lead_agent_id: string
+  lead_agent_status: string
+  next_step: string
 }
 
 export type Input = z.infer<InputSchema>
@@ -106,7 +108,8 @@ export const TeamCreateTool: Tool<InputSchema, Output> = buildTool({
   },
 
   async description() {
-    return 'Create a new team for coordinating multiple agents'
+    return 'Create a new team with an automatically-started lead agent. ' +
+      'The lead already exists after this call — never spawn it with Agent.'
   },
 
   async prompt() {
@@ -239,6 +242,8 @@ export const TeamCreateTool: Tool<InputSchema, Output> = buildTool({
         team_name: finalTeamName,
         team_file_path: teamFilePath,
         lead_agent_id: leadAgentId,
+        lead_agent_status: `already running — created by TeamCreate, do not spawn`,
+        next_step: `SendMessage(to: "${leadAgentId}"). Use Agent only for additional teammates.`,
       },
     }
   },
