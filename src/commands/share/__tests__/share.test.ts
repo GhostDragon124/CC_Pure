@@ -55,15 +55,17 @@ const execFileMockBase = (
 // Spread real child_process + flag-gated stub (see share-gh.test.ts for the
 // promisify.custom rationale). Default OFF; suite's beforeAll flips on,
 // afterAll flips off so projectContext.test and other child_process consumers
-// see the real impl outside this suite.
+// fail loudly instead of reaching the host gh CLI outside this suite.
 let useShareCpStubs = false
+function inactiveShareCpMock(): never {
+  throw new Error('share child_process mock not active - test setup missing?')
+}
+
 const wrappedShareExecFile = ((...args: unknown[]) =>
   useShareCpStubs
     ? (execFileMockBase as (...a: unknown[]) => unknown)(...args)
-    : // eslint-disable-next-line @typescript-eslint/no-require-imports
-      (require('node:child_process').execFile as (...a: unknown[]) => unknown)(
-        ...args,
-      )) as unknown as Record<symbol, unknown> & ((...a: unknown[]) => unknown)
+    : inactiveShareCpMock()) as unknown as Record<symbol, unknown> &
+  ((...a: unknown[]) => unknown)
 ;(wrappedShareExecFile as Record<symbol, unknown>)[promisify.custom as symbol] =
   (
     cmd: string,
@@ -77,12 +79,7 @@ const wrappedShareExecFile = ((...args: unknown[]) =>
         ),
       )
     }
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const real = require('node:child_process') as Record<string, unknown>
-    return promisify(real.execFile as never)(cmd, args, opts) as Promise<{
-      stdout: string
-      stderr: string
-    }>
+    return inactiveShareCpMock()
   }
 mock.module('node:child_process', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -94,9 +91,7 @@ mock.module('node:child_process', () => {
     execFileSync: ((...args: unknown[]) =>
       useShareCpStubs
         ? Buffer.from('')
-        : (real.execFileSync as (...a: unknown[]) => unknown)(
-            ...args,
-          )) as typeof real.execFileSync,
+        : inactiveShareCpMock()) as typeof real.execFileSync,
   }
 })
 

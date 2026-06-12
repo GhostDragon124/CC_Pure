@@ -68,7 +68,7 @@ const execFileSyncMockCore = (
 
 // Spread real child_process + flag-gated stub. Default OFF; suite's
 // beforeAll flips on, afterAll flips off so projectContext.test and other
-// child_process consumers see the real impl outside this suite.
+// child_process consumers fail loudly instead of reaching the host gh CLI.
 //
 // CRITICAL: util.promisify(execFile) reads `[util.promisify.custom]` from the
 // callee. Our wrapper must forward that symbol so promisify returns the
@@ -76,13 +76,17 @@ const execFileSyncMockCore = (
 // wrapper has no custom symbol and promisify falls back to the cb adapter,
 // which our test stub doesn't support.
 let useShareGhCpStubs = false
+function inactiveShareGhCpMock(): never {
+  throw new Error(
+    'share-gh child_process mock not active - test setup missing?',
+  )
+}
+
 const wrappedExecFile = ((...args: unknown[]) =>
   useShareGhCpStubs
     ? (execFileMockCore as (...a: unknown[]) => unknown)(...args)
-    : // eslint-disable-next-line @typescript-eslint/no-require-imports
-      (require('node:child_process').execFile as (...a: unknown[]) => unknown)(
-        ...args,
-      )) as unknown as Record<symbol, unknown> & ((...a: unknown[]) => unknown)
+    : inactiveShareGhCpMock()) as unknown as Record<symbol, unknown> &
+  ((...a: unknown[]) => unknown)
 ;(wrappedExecFile as Record<symbol, unknown>)[promisify.custom as symbol] = (
   cmd: string,
   args: string[],
@@ -107,12 +111,7 @@ const wrappedExecFile = ((...args: unknown[]) =>
           ),
         )
   }
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const real = require('node:child_process') as Record<string, unknown>
-  return promisify(real.execFile as never)(cmd, args, opts) as Promise<{
-    stdout: string
-    stderr: string
-  }>
+  return inactiveShareGhCpMock()
 }
 mock.module('node:child_process', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -124,9 +123,7 @@ mock.module('node:child_process', () => {
     execFileSync: ((...args: unknown[]) =>
       useShareGhCpStubs
         ? (execFileSyncMockCore as (...a: unknown[]) => unknown)(...args)
-        : (real.execFileSync as (...a: unknown[]) => unknown)(
-            ...args,
-          )) as typeof real.execFileSync,
+        : inactiveShareGhCpMock()) as typeof real.execFileSync,
   }
 })
 

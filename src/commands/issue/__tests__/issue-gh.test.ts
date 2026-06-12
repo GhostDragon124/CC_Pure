@@ -60,13 +60,17 @@ const execFileMockCore = (
 // Spread real child_process + flag-gated stub (see share-gh.test.ts for the
 // promisify.custom rationale).
 let useIssueGhCpStubs = false
+function inactiveIssueGhCpMock(): never {
+  throw new Error(
+    'issue-gh child_process mock not active - test setup missing?',
+  )
+}
+
 const wrappedIssueGhExecFile = ((...args: unknown[]) =>
   useIssueGhCpStubs
     ? (execFileMockCore as (...a: unknown[]) => unknown)(...args)
-    : // eslint-disable-next-line @typescript-eslint/no-require-imports
-      (require('node:child_process').execFile as (...a: unknown[]) => unknown)(
-        ...args,
-      )) as unknown as Record<symbol, unknown> & ((...a: unknown[]) => unknown)
+    : inactiveIssueGhCpMock()) as unknown as Record<symbol, unknown> &
+  ((...a: unknown[]) => unknown)
 ;(wrappedIssueGhExecFile as Record<symbol, unknown>)[
   promisify.custom as symbol
 ] = (
@@ -81,12 +85,7 @@ const wrappedIssueGhExecFile = ((...args: unknown[]) =>
       ),
     )
   }
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const real = require('node:child_process') as Record<string, unknown>
-  return promisify(real.execFile as never)(cmd, args, opts) as Promise<{
-    stdout: string
-    stderr: string
-  }>
+  return inactiveIssueGhCpMock()
 }
 mock.module('node:child_process', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -98,9 +97,7 @@ mock.module('node:child_process', () => {
     execFileSync: ((...args: unknown[]) =>
       useIssueGhCpStubs
         ? (execFileSyncMockCore as (...a: unknown[]) => unknown)(...args)
-        : (real.execFileSync as (...a: unknown[]) => unknown)(
-            ...args,
-          )) as typeof real.execFileSync,
+        : inactiveIssueGhCpMock()) as typeof real.execFileSync,
   }
 })
 
@@ -231,6 +228,19 @@ beforeAll(() => {
 })
 afterAll(() => {
   useIssueGhCpStubs = false
+})
+
+describe('issue-gh child_process mock safety', () => {
+  test('throws instead of executing child_process when stubs are inactive', () => {
+    useIssueGhCpStubs = false
+    try {
+      expect(() =>
+        wrappedIssueGhExecFile(process.execPath, ['--version'], {}, () => {}),
+      ).toThrow('issue-gh child_process mock not active')
+    } finally {
+      useIssueGhCpStubs = true
+    }
+  })
 })
 
 describe('issue command — tryDetectGitRemoteUrl catch path', () => {

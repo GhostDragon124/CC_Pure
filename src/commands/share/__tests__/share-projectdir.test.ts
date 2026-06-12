@@ -54,8 +54,15 @@ const execFileMockPD = (
 // Default OFF: only this suite's beforeAll flips on; afterAll flips off.
 // Without spread, every other test in the same `bun test` run that imports
 // child_process (e.g. src/services/skillLearning/projectContext.ts which uses
-// execFileSync for git) gets our stubs and breaks.
+// execFileSync for git) gets our stubs and breaks. Outside this suite, fail
+// closed instead of reaching the host gh CLI.
 let useShareProjectdirCpStubs = false
+function inactiveShareProjectdirCpMock(): never {
+  throw new Error(
+    'share-projectdir child_process mock not active - test setup missing?',
+  )
+}
+
 mock.module('node:child_process', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const real = require('node:child_process') as Record<string, unknown>
@@ -65,15 +72,11 @@ mock.module('node:child_process', () => {
     execFile: ((...args: unknown[]) =>
       useShareProjectdirCpStubs
         ? (execFileMockPD as (...a: unknown[]) => unknown)(...args)
-        : (real.execFile as (...a: unknown[]) => unknown)(
-            ...args,
-          )) as typeof real.execFile,
+        : inactiveShareProjectdirCpMock()) as typeof real.execFile,
     execFileSync: ((...args: unknown[]) =>
       useShareProjectdirCpStubs
         ? Buffer.from('')
-        : (real.execFileSync as (...a: unknown[]) => unknown)(
-            ...args,
-          )) as typeof real.execFileSync,
+        : inactiveShareProjectdirCpMock()) as typeof real.execFileSync,
   }
 })
 

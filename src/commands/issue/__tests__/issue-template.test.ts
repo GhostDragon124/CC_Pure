@@ -70,13 +70,17 @@ const execFileMockT = (
 // Spread real child_process + flag-gated stub (see share-gh.test.ts for the
 // promisify.custom rationale).
 let useIssueTemplateCpStubs = false
+function inactiveIssueTemplateCpMock(): never {
+  throw new Error(
+    'issue-template child_process mock not active - test setup missing?',
+  )
+}
+
 const wrappedIssueTemplateExecFile = ((...args: unknown[]) =>
   useIssueTemplateCpStubs
     ? (execFileMockT as (...a: unknown[]) => unknown)(...args)
-    : // eslint-disable-next-line @typescript-eslint/no-require-imports
-      (require('node:child_process').execFile as (...a: unknown[]) => unknown)(
-        ...args,
-      )) as unknown as Record<symbol, unknown> & ((...a: unknown[]) => unknown)
+    : inactiveIssueTemplateCpMock()) as unknown as Record<symbol, unknown> &
+  ((...a: unknown[]) => unknown)
 ;(wrappedIssueTemplateExecFile as Record<symbol, unknown>)[
   promisify.custom as symbol
 ] = (
@@ -91,12 +95,7 @@ const wrappedIssueTemplateExecFile = ((...args: unknown[]) =>
       ),
     )
   }
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const real = require('node:child_process') as Record<string, unknown>
-  return promisify(real.execFile as never)(cmd, args, opts) as Promise<{
-    stdout: string
-    stderr: string
-  }>
+  return inactiveIssueTemplateCpMock()
 }
 mock.module('node:child_process', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -108,9 +107,7 @@ mock.module('node:child_process', () => {
     execFileSync: ((...args: unknown[]) =>
       useIssueTemplateCpStubs
         ? (execFileSyncMockT as (...a: unknown[]) => unknown)(...args)
-        : (real.execFileSync as (...a: unknown[]) => unknown)(
-            ...args,
-          )) as typeof real.execFileSync,
+        : inactiveIssueTemplateCpMock()) as typeof real.execFileSync,
   }
 })
 
@@ -214,6 +211,24 @@ beforeAll(() => {
 })
 afterAll(() => {
   useIssueTemplateCpStubs = false
+})
+
+describe('issue-template child_process mock safety', () => {
+  test('throws instead of executing child_process when stubs are inactive', () => {
+    useIssueTemplateCpStubs = false
+    try {
+      expect(() =>
+        wrappedIssueTemplateExecFile(
+          process.execPath,
+          ['--version'],
+          {},
+          () => {},
+        ),
+      ).toThrow('issue-template child_process mock not active')
+    } finally {
+      useIssueTemplateCpStubs = true
+    }
+  })
 })
 
 describe('issue command — detectIssueTemplate template paths', () => {

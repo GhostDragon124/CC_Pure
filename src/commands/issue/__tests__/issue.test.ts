@@ -55,6 +55,12 @@ let useIssueDynamicState = false
 // then flips off in finally. Without the flag the child_process stub leaked
 // process-globally into every later test file via Bun's mock.module cache.
 let useIssueLongBodyCpStubs = false
+function inactiveIssueLongBodyCpMock(): never {
+  throw new Error(
+    'issue long-body child_process mock not active - test setup missing?',
+  )
+}
+
 mock.module('src/bootstrap/state.js', () => ({
   ...stateMock(),
   getSessionId: () =>
@@ -549,9 +555,9 @@ describe('issue command — with title', () => {
     //
     // Spread+flag pattern: the previous bare `mock.module(...)` here leaked
     // a stub child_process to every later test file in the same `bun test`
-    // run (mock.module is process-global, last-write-wins). Now we register
-    // a flag-gated mock that delegates to real child_process by default, and
-    // only flips on for THIS test's body.
+    // run (mock.module is process-global, last-write-wins). Keep the mock
+    // active only for THIS test body; outside it, fail closed instead of
+    // delegating to real gh.
     mock.module('node:child_process', () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const real = require('node:child_process') as Record<string, unknown>
@@ -566,7 +572,7 @@ describe('issue command — with title', () => {
             if (cb) cb(new Error('ENOENT'), '', '')
             return
           }
-          return (real.execFile as (...a: unknown[]) => unknown)(...args)
+          return inactiveIssueLongBodyCpMock()
         }) as typeof real.execFile,
         execFileSync: ((...args: unknown[]) => {
           if (useIssueLongBodyCpStubs) {
@@ -575,7 +581,7 @@ describe('issue command — with title', () => {
               return Buffer.from('https://github.com/owner/repo.git\n')
             throw new Error('ENOENT')
           }
-          return (real.execFileSync as (...a: unknown[]) => unknown)(...args)
+          return inactiveIssueLongBodyCpMock()
         }) as typeof real.execFileSync,
       }
     })
