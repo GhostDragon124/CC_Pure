@@ -12,15 +12,25 @@ mock.module('src/utils/model/providers.js', () => ({
 const { createAdapter } = await import('../adapters/index')
 
 const originalWebSearchAdapter = process.env.WEB_SEARCH_ADAPTER
+const originalUseOpenAI = process.env.CLAUDE_CODE_USE_OPENAI
+const originalUseGemini = process.env.CLAUDE_CODE_USE_GEMINI
+const originalUseGrok = process.env.CLAUDE_CODE_USE_GROK
 
 afterEach(() => {
   isFirstPartyBaseUrl = true
 
+  // Restore WEB_SEARCH_ADAPTER
   if (originalWebSearchAdapter === undefined) {
     delete process.env.WEB_SEARCH_ADAPTER
   } else {
     process.env.WEB_SEARCH_ADAPTER = originalWebSearchAdapter
   }
+
+  // Clear third-party provider flags so they don't hijack adapter selection
+  // (CI or local env may have CLAUDE_CODE_USE_OPENAI=1 set)
+  delete process.env.CLAUDE_CODE_USE_OPENAI
+  delete process.env.CLAUDE_CODE_USE_GEMINI
+  delete process.env.CLAUDE_CODE_USE_GROK
 })
 
 describe('createAdapter', () => {
